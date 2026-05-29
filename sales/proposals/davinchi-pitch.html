@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Davinchi App — Pitch Deck</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0F0E0B;
+      --bg2:     #1A1810;
+      --bg3:     #2A2618;
+      --text:    #F9F5EE;
+      --muted:   #7A6A50;
+      --gold:    #C8A45A;
+      --gold-lt: #E2C07E;
+      --emerald: #3D8A5A;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ── PROGRESS ── */
+    .progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: var(--gold);
+      transition: width 0.35s ease;
+      z-index: 200;
+    }
+
+    /* ── SLIDES ── */
+    .slides { width: 100%; height: 100vh; position: relative; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 64px 88px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: all; }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 200;
+    }
+
+    .nav-btn {
+      width: 38px; height: 38px;
+      border: 1px solid var(--bg3);
+      background: var(--bg2);
+      color: var(--text);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .nav-btn:hover:not(:disabled) { background: var(--bg3); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+    .nav-counter { font-size: 13px; color: var(--muted); min-width: 44px; text-align: center; }
+
+    .pdf-btn {
+      position: fixed;
+      top: 20px; right: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 200;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .pdf-btn:hover { color: var(--text); border-color: var(--gold); }
+
+    /* ── SHARED ── */
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+    }
+
+    .title {
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin-bottom: 40px;
+    }
+
+    /* ── SLIDE 1: COVER ── */
+    #s1 { align-items: center; text-align: center; }
+
+    .cover-logo {
+      font-size: 76px;
+      font-weight: 900;
+      letter-spacing: -3px;
+      line-height: 1;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .cover-logo .accent { color: var(--gold); }
+
+    .cover-tagline {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gold-lt);
+      margin-bottom: 16px;
+    }
+
+    .cover-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 56px;
+      max-width: 520px;
+    }
+
+    .cover-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--bg3);
+      border-radius: 100px;
+      padding: 8px 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .cover-pill span { color: var(--gold-lt); font-weight: 600; }
+
+    /* ── SLIDE 2: PROBLEM ── */
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+
+    .pain-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-top: 3px solid #C0442A;
+      border-radius: 14px;
+      padding: 28px 24px;
+    }
+
+    .pain-icon { font-size: 34px; margin-bottom: 16px; }
+    .pain-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .pain-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    /* ── SLIDE 3: SOLUTION ── */
+    .sol-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      width: 100%;
+      align-items: start;
+    }
+
+    .sol-intro { font-size: 17px; color: var(--muted); line-height: 1.75; }
+
+    .sol-features { display: flex; flex-direction: column; gap: 14px; }
+
+    .sol-feat {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .sol-feat-icon { font-size: 22px; flex-shrink: 0; }
+    .sol-feat-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .sol-feat-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* ── SLIDE 4: MODULES ── */
+    .mod-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+
+    .mod-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 14px;
+      padding: 24px 20px;
+    }
+
+    .mod-icon { font-size: 28px; margin-bottom: 12px; }
+    .mod-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .mod-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── SLIDE 5: HOW IT WORKS ── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .flow-step { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+    .flow-circle {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      background: var(--bg2);
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .flow-circle.done { border-color: var(--emerald); }
+
+    .flow-label { font-size: 12px; font-weight: 600; text-align: center; max-width: 76px; color: var(--muted); }
+    .flow-arrow { font-size: 22px; color: var(--gold); padding-bottom: 28px; }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      width: 100%;
+      margin-top: 36px;
+    }
+
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .kpi-value { font-size: 34px; font-weight: 800; color: var(--gold); }
+    .kpi-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── SLIDE 6: PRICING ── */
+    .price-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .price-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 18px;
+      padding: 36px 32px;
+      position: relative;
+    }
+
+    .price-card.highlight {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, #1F1A0A 0%, #1A1810 100%);
+    }
+
+    .price-badge {
+      position: absolute;
+      top: -13px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: #0F0E0B;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .price-plan { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .price-amount { font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 2px; }
+    .price-label { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+
+    .price-breakdown {
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .price-row { display: flex; justify-content: space-between; font-size: 12px; }
+    .price-row-label { color: var(--muted); }
+    .price-row-val { font-weight: 600; }
+    .price-divider { height: 1px; background: var(--bg3); margin: 4px 0; }
+    .price-year { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; }
+    .price-year-label { color: var(--gold-lt); }
+
+    .price-items { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+    .price-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .price-item::before { content: "✓"; color: var(--emerald); font-weight: 700; }
+
+    .price-conditions {
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--bg3);
+    }
+
+    /* ── SLIDE 7: CTA ── */
+    .steps { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-bottom: 32px; }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 12px;
+      padding: 16px 24px;
+    }
+
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #0F0E0B;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .step-week { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .step-desc { font-size: 15px; font-weight: 600; }
+
+    .cta-box {
+      background: var(--gold);
+      border-radius: 16px;
+      padding: 28px 40px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .cta-title { font-size: 22px; font-weight: 800; color: #0F0E0B; margin-bottom: 6px; }
+    .cta-contact { font-size: 15px; color: #1A1810; opacity: 0.85; }
+
+    /* ── SLIDE 8: DEMO ── */
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      width: 100%;
+    }
+
+    .demo-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 18px;
+      padding: 36px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .demo-card.highlight { border-color: var(--gold); }
+
+    .demo-role {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .demo-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .demo-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .demo-qr {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid var(--bg3);
+      margin: 6px 0;
+      background: #1A1810;
+      padding: 10px;
+    }
+
+    .demo-qr img { display: block; border-radius: 6px; }
+
+    .demo-link {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold-lt);
+      text-decoration: none;
+      letter-spacing: -0.2px;
+    }
+    .demo-link:hover { text-decoration: underline; }
+
+    .demo-creds {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--bg3);
+      border-radius: 10px;
+      padding: 10px 18px;
+      width: 100%;
+    }
+
+    .demo-cred-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .demo-cred-label { color: var(--muted); }
+    .demo-cred-val { font-weight: 600; color: var(--text); font-family: monospace; font-size: 12px; }
+
+    /* ── PRINT ── */
+    @media print {
+      body { overflow: visible; height: auto; }
+      .slides { height: auto; position: relative; }
+      .slide {
+        position: relative !important;
+        opacity: 1 !important;
+        pointer-events: all !important;
+        display: flex !important;
+        height: 100vh;
+        page-break-after: always;
+        break-after: page;
+      }
+      .nav, .progress, .pdf-btn { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<button class="pdf-btn" onclick="window.print()">⬇ Guardar PDF</button>
+
+<div class="slides">
+
+  <!-- ── SLIDE 1: COVER ── -->
+  <div class="slide active" id="s1">
+    <div class="cover-logo">Davinchi<span class="accent"> App</span></div>
+    <div class="cover-tagline">"Tu catálogo y tus pedidos, siempre bajo control."</div>
+    <div class="cover-sub">Plataforma digital de ventas en campo con IA para empresas que distribuyen con vendedores</div>
+    <div class="cover-pill">Presentado por <span>Nexora IA</span> · Jerónimo Álvarez · Abril 2026</div>
+  </div>
+
+  <!-- ── SLIDE 2: PROBLEM ── -->
+  <div class="slide" id="s2">
+    <div class="label">El problema</div>
+    <div class="title">¿Cómo se toman<br>los pedidos hoy?</div>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-icon">📄</div>
+        <div class="pain-title">Catálogo en PDF</div>
+        <div class="pain-desc">Desactualizado, sin precios reales, sin fotos claras. El cliente no puede filtrar ni comparar. El vendedor lleva impresiones.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">💬</div>
+        <div class="pain-title">Pedidos por WhatsApp</div>
+        <div class="pain-desc">Sin estructura, sin confirmación formal, fácil de perder entre mensajes. El CEO no tiene visibilidad de nada.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">📋</div>
+        <div class="pain-title">Seguimiento en papel</div>
+        <div class="pain-desc">Sin KPIs, sin OTIF, sin ranking de vendedores. Las decisiones se toman de memoria, no con datos.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: SOLUTION ── -->
+  <div class="slide" id="s3">
+    <div class="label">La solución</div>
+    <div class="sol-grid">
+      <div>
+        <div class="title" style="font-size: 44px; margin-bottom: 20px;">Davinchi App digitaliza<br>tu proceso de ventas<br>de punta a punta.</div>
+        <div class="sol-intro">El cliente navega el catálogo desde su celular, le pregunta al asistente IA por precios y disponibilidad, agrega al carrito y confirma el pedido. El vendedor ve todo en su panel. El CEO ve los KPIs en tiempo real. Sin papel. Sin WhatsApp desordenado.</div>
+      </div>
+      <div class="sol-features">
+        <div class="sol-feat">
+          <div class="sol-feat-icon">🛍️</div>
+          <div>
+            <div class="sol-feat-name">Catálogo digital actualizable</div>
+            <div class="sol-feat-desc">70+ referencias con fotos, precios y stock — gestionable desde Google Sheets sin desarrollo</div>
+          </div>
+        </div>
+        <div class="sol-feat">
+          <div class="sol-feat-icon">🤖</div>
+          <div>
+            <div class="sol-feat-name">Asistente IA (Claude)</div>
+            <div class="sol-feat-desc">Responde preguntas de precio, stock y presentaciones. Genera el resumen del pedido automáticamente</div>
+          </div>
+        </div>
+        <div class="sol-feat">
+          <div class="sol-feat-icon">📊</div>
+          <div>
+            <div class="sol-feat-name">Dashboard CEO con KPIs reales</div>
+            <div class="sol-feat-desc">OTIF, ranking vendedores, top clientes, referencias que más rotan — todo en tiempo real</div>
+          </div>
+        </div>
+        <div class="sol-feat">
+          <div class="sol-feat-icon">📱</div>
+          <div>
+            <div class="sol-feat-name">Sin instalación</div>
+            <div class="sol-feat-desc">El cliente accede desde cualquier celular por URL — sin app store, sin fricción</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4: MODULES ── -->
+  <div class="slide" id="s4">
+    <div class="label">Módulos</div>
+    <div class="title" style="font-size: 44px; margin-bottom: 28px;">Todo lo que incluye Davinchi App</div>
+    <div class="mod-grid">
+      <div class="mod-card">
+        <div class="mod-icon">🛍️</div>
+        <div class="mod-name">Catálogo Digital</div>
+        <div class="mod-desc">Grid con buscador en tiempo real, filtros por categoría, galería de fotos por referencia y precio por unidad o paquete.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🤖</div>
+        <div class="mod-name">Asistente IA</div>
+        <div class="mod-desc">Entrenado con el catálogo completo. Responde precios, stock y calcula por unidad. Detecta intención de compra y genera el pedido.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🛒</div>
+        <div class="mod-name">Carrito & Checkout</div>
+        <div class="mod-desc">Carrito persistente con control de cantidades. Checkout con datos del cliente. Registro automático en Google Sheets.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">👤</div>
+        <div class="mod-name">Panel Vendedor</div>
+        <div class="mod-desc">Vista de todos los pedidos con filtros por estado. Cambio de estado, asignación y KPIs de referencias que más rotan.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">📊</div>
+        <div class="mod-name">Dashboard CEO</div>
+        <div class="mod-desc">OTIF con semáforo, ranking de vendedores, top 5 clientes más activos, valor vendido y gestión de catálogo en vivo.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🔍</div>
+        <div class="mod-name">Seguimiento de Pedidos</div>
+        <div class="mod-desc">El cliente ve el estado de sus pedidos en tiempo real desde el mismo celular. Historial por joyería.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5: HOW IT WORKS ── -->
+  <div class="slide" id="s5">
+    <div class="label">Cómo funciona</div>
+    <div class="title" style="font-size: 44px; margin-bottom: 40px;">Del catálogo al pedido<br>en menos de 2 minutos.</div>
+    <div class="flow-row">
+      <div class="flow-step">
+        <div class="flow-circle">📱</div>
+        <div class="flow-label">Cliente abre la app</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">🛍️</div>
+        <div class="flow-label">Navega el catálogo</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">🤖</div>
+        <div class="flow-label">Consulta a la IA</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">🛒</div>
+        <div class="flow-label">Agrega y confirma</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">👤</div>
+        <div class="flow-label">Vendedor gestiona</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle done">📊</div>
+        <div class="flow-label">CEO ve KPIs</div>
+      </div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-value">70+</div>
+        <div class="kpi-label">referencias en catálogo digital</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">&lt;2min</div>
+        <div class="kpi-label">del catálogo al pedido confirmado</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">0</div>
+        <div class="kpi-label">pedidos perdidos por WhatsApp</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">100%</div>
+        <div class="kpi-label">trazabilidad OTIF en tiempo real</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6: PRICING ── -->
+  <div class="slide" id="s6">
+    <div class="label">Planes</div>
+    <div class="title" style="font-size: 40px; margin-bottom: 24px;">Un servicio mensual,<br>no un gasto único.</div>
+    <div class="price-grid">
+
+      <div class="price-card">
+        <div class="price-plan">Plan Esencial</div>
+        <div class="price-amount">$500.000</div>
+        <div class="price-label">COP / mes · sin permanencia mínima</div>
+        <div class="price-breakdown">
+          <div class="price-row">
+            <span class="price-row-label">Plataforma Davinchi App</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Soporte técnico</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Actualizaciones de catálogo</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-divider"></div>
+          <div class="price-year">
+            <span class="price-year-label">Costo año 1</span>
+            <span>$6.000.000</span>
+          </div>
+        </div>
+        <ul class="price-items">
+          <li class="price-item">Catálogo digital + Asistente IA</li>
+          <li class="price-item">Carrito & Checkout automático</li>
+          <li class="price-item">Panel Vendedor + Dashboard CEO</li>
+          <li class="price-item">Seguimiento de pedidos en tiempo real</li>
+          <li class="price-item">Capacitación del equipo (2h)</li>
+        </ul>
+      </div>
+
+      <div class="price-card highlight">
+        <div class="price-badge">RECOMENDADO</div>
+        <div class="price-plan">Plan Pro · con Informe Mensual</div>
+        <div class="price-amount">$800.000</div>
+        <div class="price-label">COP / mes · sin permanencia mínima</div>
+        <div class="price-breakdown">
+          <div class="price-row">
+            <span class="price-row-label">Todo del Plan Esencial</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Informe mensual de métricas</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Sesión de revisión (30 min)</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-divider"></div>
+          <div class="price-year">
+            <span class="price-year-label">Costo año 1</span>
+            <span>$9.600.000</span>
+          </div>
+        </div>
+        <ul class="price-items">
+          <li class="price-item">OTIF mensual con tendencia y semáforo</li>
+          <li class="price-item">Top referencias que más rotan</li>
+          <li class="price-item">Ranking de vendedores con análisis</li>
+          <li class="price-item">Top clientes y valor vendido por período</li>
+          <li class="price-item">Recomendaciones accionables al CEO</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="price-conditions">
+      Sin costo de implementación · Sin permanencia mínima · Cancelación con 30 días de aviso · 30 días de garantía sin costo
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7: NEXT STEPS ── -->
+  <div class="slide" id="s7">
+    <div class="label">Próximos pasos</div>
+    <div class="title" style="font-size: 44px; margin-bottom: 28px;">Arrancamos en<br>4 semanas.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-week">Semana 1</div>
+          <div class="step-desc">Levantamiento — cargamos tu catálogo completo con fotos, precios y categorías</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-week">Semanas 2 – 3</div>
+          <div class="step-desc">Prueba interna — tus vendedores usan la app con pedidos reales antes del lanzamiento</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-week">Semana 4</div>
+          <div class="step-desc">Lanzamiento — tus clientes reciben el link, el catálogo está en vivo y el CEO ya ve KPIs</div>
+        </div>
+      </div>
+    </div>
+    <div class="cta-box">
+      <div class="cta-title">Un mes de prueba. Sin riesgo.</div>
+      <div class="cta-contact" style="margin-bottom:8px;">Si en 30 días la app no le está ahorrando tiempo a tu equipo de ventas, cancelas sin costo.</div>
+      <div class="cta-contact" style="font-size:13px; opacity:0.7;">WhatsApp: +57 312 279 5696 &nbsp;·&nbsp; jeronimo.230211@gmail.com</div>
+    </div>
+  </div>
+
+
+  <!-- ── SLIDE 8: DEMO EN VIVO ── -->
+  <div class="slide" id="s8">
+    <div class="label">Demo en vivo</div>
+    <div class="title" style="font-size: 44px; margin-bottom: 32px;">Prueba la app<br>ahora mismo.</div>
+    <div class="demo-grid">
+
+      <div class="demo-card">
+        <div class="demo-role">Vista Cliente</div>
+        <div class="demo-title">Catálogo</div>
+        <div class="demo-desc">Navegación del catálogo, chat con IA y carrito — sin login, desde cualquier celular</div>
+        <div class="demo-qr">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://davinchi-app.vercel.app&size=180x180&color=C8A45A&bgcolor=1A1810&margin=4" width="180" height="180" alt="QR Cliente">
+        </div>
+        <a class="demo-link" href="https://davinchi-app.vercel.app" target="_blank">davinchi-app.vercel.app</a>
+      </div>
+
+      <div class="demo-card highlight">
+        <div class="demo-role">Vista Vendedores y CEO</div>
+        <div class="demo-title">Panel Interno</div>
+        <div class="demo-desc">Panel de pedidos, gestión de estados y dashboard de KPIs en tiempo real</div>
+        <div class="demo-qr">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://davinchi-app.vercel.app?admin&size=180x180&color=C8A45A&bgcolor=1A1810&margin=4" width="180" height="180" alt="QR Admin">
+        </div>
+        <a class="demo-link" href="https://davinchi-app.vercel.app?admin" target="_blank">davinchi-app.vercel.app?admin</a>
+        <div class="demo-creds">
+          <div class="demo-cred-row">
+            <span class="demo-cred-label">CEO / Admin</span>
+            <span class="demo-cred-val">admin · davinchi2025</span>
+          </div>
+          <div class="demo-cred-row">
+            <span class="demo-cred-label">Jerónimo</span>
+            <span class="demo-cred-val">jero · jero2025</span>
+          </div>
+          <div class="demo-cred-row">
+            <span class="demo-cred-label">Juan Gabriel</span>
+            <span class="demo-cred-val">yiyo · yiyo2025</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /slides -->
+
+<!-- ── NAV ── -->
+<div class="nav">
+  <button class="nav-btn" id="prev-btn" onclick="go(-1)" disabled>←</button>
+  <span class="nav-counter" id="counter">1 / 8</span>
+  <button class="nav-btn" id="next-btn" onclick="go(1)">→</button>
+</div>
+
+<script>
+  const TOTAL = 8;
+  let cur = 1;
+
+  function go(dir) {
+    document.getElementById('s' + cur).classList.remove('active');
+    cur += dir;
+    document.getElementById('s' + cur).classList.add('active');
+    document.getElementById('counter').textContent = cur + ' / ' + TOTAL;
+    document.getElementById('prev-btn').disabled = cur === 1;
+    document.getElementById('next-btn').disabled = cur === TOTAL;
+    document.getElementById('progress').style.width = (cur / TOTAL * 100) + '%';
+  }
+
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'ArrowRight' || e.key === 'ArrowDown') && cur < TOTAL) go(1);
+    if ((e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   && cur > 1)     go(-1);
+  });
+
+  document.getElementById('progress').style.width = (1 / TOTAL * 100) + '%';
+</script>
+
+</body>
+</html>

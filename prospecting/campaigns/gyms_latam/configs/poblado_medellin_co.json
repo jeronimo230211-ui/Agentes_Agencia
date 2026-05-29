@@ -1,0 +1,23 @@
+{
+  "searchStringsArray": [
+    "gimnasio",
+    "gym",
+    "centro fitness",
+    "crossfit",
+    "pilates",
+    "yoga",
+    "entrenamiento funcional",
+    "spinning",
+    "studio de ejercicio",
+    "entrenamiento personal"
+  ],
+  "locationQuery": "El Poblado, Medellín, Antioquia, Colombia",
+  "language": "es",
+  "maxCrawledPlacesPerSearch": 20,
+  "includeReviews": false,
+  "includeImages": false,
+  "includeOpeningHours": true,
+  "includeContacts": true,
+  "exportPlaceUrls": true,
+  "additionalInfo": false
+}

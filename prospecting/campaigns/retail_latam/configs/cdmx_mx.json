@@ -1,0 +1,20 @@
+{
+  "searchStringsArray": [
+    "joyería",
+    "tienda de ropa",
+    "boutique ropa femenina",
+    "tienda de accesorios",
+    "ropa infantil",
+    "calzado y ropa",
+    "tienda de moda"
+  ],
+  "locationQuery": "Ciudad de México, México",
+  "language": "es",
+  "maxCrawledPlacesPerSearch": 20,
+  "includeReviews": false,
+  "includeImages": false,
+  "includeOpeningHours": true,
+  "includeContacts": true,
+  "exportPlaceUrls": true,
+  "additionalInfo": false
+}

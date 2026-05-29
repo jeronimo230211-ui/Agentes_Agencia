@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recibo de Pago — Nexora IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --obsidiana: #0D0F0E;
+      --esmeralda: #1A3C2E;
+      --lima: #A8FF3E;
+      --blanco: #F2F0EB;
+      --gris: #C8C9C0;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    /* BOTÓN PDF — solo en pantalla */
+    .btn-pdf {
+      margin-bottom: 24px;
+      background: var(--lima);
+      color: var(--obsidiana);
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+    .btn-pdf:hover { opacity: 0.85; }
+
+    /* HOJA */
+    .recibo {
+      width: 700px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--obsidiana);
+      padding: 36px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .logo-area .logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--lima);
+      letter-spacing: -0.5px;
+    }
+    .logo-area .logo span { color: var(--blanco); font-weight: 400; }
+    .logo-area .tagline {
+      font-size: 11px;
+      color: var(--gris);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+    .recibo-badge {
+      text-align: right;
+    }
+    .recibo-badge .label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gris);
+    }
+    .recibo-badge .numero {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--lima);
+      line-height: 1.1;
+    }
+    .recibo-badge .fecha {
+      font-size: 12px;
+      color: var(--gris);
+      margin-top: 4px;
+    }
+
+    /* BODY */
+    .body {
+      padding: 40px 48px;
+    }
+
+    /* PARTES */
+    .partes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+    .parte-card {
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 20px;
+      border-left: 3px solid var(--lima);
+    }
+    .parte-card .parte-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 10px;
+    }
+    .parte-card .nombre {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--obsidiana);
+      margin-bottom: 4px;
+    }
+    .parte-card .detalle {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    /* TABLA SERVICIOS */
+    .tabla-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+    thead th {
+      background: var(--obsidiana);
+      color: var(--blanco);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 10px 14px;
+      text-align: left;
+    }
+    thead th:last-child { text-align: right; }
+    tbody td {
+      padding: 14px;
+      font-size: 13px;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+    tbody td:last-child { text-align: right; font-weight: 600; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* TOTAL */
+    .total-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 32px;
+    }
+    .total-box {
+      background: var(--obsidiana);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      text-align: right;
+      min-width: 220px;
+    }
+    .total-box .total-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gris);
+      margin-bottom: 4px;
+    }
+    .total-box .total-valor {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--lima);
+    }
+    .total-box .total-moneda {
+      font-size: 12px;
+      color: var(--gris);
+      margin-top: 2px;
+    }
+
+    /* PAGO */
+    .pago-section {
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .pago-item .pago-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    .pago-item .pago-valor {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--obsidiana);
+    }
+
+    /* NOTA LEGAL */
+    .nota-legal {
+      font-size: 11px;
+      color: #999;
+      line-height: 1.6;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+    .nota-legal strong { color: #666; }
+
+    /* FOOTER */
+    .footer {
+      background: var(--obsidiana);
+      padding: 20px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer .gracias {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blanco);
+    }
+    .footer .contacto {
+      font-size: 11px;
+      color: var(--gris);
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    /* PRINT */
+    @media print {
+      body { background: white; padding: 0; }
+      .btn-pdf { display: none; }
+      .recibo {
+        width: 100%;
+        box-shadow: none;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <button class="btn-pdf" onclick="window.print()">Guardar como PDF</button>
+
+  <div class="recibo">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo-area">
+        <div class="logo">Nexora <span>IA</span></div>
+        <div class="tagline">Automatización inteligente para PYMEs</div>
+      </div>
+      <div class="recibo-badge">
+        <div class="label">Recibo de Pago</div>
+        <div class="numero">#001</div>
+        <div class="fecha">24 de mayo de 2026</div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+
+      <!-- PARTES -->
+      <div class="partes">
+        <div class="parte-card">
+          <div class="parte-label">Proveedor del servicio</div>
+          <div class="nombre">Jerónimo Álvarez</div>
+          <div class="detalle">
+            C.C. [TU CÉDULA]-0<br>
+            jeronimo.230211@gmail.com<br>
+            +57 312 279 5696<br>
+            Medellín, Colombia
+          </div>
+        </div>
+        <div class="parte-card">
+          <div class="parte-label">Cliente</div>
+          <div class="nombre">[Nombre del cliente]</div>
+          <div class="detalle">
+            NIT/C.C. [NIT o cédula]<br>
+            [correo del cliente]<br>
+            [ciudad, país]
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA -->
+      <div class="tabla-label">Detalle del servicio</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Período</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>[Nombre del plan]</strong><br>
+              <span style="font-size:12px; color:#666;">[Descripción breve del servicio — ej: Sistema de automatización WhatsApp IA · Triage inteligente · Panel de gestión]</span>
+            </td>
+            <td style="white-space: nowrap;">[Mes] [Año]</td>
+            <td>$[VALOR] COP</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TOTAL -->
+      <div class="total-row">
+        <div class="total-box">
+          <div class="total-label">Total a pagar</div>
+          <div class="total-valor">$[VALOR]</div>
+          <div class="total-moneda">Pesos colombianos (COP)</div>
+        </div>
+      </div>
+
+      <!-- DATOS DE PAGO -->
+      <div class="pago-section">
+        <div class="pago-item">
+          <div class="pago-label">Forma de pago</div>
+          <div class="pago-valor">Transferencia bancaria</div>
+        </div>
+        <div class="pago-item">
+          <div class="pago-label">Banco</div>
+          <div class="pago-valor">Nu (Nubank Colombia)</div>
+        </div>
+        <div class="pago-item">
+          <div class="pago-label">Titular</div>
+          <div class="pago-valor">Jerónimo Álvarez</div>
+        </div>
+        <div class="pago-item">
+          <div class="pago-label">Número de cuenta</div>
+          <div class="pago-valor">[TU NÚMERO DE CUENTA NU]</div>
+        </div>
+      </div>
+
+      <!-- NOTA LEGAL -->
+      <div class="nota-legal">
+        <strong>Nota legal:</strong> Jerónimo Álvarez actúa como persona natural bajo el <strong>Régimen Simple de Tributación</strong> (Art. 437 E.T.). No somos responsables del IVA. Este documento equivale a factura de venta para efectos contables en el régimen simplificado colombiano.
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="gracias">Gracias por confiar en Nexora IA</div>
+      <div class="contacto">
+        jeronimo.230211@gmail.com<br>
+        +57 312 279 5696 · Medellín, Colombia
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

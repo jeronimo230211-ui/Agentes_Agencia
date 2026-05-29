@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fijo — Pitch Deck · RedLine</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0B1120;
+      --bg2:     #111827;
+      --bg3:     #1E293B;
+      --text:    #F8FAFC;
+      --muted:   #64748B;
+      --blue:    #3B82F6;
+      --blue-lt: #60A5FA;
+      --emerald: #10B981;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ── PROGRESS ── */
+    .progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: var(--blue);
+      transition: width 0.35s ease;
+      z-index: 200;
+    }
+
+    /* ── SLIDES ── */
+    .slides { width: 100%; height: 100vh; position: relative; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 64px 88px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: all; }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 200;
+    }
+
+    .nav-btn {
+      width: 38px; height: 38px;
+      border: 1px solid var(--bg3);
+      background: var(--bg2);
+      color: var(--text);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .nav-btn:hover:not(:disabled) { background: var(--bg3); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+    .nav-counter { font-size: 13px; color: var(--muted); min-width: 44px; text-align: center; }
+
+    .pdf-btn {
+      position: fixed;
+      top: 20px; right: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 200;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .pdf-btn:hover { color: var(--text); border-color: var(--blue); }
+
+    /* ── SHARED COMPONENTS ── */
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 14px;
+    }
+
+    .title {
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin-bottom: 40px;
+    }
+
+    /* ── SLIDE 1: COVER ── */
+    #s1 { align-items: center; text-align: center; justify-content: center; }
+
+    .cover-logo {
+      font-size: 80px;
+      font-weight: 900;
+      letter-spacing: -3px;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .cover-logo .dot { color: var(--blue); }
+
+    .cover-tagline {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--blue-lt);
+      margin-bottom: 16px;
+    }
+
+    .cover-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 56px;
+      max-width: 500px;
+    }
+
+    .cover-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--bg3);
+      border-radius: 100px;
+      padding: 8px 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .cover-pill span { color: var(--blue-lt); font-weight: 600; }
+
+    /* ── SLIDE 2: PROBLEM ── */
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+
+    .pain-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-top: 3px solid #EF4444;
+      border-radius: 14px;
+      padding: 28px 24px;
+    }
+
+    .pain-icon { font-size: 34px; margin-bottom: 16px; }
+    .pain-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .pain-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    /* ── SLIDE 3: SOLUTION ── */
+    .sol-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      width: 100%;
+      align-items: start;
+    }
+
+    .sol-intro {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 0;
+    }
+
+    .sol-features { display: flex; flex-direction: column; gap: 14px; }
+
+    .sol-feat {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .sol-feat-icon { font-size: 22px; flex-shrink: 0; }
+    .sol-feat-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .sol-feat-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* ── SLIDE 4: MODULES ── */
+    .mod-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+
+    .mod-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 14px;
+      padding: 24px 20px;
+    }
+
+    .mod-icon { font-size: 28px; margin-bottom: 12px; }
+    .mod-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .mod-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── SLIDE 5: HOW IT WORKS ── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .flow-step { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+    .flow-circle {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      background: var(--bg2);
+      border: 2px solid var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .flow-circle.done { border-color: var(--emerald); }
+
+    .flow-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      max-width: 76px;
+      color: var(--muted);
+    }
+
+    .flow-arrow { font-size: 22px; color: var(--blue); padding-bottom: 28px; }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      width: 100%;
+      margin-top: 36px;
+    }
+
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .kpi-value { font-size: 34px; font-weight: 800; color: var(--emerald); }
+    .kpi-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── SLIDE 6: PRICING ── */
+    .price-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .price-card {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 18px;
+      padding: 36px 32px;
+      position: relative;
+    }
+
+    .price-card.highlight {
+      border-color: var(--blue);
+      background: linear-gradient(135deg, #0F1F3D 0%, #111827 100%);
+    }
+
+    .price-badge {
+      position: absolute;
+      top: -13px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--blue);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .price-plan { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .price-amount { font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 2px; }
+    .price-label { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+
+    .price-breakdown {
+      background: rgba(255,255,255,0.04);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .price-row { display: flex; justify-content: space-between; font-size: 12px; }
+    .price-row-label { color: var(--muted); }
+    .price-row-val { font-weight: 600; }
+    .price-divider { height: 1px; background: var(--bg3); margin: 4px 0; }
+    .price-year { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; }
+    .price-year-label { color: var(--blue-lt); }
+
+    .price-items { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+    .price-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .price-item::before { content: "✓"; color: var(--emerald); font-weight: 700; }
+
+    .price-conditions {
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--bg3);
+    }
+
+    /* ── SLIDE 7: CTA ── */
+    .steps { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-bottom: 32px; }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: 12px;
+      padding: 16px 24px;
+    }
+
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .step-week { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .step-desc { font-size: 15px; font-weight: 600; }
+
+    .cta-box {
+      background: var(--blue);
+      border-radius: 16px;
+      padding: 28px 40px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .cta-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .cta-contact { font-size: 15px; opacity: 0.88; }
+
+    /* ── PRINT ── */
+    @media print {
+      body { overflow: visible; height: auto; }
+      .slides { height: auto; position: relative; }
+      .slide {
+        position: relative !important;
+        opacity: 1 !important;
+        pointer-events: all !important;
+        display: flex !important;
+        height: 100vh;
+        page-break-after: always;
+        break-after: page;
+      }
+      .nav, .progress, .pdf-btn { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<button class="pdf-btn" onclick="window.print()">⬇ Guardar PDF</button>
+
+<div class="slides">
+
+  <!-- ── SLIDE 1: COVER ── -->
+  <div class="slide active" id="s1">
+    <div class="cover-logo">fi<span class="dot">j</span>o</div>
+    <div class="cover-tagline">"Con Fijo, el técnico sí llega."</div>
+    <div class="cover-sub">Sistema inteligente de atención al cliente con IA para proveedores de internet</div>
+    <div class="cover-pill">Presentado por <span>Nexora IA</span> · Jerónimo Álvarez · Abril 2026</div>
+  </div>
+
+  <!-- ── SLIDE 2: PROBLEM ── -->
+  <div class="slide" id="s2">
+    <div class="label">El problema</div>
+    <div class="title">¿Qué pasa hoy<br>en RedLine?</div>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-icon">📵</div>
+        <div class="pain-title">El técnico no llega</div>
+        <div class="pain-desc">Se agenda la visita, el cliente espera todo el día — y el técnico no aparece. Sin aviso. Sin explicación.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">🔕</div>
+        <div class="pain-title">Nadie avisa nada</div>
+        <div class="pain-desc">El cliente no sabe en qué va su caso. Toca llamar, esperar en línea, y muchas veces ni eso funciona.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">💬</div>
+        <div class="pain-title">Todo por WhatsApp</div>
+        <div class="pain-desc">Los tickets se mandan por chat, se pierden entre mensajes, sin prioridad ni seguimiento estructurado.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: SOLUTION ── -->
+  <div class="slide" id="s3">
+    <div class="label">La solución</div>
+    <div class="sol-grid">
+      <div>
+        <div class="title" style="font-size: 44px; margin-bottom: 20px;">Fijo automatiza<br>tu atención técnica<br>de punta a punta.</div>
+        <div class="sol-intro">El cliente escribe por WhatsApp. Un bot con IA recoge sus datos, crea el ticket y agenda la cita automáticamente. El técnico confirma. El cliente recibe notificación en cada paso. Sin fricción. Sin pérdidas.</div>
+      </div>
+      <div class="sol-features">
+        <div class="sol-feat">
+          <div class="sol-feat-icon">🤖</div>
+          <div>
+            <div class="sol-feat-name">Bot WhatsApp con IA</div>
+            <div class="sol-feat-desc">Recibe, entiende y responde solicitudes 24/7 sin intervención humana</div>
+          </div>
+        </div>
+        <div class="sol-feat">
+          <div class="sol-feat-icon">🎫</div>
+          <div>
+            <div class="sol-feat-name">Tickets automáticos</div>
+            <div class="sol-feat-desc">Cada conversación genera un ticket con datos completos y prioridad</div>
+          </div>
+        </div>
+        <div class="sol-feat">
+          <div class="sol-feat-icon">📅</div>
+          <div>
+            <div class="sol-feat-name">Agenda inteligente</div>
+            <div class="sol-feat-desc">Citas coordinadas, visibles para técnicos y supervisores en tiempo real</div>
+          </div>
+        </div>
+        <div class="sol-feat">
+          <div class="sol-feat-icon">🔔</div>
+          <div>
+            <div class="sol-feat-name">Notificaciones automáticas</div>
+            <div class="sol-feat-desc">El cliente sabe el estado de su caso en cada paso del proceso</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4: MODULES ── -->
+  <div class="slide" id="s4">
+    <div class="label">Módulos</div>
+    <div class="title" style="font-size: 44px; margin-bottom: 28px;">Todo lo que incluye Fijo</div>
+    <div class="mod-grid">
+      <div class="mod-card">
+        <div class="mod-icon">💬</div>
+        <div class="mod-name">Bot WhatsApp</div>
+        <div class="mod-desc">Flujo guiado: recopila nombre, cédula, correo y tipo de falla. Botón de intervención manual para el agente.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">👥</div>
+        <div class="mod-name">CRM de Clientes</div>
+        <div class="mod-desc">Tabla con datos completos, estado, plan contratado e historial de interacciones por cliente.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">📅</div>
+        <div class="mod-name">Agenda</div>
+        <div class="mod-desc">3 vistas: Lista, Semana y Mes. Grid hora por hora para coordinar visitas de técnicos.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">🎫</div>
+        <div class="mod-name">Tickets Kanban</div>
+        <div class="mod-desc">Pipeline visual: Nuevo → En proceso → Resuelto. Con prioridad y asignación de técnico.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">📚</div>
+        <div class="mod-name">Base de Conocimiento</div>
+        <div class="mod-desc">El bot aprende de los protocolos, cobertura, precios y políticas de RedLine.</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-icon">📣</div>
+        <div class="mod-name">Plantillas Masivas</div>
+        <div class="mod-desc">Mensajes en lote con variables dinámicas. Confirmaciones, alertas de corte, mantenimientos.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5: HOW IT WORKS ── -->
+  <div class="slide" id="s5">
+    <div class="label">Cómo funciona</div>
+    <div class="title" style="font-size: 44px; margin-bottom: 40px;">Del problema al cierre<br>en minutos, no días.</div>
+    <div class="flow-row">
+      <div class="flow-step">
+        <div class="flow-circle">📱</div>
+        <div class="flow-label">Cliente escribe</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">🤖</div>
+        <div class="flow-label">Bot IA responde</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">🎫</div>
+        <div class="flow-label">Ticket creado</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">📅</div>
+        <div class="flow-label">Cita agendada</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle">🔧</div>
+        <div class="flow-label">Técnico confirma</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-circle done">✓</div>
+        <div class="flow-label">Problema resuelto</div>
+      </div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-value">87%</div>
+        <div class="kpi-label">solicitudes automatizadas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">&lt;30s</div>
+        <div class="kpi-label">primera respuesta al cliente</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">75%</div>
+        <div class="kpi-label">citas confirmadas sin llamar</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">4.6★</div>
+        <div class="kpi-label">satisfacción promedio</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6: PRICING ── -->
+  <div class="slide" id="s6">
+    <div class="label">Planes</div>
+    <div class="title" style="font-size: 40px; margin-bottom: 24px;">Un servicio mensual,<br>no un gasto único.</div>
+    <div class="price-grid">
+
+      <div class="price-card">
+        <div class="price-plan">Plan Esencial</div>
+        <div class="price-amount">$600.000</div>
+        <div class="price-label">COP / mes · sin permanencia mínima</div>
+        <div class="price-breakdown">
+          <div class="price-row">
+            <span class="price-row-label">Plataforma Fijo completa</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Soporte técnico</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Actualizaciones</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-divider"></div>
+          <div class="price-year">
+            <span class="price-year-label">Costo año 1</span>
+            <span>$7.200.000</span>
+          </div>
+        </div>
+        <ul class="price-items">
+          <li class="price-item">Bot IA + CRM + Tickets + Agenda</li>
+          <li class="price-item">Base de conocimiento RedLine</li>
+          <li class="price-item">Plantillas de mensajes</li>
+          <li class="price-item">Capacitación del equipo (2h)</li>
+          <li class="price-item">Soporte WhatsApp en 24h hábiles</li>
+        </ul>
+      </div>
+
+      <div class="price-card highlight">
+        <div class="price-badge">RECOMENDADO</div>
+        <div class="price-plan">Plan Pro · con Informe Mensual</div>
+        <div class="price-amount">$950.000</div>
+        <div class="price-label">COP / mes · sin permanencia mínima</div>
+        <div class="price-breakdown">
+          <div class="price-row">
+            <span class="price-row-label">Todo del Plan Esencial</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Informe mensual de métricas</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-row">
+            <span class="price-row-label">Sesión de revisión (30 min)</span>
+            <span class="price-row-val">✓ incluido</span>
+          </div>
+          <div class="price-divider"></div>
+          <div class="price-year">
+            <span class="price-year-label">Costo año 1</span>
+            <span>$11.400.000</span>
+          </div>
+        </div>
+        <ul class="price-items">
+          <li class="price-item">Tasa de resolución y tiempos promedio</li>
+          <li class="price-item">Eficiencia por técnico y por zona</li>
+          <li class="price-item">Picos de demanda y causas frecuentes</li>
+          <li class="price-item">Satisfacción del cliente (tendencia)</li>
+          <li class="price-item">Recomendaciones accionables al gerente</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="price-conditions">
+      Sin costo de implementación · Sin permanencia mínima · Cancelación con 30 días de aviso · 30 días de garantía sin costo
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7: NEXT STEPS ── -->
+  <div class="slide" id="s7">
+    <div class="label">Próximos pasos</div>
+    <div class="title" style="font-size: 44px; margin-bottom: 28px;">Arrancamos en<br>4 semanas.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-week">Semana 1</div>
+          <div class="step-desc">Levantamiento de información — configuramos Fijo con los datos y protocolos de RedLine</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-week">Semanas 2 – 3</div>
+          <div class="step-desc">Prueba interna — el equipo usa Fijo con casos reales antes del lanzamiento</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-week">Semana 4</div>
+          <div class="step-desc">Lanzamiento — Fijo activo para los clientes de RedLine, bot encendido 24/7</div>
+        </div>
+      </div>
+    </div>
+    <div class="cta-box">
+      <div class="cta-title">Un mes de prueba. Sin riesgo.</div>
+      <div class="cta-contact" style="margin-bottom:8px;">Si en 30 días Fijo no le está ahorrando tiempo a tu equipo, cancelas sin costo.</div>
+      <div class="cta-contact" style="font-size:13px; opacity:0.75;">WhatsApp: +57 312 279 5696 &nbsp;·&nbsp; jeronimo.230211@gmail.com</div>
+    </div>
+  </div>
+
+</div><!-- /slides -->
+
+<!-- ── NAV CONTROLS ── -->
+<div class="nav">
+  <button class="nav-btn" id="prev-btn" onclick="go(-1)" disabled>←</button>
+  <span class="nav-counter" id="counter">1 / 7</span>
+  <button class="nav-btn" id="next-btn" onclick="go(1)">→</button>
+</div>
+
+<script>
+  const TOTAL = 7;
+  let cur = 1;
+
+  function go(dir) {
+    document.getElementById('s' + cur).classList.remove('active');
+    cur += dir;
+    document.getElementById('s' + cur).classList.add('active');
+    document.getElementById('counter').textContent = cur + ' / ' + TOTAL;
+    document.getElementById('prev-btn').disabled = cur === 1;
+    document.getElementById('next-btn').disabled = cur === TOTAL;
+    document.getElementById('progress').style.width = (cur / TOTAL * 100) + '%';
+  }
+
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'ArrowRight' || e.key === 'ArrowDown') && cur < TOTAL) go(1);
+    if ((e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   && cur > 1)     go(-1);
+  });
+
+  document.getElementById('progress').style.width = (1 / TOTAL * 100) + '%';
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RedLine × Nexora IA — Estrategia Triage Inteligente</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --obsidiana: #0D0F0E;
+      --esmeralda: #1A3C2E;
+      --lima: #A8FF3E;
+      --blanco: #F2F0EB;
+      --gris: #C8C9C0;
+      --rojo: #FF4E4E;
+      --azul: #3E8EFF;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--obsidiana);
+      color: var(--blanco);
+      line-height: 1.7;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,15,14,0.95);
+      border-bottom: 1px solid var(--esmeralda);
+      padding: 16px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(10px);
+    }
+    .nav-logo { font-weight: 800; font-size: 18px; color: var(--lima); }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a {
+      color: var(--gris);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--lima); }
+
+    /* HERO */
+    .hero {
+      padding: 100px 48px 80px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--esmeralda);
+      color: var(--lima);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+    .hero h1 span { color: var(--lima); }
+    .hero p {
+      font-size: 18px;
+      color: var(--gris);
+      max-width: 640px;
+      margin-bottom: 40px;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .meta-item label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gris);
+      margin-bottom: 4px;
+    }
+    .meta-item span {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--blanco);
+    }
+
+    /* SECTIONS */
+    section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 48px;
+      border-top: 1px solid rgba(26,60,46,0.4);
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--lima);
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: clamp(28px, 3vw, 42px);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--gris);
+      max-width: 660px;
+      margin-bottom: 48px;
+    }
+
+    /* CARDS */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+
+    .card {
+      background: rgba(26,60,46,0.15);
+      border: 1px solid rgba(26,60,46,0.6);
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--lima); transform: translateY(-2px); }
+    .card-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .card p { font-size: 14px; color: var(--gris); line-height: 1.6; }
+    .card .tag {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .tag-lima { background: rgba(168,255,62,0.15); color: var(--lima); }
+    .tag-azul { background: rgba(62,142,255,0.15); color: var(--azul); }
+    .tag-gris { background: rgba(200,201,192,0.1); color: var(--gris); }
+
+    /* TAXONOMY TABLE */
+    .tax-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .tax-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gris);
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(26,60,46,0.6);
+    }
+    .tax-table td {
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(26,60,46,0.3);
+      vertical-align: top;
+    }
+    .tax-table tr:last-child td { border-bottom: none; }
+    .tax-table tr:hover td { background: rgba(26,60,46,0.2); }
+    .priority-critical { color: #FF4E4E; font-weight: 700; font-size: 12px; }
+    .priority-high { color: #FFB74E; font-weight: 700; font-size: 12px; }
+    .priority-medium { color: var(--lima); font-weight: 700; font-size: 12px; }
+    .priority-low { color: var(--gris); font-weight: 700; font-size: 12px; }
+
+    /* FLOW */
+    .flow-step {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .flow-step::after {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 52px;
+      bottom: -32px;
+      width: 2px;
+      background: rgba(26,60,46,0.5);
+    }
+    .flow-step:last-child::after { display: none; }
+    .step-num {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--esmeralda);
+      border: 2px solid var(--lima);
+      color: var(--lima);
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .step-content h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .step-content p { font-size: 14px; color: var(--gris); }
+    .step-content code {
+      display: block;
+      margin-top: 10px;
+      background: rgba(26,60,46,0.3);
+      border: 1px solid rgba(26,60,46,0.8);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: var(--lima);
+      line-height: 1.8;
+    }
+
+    /* STACK */
+    .stack-block {
+      background: rgba(26,60,46,0.15);
+      border: 1px solid rgba(26,60,46,0.6);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .stack-block h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stack-block .role { font-size: 12px; color: var(--lima); font-weight: 600; }
+    .stack-block p { font-size: 14px; color: var(--gris); margin-top: 8px; }
+    .stack-block ul { margin-top: 10px; padding-left: 20px; }
+    .stack-block ul li { font-size: 13px; color: var(--gris); margin-bottom: 4px; }
+
+    /* PHASES */
+    .phase-card {
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      border: 1px solid;
+    }
+    .phase-1 { background: rgba(168,255,62,0.04); border-color: rgba(168,255,62,0.3); }
+    .phase-2 { background: rgba(62,142,255,0.04); border-color: rgba(62,142,255,0.3); }
+    .phase-3 { background: rgba(168,62,255,0.04); border-color: rgba(168,62,255,0.3); }
+    .phase-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .phase-header h3 { font-size: 22px; font-weight: 800; }
+    .phase-header .duration {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .dur-1 { background: rgba(168,255,62,0.15); color: var(--lima); }
+    .dur-2 { background: rgba(62,142,255,0.15); color: var(--azul); }
+    .dur-3 { background: rgba(168,62,255,0.15); color: #C87EFF; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li {
+      font-size: 14px;
+      color: var(--gris);
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist li::before {
+      content: '→';
+      color: var(--lima);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .phase-outcome {
+      margin-top: 20px;
+      padding: 16px 20px;
+      border-radius: 10px;
+      background: rgba(168,255,62,0.05);
+      border-left: 3px solid var(--lima);
+    }
+    .phase-outcome p { font-size: 13px; color: var(--blanco); font-weight: 500; }
+
+    /* KPI TABLE */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .kpi-box {
+      background: rgba(26,60,46,0.15);
+      border: 1px solid rgba(26,60,46,0.6);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .kpi-box .kpi-val {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--lima);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .kpi-box .kpi-label { font-size: 12px; color: var(--gris); font-weight: 600; }
+    .kpi-box .kpi-sub { font-size: 11px; color: rgba(200,201,192,0.6); margin-top: 4px; }
+
+    /* PRICING */
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+    .price-card {
+      border-radius: 20px;
+      padding: 36px 32px;
+      border: 1px solid rgba(26,60,46,0.6);
+      background: rgba(26,60,46,0.1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .price-card.featured {
+      border-color: var(--lima);
+      background: rgba(168,255,62,0.04);
+    }
+    .featured-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--lima);
+      color: var(--obsidiana);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      padding: 5px 16px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .price-plan { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gris); margin-bottom: 8px; }
+    .price-name { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+    .price-phase { font-size: 12px; color: var(--gris); margin-bottom: 24px; }
+    .price-setup {
+      font-size: 13px;
+      color: var(--gris);
+      margin-bottom: 4px;
+    }
+    .price-setup strong { color: var(--blanco); }
+    .price-monthly {
+      margin-bottom: 28px;
+    }
+    .price-monthly .amount {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--lima);
+    }
+    .price-monthly .period {
+      font-size: 14px;
+      color: var(--gris);
+    }
+    .price-features { list-style: none; padding: 0; flex: 1; }
+    .price-features li {
+      font-size: 13px;
+      color: var(--gris);
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .price-features li:last-child { border-bottom: none; }
+    .price-features li::before { content: '✓'; color: var(--lima); font-weight: 700; flex-shrink: 0; }
+    .price-note { margin-top: 20px; font-size: 12px; color: rgba(200,201,192,0.6); text-align: center; }
+
+    /* NEXT STEPS */
+    .next-steps {
+      background: rgba(26,60,46,0.2);
+      border: 1px solid rgba(26,60,46,0.6);
+      border-radius: 20px;
+      padding: 48px;
+    }
+    .next-steps ol { padding-left: 24px; }
+    .next-steps li {
+      font-size: 15px;
+      margin-bottom: 16px;
+      color: var(--blanco);
+    }
+    .next-steps li strong { color: var(--lima); }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 40px 48px;
+      border-top: 1px solid rgba(26,60,46,0.4);
+      color: var(--gris);
+      font-size: 13px;
+    }
+    footer strong { color: var(--lima); }
+
+    /* HIGHLIGHT BOX */
+    .highlight-box {
+      background: rgba(168,255,62,0.06);
+      border: 1px solid rgba(168,255,62,0.2);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 24px 0;
+    }
+    .highlight-box p { font-size: 14px; color: var(--blanco); }
+
+    /* ARCH DIAGRAM */
+    .arch {
+      background: rgba(26,60,46,0.2);
+      border: 1px solid rgba(26,60,46,0.7);
+      border-radius: 12px;
+      padding: 28px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--lima);
+      line-height: 2;
+      overflow-x: auto;
+      margin: 28px 0;
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .hero, section { padding: 60px 24px; }
+      .next-steps { padding: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">Nexora IA × RedLine</span>
+  <div class="nav-links">
+    <a href="#crminbox">CRMinbox</a>
+    <a href="#triage">Triage</a>
+    <a href="#automatizaciones">Automatizaciones</a>
+    <a href="#stack">Stack</a>
+    <a href="#fases">Fases</a>
+    <a href="#precio">Precio</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">Estrategia Técnica — Mayo 2026</div>
+  <h1>Triage Inteligente<br /><span>para RedLine</span></h1>
+  <p>Sistema de clasificación y ruteo automático de solicitudes con IA — integrado sobre CRMinbox para que cada cliente llegue directamente a quien puede resolverlo.</p>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <label>Cliente</label>
+      <span>RedLine (ISP Colombia)</span>
+    </div>
+    <div class="meta-item">
+      <label>CRM actual</label>
+      <span>CRMinbox</span>
+    </div>
+    <div class="meta-item">
+      <label>Motor IA</label>
+      <span>Claude API (Anthropic)</span>
+    </div>
+    <div class="meta-item">
+      <label>Orquestación</label>
+      <span>Make.com</span>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEMA -->
+<section>
+  <div class="section-label">El problema</div>
+  <h2>¿Por qué se pierde tiempo?</h2>
+  <p class="section-sub">El cliente manda un mensaje. Pasa por 2-3 personas. Cada quien lo atiende sin contexto. Llega tarde al especialista correcto — si llega.</p>
+  <div class="grid-3">
+    <div class="card">
+      <span class="card-icon">⏱</span>
+      <h3>Tiempo de primera respuesta alto</h3>
+      <p>Sin clasificación automática, los mensajes esperan a que alguien los asigne manualmente — minutos u horas perdidas desde el inicio.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔀</span>
+      <h3>Transferencias innecesarias</h3>
+      <p>Un problema de facturación llega a soporte técnico. Una falla de red llega a ventas. El cliente repite su historia en cada salto.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">📉</span>
+      <h3>Sin métricas ni visibilidad</h3>
+      <p>No hay datos claros de qué tipo de solicitudes llegan, cuánto tardan en resolverse, o qué agente tiene mejor desempeño.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CRMINBOX -->
+<section id="crminbox">
+  <div class="section-label">Punto de partida</div>
+  <h2>¿Qué podemos hacer con CRMinbox?</h2>
+  <p class="section-sub">CRMinbox es un CRM omnicanal LATAM centrado en WhatsApp Business API. Antes de diseñar el sistema, esto es lo que podemos y debemos verificar.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">✅</span>
+      <h3>Confirmado disponible</h3>
+      <p>WhatsApp Business API como canal principal. Inbox unificado. Asignación a agentes. Tickets. Etiquetas/tags. Respuestas rápidas. Business hours.</p>
+      <span class="tag tag-lima">Podemos usar ya</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔍</span>
+      <h3>Probable — verificar primero</h3>
+      <p>API REST con endpoints para leer/escribir conversaciones, contactos y tickets. Webhooks en eventos de nuevo mensaje, asignación y resolución.</p>
+      <span class="tag tag-azul">Pedir a soporte CRMinbox</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">📊</span>
+      <h3>Datos extraíbles</h3>
+      <p>ID de conversación, canal, teléfono y nombre del cliente, historial de mensajes, estado del ticket, agente asignado, tags, timestamps de apertura y cierre.</p>
+      <span class="tag tag-lima">Base del dashboard</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">⚠️</span>
+      <h3>Sin app nativa en Make.com</h3>
+      <p>CRMinbox no tiene conector nativo en Make.com. La solución: webhook de CRMinbox → Make.com + módulos HTTP para llamar la API. Funciona igual de bien.</p>
+      <span class="tag tag-gris">Workaround estándar</span>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top: 32px;">
+    <p><strong style="color:var(--lima)">Acción inmediata:</strong> Antes de codear, pedir a CRMinbox 3 cosas: (1) documentación de su API REST, (2) si su plan actual incluye acceso a API, (3) lista de eventos de webhook disponibles. Con eso, el resto del sistema se construye sobre terreno firme.</p>
+  </div>
+
+  <div class="arch">
+[Cliente WhatsApp]
+       ↓
+[CRMinbox] ──webhook──→ [Make.com]
+                              ↓
+                   [HTTP GET: datos del cliente]
+                              ↓
+                   [Claude API: clasificación]
+                              ↓
+            ┌─────────────────┼──────────────────┐
+            ↓                 ↓                  ↓
+  [HTTP: asignar agente] [HTTP: poner tag] [WA: confirmar al cliente]
+            ↓
+  [Google Sheets: log → dashboard]
+  </div>
+</section>
+
+<!-- TAXONOMIA -->
+<section>
+  <div class="section-label">Categorización</div>
+  <h2>Taxonomía de solicitudes de RedLine</h2>
+  <p class="section-sub">Todo mensaje que llegue cae en una de estas 10 categorías. Cada una tiene propietario y SLA definido.</p>
+
+  <table class="tax-table">
+    <thead>
+      <tr>
+        <th>Categoría</th>
+        <th>Tipos de solicitud</th>
+        <th>Equipo destino</th>
+        <th>Prioridad</th>
+        <th>SLA resolución</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Soporte T1</strong></td>
+        <td>Corte total, velocidad lenta, Wi-Fi, router, TV decoder</td>
+        <td>Soporte Técnico T1</td>
+        <td class="priority-critical">CRÍTICO / ALTO</td>
+        <td>4h – 8h</td>
+      </tr>
+      <tr>
+        <td><strong>Soporte T2 / Campo</strong></td>
+        <td>Visita técnica, cambio de equipo, daño físico, radio</td>
+        <td>Soporte T2 / Dispatch</td>
+        <td class="priority-high">ALTO</td>
+        <td>24h</td>
+      </tr>
+      <tr>
+        <td><strong>Avería masiva</strong></td>
+        <td>Caída en zona, múltiples clientes afectados</td>
+        <td>NOC / T2</td>
+        <td class="priority-critical">CRÍTICO</td>
+        <td>4h</td>
+      </tr>
+      <tr>
+        <td><strong>Facturación</strong></td>
+        <td>Facturas, pagos, disputas, reembolsos, planes de pago</td>
+        <td>Facturación / Cartera</td>
+        <td class="priority-medium">MEDIO</td>
+        <td>24h – 48h</td>
+      </tr>
+      <tr>
+        <td><strong>Ventas</strong></td>
+        <td>Nueva instalación, upgrade, cobertura, promociones</td>
+        <td>Ventas / Comercial</td>
+        <td class="priority-low">BAJO</td>
+        <td>2h contacto / 5 días instalación</td>
+      </tr>
+      <tr>
+        <td><strong>Admin cuenta</strong></td>
+        <td>Cambio de datos, traslado, suspensión, reactivación</td>
+        <td>CS General / Admin</td>
+        <td class="priority-medium">MEDIO</td>
+        <td>24h</td>
+      </tr>
+      <tr>
+        <td><strong>Cancelación / Churn</strong></td>
+        <td>Intención de cancelar por cualquier motivo</td>
+        <td>Retención → Admin</td>
+        <td class="priority-high">ALTO</td>
+        <td>15 min primer contacto / 2h resolución</td>
+      </tr>
+      <tr>
+        <td><strong>Agendamiento</strong></td>
+        <td>Agendar, reagendar o cancelar visita técnica</td>
+        <td>Dispatch (automatizable 80%)</td>
+        <td class="priority-medium">MEDIO</td>
+        <td>Confirmado en 4h</td>
+      </tr>
+      <tr>
+        <td><strong>PQRS</strong></td>
+        <td>Queja formal, amenaza SIC, solicitar supervisor</td>
+        <td>Calidad / Supervisión</td>
+        <td class="priority-critical">CRÍTICO</td>
+        <td>15 días hábiles (ley colombiana)</td>
+      </tr>
+      <tr>
+        <td><strong>TV</strong></td>
+        <td>Decoder, canales, IPTV, imagen congelada</td>
+        <td>Soporte T1 → T2</td>
+        <td class="priority-medium">MEDIO</td>
+        <td>24h</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- TRIAGE FLOW -->
+<section id="triage">
+  <div class="section-label">El sistema</div>
+  <h2>Flujo de triage inteligente</h2>
+  <p class="section-sub">Desde que el cliente envía un mensaje hasta que el ticket llega al agente correcto — completamente automatizado.</p>
+
+  <div class="flow-step">
+    <div class="step-num">0</div>
+    <div class="step-content">
+      <h3>Mensaje recibido en CRMinbox</h3>
+      <p>Llega por WhatsApp, email o web chat. CRMinbox dispara webhook a Make.com con el payload del mensaje.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h3>Resolución de identidad</h3>
+      <p>Make.com busca el teléfono en CRMinbox. Si hay match → extrae nombre, plan, tipo de servicio, historial de tickets, estado de cuenta. Si no hay match → pide número de cuenta o dirección en un solo mensaje.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h3>Saludo contextual automático</h3>
+      <p>El bot envía un primer mensaje personalizado antes de que toque un agente humano.</p>
+      <code>"Hola Carlos, soy el asistente de RedLine.
+Vi que tienes el plan 50MB en Laureles.
+¿En qué te puedo ayudar hoy?"</code>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h3>Clasificación por IA (Claude API)</h3>
+      <p>Make.com envía el mensaje + contexto del cliente a Claude API. El modelo devuelve JSON estructurado con categoría, subcategoría, prioridad, sentimiento, riesgo de churn y si aplica autoservicio.</p>
+      <code>{
+  "category": "technical_t1",
+  "subcategory": "slow_speed",
+  "confidence": 0.94,
+  "priority": "medium",
+  "sentiment": -0.5,
+  "churn_risk": "medium",
+  "pqrs_flag": false,
+  "self_service_applicable": false,
+  "agent_briefing": "Cliente lleva 8 meses, 2 tickets técnicos este mes"
+}</code>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h3>Verificación de completitud</h3>
+      <p>Si confianza ≥ 85% → procede. Si está entre 60–84% → hace una pregunta aclaratoria al cliente. Si &lt;60% → ruta a cola general con flag "necesita clasificación manual". Máximo 2 preguntas de clarificación.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <h3>Creación y enriquecimiento del ticket</h3>
+      <p>Make.com actualiza el ticket en CRMinbox: pone el tag de categoría, asigna prioridad, agrega resumen generado por IA al ticket y calcula el timestamp límite del SLA.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num">6</div>
+    <div class="step-content">
+      <h3>Ruteo al agente correcto</h3>
+      <p>Asigna al agente menos cargado del equipo correcto (Soporte T1 / Facturación / Ventas / Retención / Calidad). Notifica al agente con briefing del cliente. Confirma al cliente con número de caso y tiempo esperado de respuesta.</p>
+      <code>"Tu caso fue asignado a nuestro equipo de Soporte Técnico.
+Un agente te contactará en máximo 30 minutos.
+Caso #4821 — Guardado ✓"</code>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="step-num">7</div>
+    <div class="step-content">
+      <h3>Escalaciones automáticas</h3>
+      <p>Palabras como "SIC", "demanda", "Superintendencia" → tag PQRS inmediato + alerta Calidad. Sentimiento muy negativo → tag "Riesgo churn alto". Mismo problema 3+ veces en 30 días → escala a T2. SLA al 80% → alerta supervisor.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AUTOMATIZACIONES -->
+<section id="automatizaciones">
+  <div class="section-label">Más allá del triage</div>
+  <h2>8 automatizaciones adicionales</h2>
+  <p class="section-sub">El triage es el core, pero hay 8 flujos más que pueden construirse sobre la misma infraestructura.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">📡</span>
+      <h3>Alertas proactivas de averías</h3>
+      <p>Cuando el NOC detecta una caída, el sistema identifica todos los clientes afectados en la zona y les envía un WhatsApp explicando la situación y el tiempo estimado de solución. Suprime la creación de tickets duplicados durante el evento.</p>
+      <span class="tag tag-lima">Deflecta 60–80% tickets en averías</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">📅</span>
+      <h3>Ciclo de vida de visitas técnicas</h3>
+      <p>T-24h: recordatorio + confirmación (SÍ/NO). Si NO: reagendar. T-1h: "tu técnico está en camino". Post-visita: cierre automático del ticket. T+2h: encuesta de satisfacción del técnico.</p>
+      <span class="tag tag-lima">Reduce no-shows</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">💳</span>
+      <h3>Recordatorios de pago automatizados</h3>
+      <p>D-5 y D-1 antes del vencimiento: WhatsApp con monto y link de pago. D+1 y D+3: aviso de mora. D+7: advertencia de suspensión. Pago confirmado: mensaje de agradecimiento automático.</p>
+      <span class="tag tag-lima">Reduce cartera morosa</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">⭐</span>
+      <h3>Encuesta CSAT post-resolución</h3>
+      <p>2h después de cerrar un ticket: "¿Quedó resuelto? 1=Sí / 2=Parcialmente / 3=No". Si responde 3 → reabre ticket + alerta supervisor. Si responde 2 → flag calidad.</p>
+      <span class="tag tag-azul">Mide satisfacción real</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🏠</span>
+      <h3>Pipeline de nuevas instalaciones</h3>
+      <p>Lead → verificación de cobertura → envío de planes → agendamiento de instalación → confirmaciones → guía de bienvenida post-instalación → check T+48h.</p>
+      <span class="tag tag-lima">Experiencia completa automatizada</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🚨</span>
+      <h3>Scoring de riesgo de churn</h3>
+      <p>Cada semana el sistema calcula el riesgo de cada cliente: tickets recientes, sentimiento histórico, pagos tardíos, antigüedad. Riesgo Alto/Crítico → alerta a Retención para contacto proactivo antes de que el cliente pida cancelar.</p>
+      <span class="tag tag-azul">Retención preventiva</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔁</span>
+      <h3>Detección de problemas recurrentes</h3>
+      <p>3+ tickets del mismo tipo en 30 días para la misma cuenta → auto-escala a T2 para análisis de causa raíz + flag en dashboard para Calidad. Evita que el cliente llame infinitas veces por lo mismo.</p>
+      <span class="tag tag-lima">Mejora FCR</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🤖</span>
+      <h3>Autoservicio inteligente</h3>
+      <p>Antes de asignar agente, la IA detecta si la solicitud tiene solución de autoservicio: guía de reinicio de router, link de descarga de factura, link de pago, consulta de cobertura. Solo si el cliente confirma que no le funcionó → crea ticket.</p>
+      <span class="tag tag-lima">Deflecta 15–25% del volumen</span>
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section id="stack">
+  <div class="section-label">Arquitectura</div>
+  <h2>Stack tecnológico</h2>
+  <p class="section-sub">Cada pieza tiene un rol específico. La arquitectura es modular — si CRMinbox tiene limitaciones de API, hay plan B listo.</p>
+
+  <div class="stack-block">
+    <h3>CRMinbox <span class="role">Sistema de registro + interfaz de agentes</span></h3>
+    <p>Todos los tickets viven aquí. Los agentes trabajan desde la interfaz de CRMinbox. La IA enriquece los tickets pero no reemplaza el CRM — lo hace más inteligente.</p>
+    <ul>
+      <li>Requiere: webhook en nuevas conversaciones + API para actualizar tickets</li>
+      <li>Acción: confirmar disponibilidad de API y webhooks con soporte CRMinbox</li>
+    </ul>
+  </div>
+
+  <div class="stack-block">
+    <h3>Make.com <span class="role">Capa de orquestación (sin código)</span></h3>
+    <p>Conecta todos los sistemas y corre los 9 escenarios de automatización. Visual, mantenible, no requiere servidor ni equipo de desarrollo para ajustes.</p>
+    <ul>
+      <li>Costo: $29–$99 USD/mes según volumen de operaciones</li>
+      <li>Escenarios: Triage, SLA, Alertas averías, Recordatorios visitas, CSAT, Pagos, Pipeline ventas, Churn scoring, Autoservicio</li>
+    </ul>
+  </div>
+
+  <div class="stack-block">
+    <h3>Claude API (Anthropic) <span class="role">Motor de clasificación</span></h3>
+    <p>No es un chatbot conversacional — es la capa de inteligencia que clasifica cada mensaje y devuelve JSON estructurado. Rápido, preciso, 100% controlable.</p>
+    <ul>
+      <li>Modelo: Claude Haiku (triage rápido y económico) / Claude Sonnet (PQRS y casos complejos)</li>
+      <li>Costo estimado: $30–$120 USD/mes según volumen de mensajes</li>
+      <li>Output: JSON con categoría, prioridad, sentimiento, riesgo churn, briefing de agente</li>
+    </ul>
+  </div>
+
+  <div class="stack-block">
+    <h3>WhatsApp Business API <span class="role">Canal de comunicación con clientes</span></h3>
+    <p>Todos los mensajes salientes automatizados van por aquí: confirmaciones, recordatorios, encuestas, alertas de avería, avisos de pago.</p>
+    <ul>
+      <li>Proveedor recomendado: 360dialog (mejor integración con Make.com, amigable con Colombia)</li>
+      <li>Requiere cuenta de WhatsApp Business API verificada por Meta</li>
+    </ul>
+  </div>
+
+  <div class="stack-block">
+    <h3>Google Looker Studio / Metabase <span class="role">Dashboard de métricas</span></h3>
+    <p>Conectado a los logs de Make.com (Google Sheets o Supabase). Muestra KPIs en tiempo real: colas, SLA, CSAT, volumen por categoría, performance de agentes.</p>
+    <ul>
+      <li>Looker Studio: gratuito</li>
+      <li>Metabase: gratuito self-hosted</li>
+    </ul>
+  </div>
+
+  <div class="highlight-box">
+    <p><strong style="color:var(--lima)">Plan B — Si CRMinbox no tiene API robusta:</strong> Se agrega Airtable o Supabase como base de datos intermedia. Make.com escribe todos los tickets ahí. CRMinbox sigue siendo la UI para los agentes, pero el motor de automatización opera independiente. Sin bloqueo.</p>
+  </div>
+</section>
+
+<!-- FASES -->
+<section id="fases">
+  <div class="section-label">Implementación</div>
+  <h2>3 fases de desarrollo</h2>
+  <p class="section-sub">De cero a sistema predictivo completo en 6 meses. Cada fase entrega valor inmediato antes de la siguiente.</p>
+
+  <div class="phase-card phase-1">
+    <div class="phase-header">
+      <div>
+        <h3>Fase 1 — Quick Wins</h3>
+        <p style="color:var(--gris);font-size:14px">Triage básico y ruteo funcionando en semanas, no meses</p>
+      </div>
+      <span class="duration dur-1">Semanas 1–4</span>
+    </div>
+    <ul class="checklist">
+      <li>Auditoría de API de CRMinbox: test de webhook, actualización de tickets, lectura de contactos</li>
+      <li>Conectar número de WhatsApp Business API a 360dialog</li>
+      <li>Crear equipos y colas en CRMinbox (Soporte / Facturación / Ventas / Calidad)</li>
+      <li>Make.com Escenario A: nuevo mensaje → acuse → ticket → asignación a cola general</li>
+      <li>Integrar Claude API para clasificación con prompt de taxonomía ISP</li>
+      <li>Auto-ruteo por categoría a cola correcta + tag en ticket</li>
+      <li>Detección de keywords PQRS y alerta inmediata a Calidad</li>
+      <li>Dashboard básico en Google Looker Studio con volumen y FRT</li>
+      <li>Capacitación a agentes en nuevo flujo de tickets pre-clasificados</li>
+    </ul>
+    <div class="phase-outcome">
+      <p>Resultado: 80%+ de tickets auto-clasificados y pre-ruteados. Tiempo de respuesta inicial baja de 45–90 min a &lt;5 min (acuse inmediato). Agentes dejan de hacer triage manual.</p>
+    </div>
+  </div>
+
+  <div class="phase-card phase-2">
+    <div class="phase-header">
+      <div>
+        <h3>Fase 2 — Automatización Completa</h3>
+        <p style="color:var(--gris);font-size:14px">Cada punto de contacto repetitivo automatizado</p>
+      </div>
+      <span class="duration dur-2">Meses 1–3</span>
+    </div>
+    <ul class="checklist">
+      <li>Ciclo completo de visitas técnicas: recordatorio T-24h, T-1h, encuesta post-visita</li>
+      <li>CSAT automático en resolución de tickets + reapertura si cliente dice "no resuelto"</li>
+      <li>Recordatorios de pago automatizados (D-5, D-1, D+1, D+3, D+7)</li>
+      <li>Autoservicio: guías de router, links de factura/pago antes de crear ticket</li>
+      <li>Sistema de alertas de avería: NOC activa → broadcast por zona + supresión de tickets duplicados</li>
+      <li>Pipeline de nueva instalación: lead → cobertura → planes → agendamiento → bienvenida</li>
+      <li>Churn scoring semanal + alerta proactiva a Retención para casos Alto/Crítico</li>
+      <li>Detección de problemas recurrentes (3+ tickets mismo tipo en 30 días) → auto-escala T2</li>
+      <li>Dashboard v2: CSAT, churn rate, retention, deflection, SLA por equipo, ranking agentes</li>
+    </ul>
+    <div class="phase-outcome">
+      <p>Resultado: 25–35% reducción de volumen de tickets. CSAT mejora 0.5–1.0 puntos. Tasa de churn baja 0.5–1.0%. Cada agente libera 2–3h/día de trabajo manual.</p>
+    </div>
+  </div>
+
+  <div class="phase-card phase-3">
+    <div class="phase-header">
+      <div>
+        <h3>Fase 3 — IA Predictiva</h3>
+        <p style="color:var(--gris);font-size:14px">De reactivo a preventivo: detectar problemas antes de que el cliente llame</p>
+      </div>
+      <span class="duration dur-3">Meses 3–6</span>
+    </div>
+    <ul class="checklist">
+      <li>Integración con herramienta de monitoreo de red (PRTG / Zabbix / OLT): alertas proactivas antes de que el cliente note la falla</li>
+      <li>Resolución full-AI Tier 0: router restart, descarga de factura, booking de citas — sin agente humano</li>
+      <li>Briefing inteligente por cliente antes de cada conversación: historial, plan, riesgo, recomendación de oferta</li>
+      <li>Análisis de sentimiento histórico mensual por zona, producto y agente</li>
+      <li>Canal de voz: integración con AI de voz (Bland.ai / Vapi) para llamadas salientes automatizadas</li>
+      <li>Campañas proactivas segmentadas: clientes en plan antiguo → oferta de upgrade personalizada</li>
+      <li>Informe ejecutivo mensual con ROI calculado: costo por ticket, ahorros por automatización, revenue protegido</li>
+    </ul>
+    <div class="phase-outcome">
+      <p>Resultado: Tier 0 (IA resuelve sola) maneja 30–40% del volumen total. Tickets inbound bajan 15–20% adicional por prevención proactiva. ROI completamente documentado y justificable.</p>
+    </div>
+  </div>
+</section>
+
+<!-- KPIs -->
+<section>
+  <div class="section-label">Métricas</div>
+  <h2>KPIs del sistema</h2>
+  <p class="section-sub">Lo que se mide, mejora. El dashboard muestra estos números en tiempo real.</p>
+
+  <div class="kpi-grid" style="margin-bottom: 40px;">
+    <div class="kpi-box">
+      <span class="kpi-val">&lt;5 min</span>
+      <span class="kpi-label">Primera respuesta</span>
+      <span class="kpi-sub">vs. 45–90 min actual</span>
+    </div>
+    <div class="kpi-box">
+      <span class="kpi-val">88%+</span>
+      <span class="kpi-label">Precisión de clasificación IA</span>
+      <span class="kpi-sub">Target: &gt;90% en mes 3</span>
+    </div>
+    <div class="kpi-box">
+      <span class="kpi-val">20–35%</span>
+      <span class="kpi-label">Reducción de volumen</span>
+      <span class="kpi-sub">Por deflección y alertas proactivas</span>
+    </div>
+    <div class="kpi-box">
+      <span class="kpi-val">4.2+</span>
+      <span class="kpi-label">CSAT objetivo</span>
+      <span class="kpi-sub">Escala 1–5</span>
+    </div>
+    <div class="kpi-box">
+      <span class="kpi-val">60%+</span>
+      <span class="kpi-label">Conversión retención</span>
+      <span class="kpi-sub">Cancelaciones recuperadas</span>
+    </div>
+    <div class="kpi-box">
+      <span class="kpi-val">&lt;5%</span>
+      <span class="kpi-label">Incumplimiento de SLA</span>
+      <span class="kpi-sub">Alerta automática al supervisor</span>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>Dashboard Tiempo Real</h3>
+      <p>Cola por equipo en vivo, tickets por prioridad, contador de breaches de SLA, disponibilidad de agentes.</p>
+    </div>
+    <div class="card">
+      <h3>Dashboard Diario</h3>
+      <p>FRT y AHT por categoría, volumen vs. día/semana anterior, CSAT de tickets cerrados, accuracy de clasificación IA.</p>
+    </div>
+    <div class="card">
+      <h3>Dashboard Gerencial</h3>
+      <p>Tasa de churn, conversión retención, ROI de automatización, compliance PQRS, ranking de agentes, top 5 problemas del mes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRECIO -->
+<section id="precio">
+  <div class="section-label">Valorización</div>
+  <h2>Planes y precios</h2>
+  <p class="section-sub">Modelo SaaS mensual — sin permanencia mínima. Cancelación con 30 días de aviso. El setup se paga una sola vez.</p>
+
+  <div class="pricing-grid">
+
+    <div class="price-card">
+      <div class="price-plan">Plan</div>
+      <div class="price-name">Esencial</div>
+      <div class="price-phase">Fase 1 — Quick Wins</div>
+      <div class="price-setup">Setup único: <strong>$1.800.000 COP</strong></div>
+      <div class="price-monthly">
+        <span class="amount">$990K</span>
+        <span class="period"> COP/mes</span>
+      </div>
+      <ul class="price-features">
+        <li>Triage IA: clasificación automática de todos los mensajes entrantes</li>
+        <li>Ruteo inteligente a 5 equipos (Soporte / Facturación / Ventas / Calidad / Admin)</li>
+        <li>Acuse de recibo instantáneo personalizado con nombre del cliente</li>
+        <li>Detección automática de PQRS y escalaciones urgentes</li>
+        <li>Tags y prioridades automáticas en CRMinbox</li>
+        <li>Dashboard básico (volumen, FRT, accuracy IA)</li>
+        <li>Hasta 3.000 clasificaciones/mes incluidas</li>
+      </ul>
+      <div class="price-note">Herramientas: Make.com + Claude API — incluidas en el mensual</div>
+    </div>
+
+    <div class="price-card featured">
+      <div class="featured-badge">RECOMENDADO</div>
+      <div class="price-plan">Plan</div>
+      <div class="price-name">Pro</div>
+      <div class="price-phase">Fases 1 + 2 — Automatización Completa</div>
+      <div class="price-setup">Setup único: <strong>$3.500.000 COP</strong></div>
+      <div class="price-monthly">
+        <span class="amount">$1.990K</span>
+        <span class="period"> COP/mes</span>
+      </div>
+      <ul class="price-features">
+        <li>Todo lo del Plan Esencial</li>
+        <li>Ciclo completo de visitas técnicas (recordatorios + encuesta post-visita)</li>
+        <li>CSAT automático en cada ticket resuelto</li>
+        <li>Recordatorios de pago automatizados (5 touchpoints)</li>
+        <li>Alertas proactivas de averías por zona</li>
+        <li>Autoservicio IA (deflecta 15–25% del volumen)</li>
+        <li>Churn scoring semanal + alertas proactivas a Retención</li>
+        <li>Pipeline automatizado de nuevas instalaciones</li>
+        <li>Dashboard completo con CSAT, churn, retención, SLA por equipo</li>
+        <li>Informe mensual de métricas con recomendaciones</li>
+        <li>Hasta 8.000 clasificaciones/mes incluidas</li>
+      </ul>
+      <div class="price-note">Herramientas: Make.com + Claude API + WhatsApp BSP — incluidas</div>
+    </div>
+
+    <div class="price-card">
+      <div class="price-plan">Plan</div>
+      <div class="price-name">Total</div>
+      <div class="price-phase">Fases 1 + 2 + 3 — IA Predictiva</div>
+      <div class="price-setup">Setup único: <strong>$6.000.000 COP</strong></div>
+      <div class="price-monthly">
+        <span class="amount">$3.500K</span>
+        <span class="period"> COP/mes</span>
+      </div>
+      <ul class="price-features">
+        <li>Todo lo del Plan Pro</li>
+        <li>Integración con monitoreo de red (alertas proactivas antes de falla)</li>
+        <li>Resolución Tier 0: IA resuelve sin agente humano (30–40% del volumen)</li>
+        <li>Briefing inteligente por cliente antes de cada conversación</li>
+        <li>Análisis mensual de sentimiento por zona y agente</li>
+        <li>Campañas proactivas segmentadas por WhatsApp</li>
+        <li>Informe ejecutivo de ROI con cálculo de ahorros reales</li>
+        <li>Clasificaciones ilimitadas</li>
+        <li>Soporte prioritario — respuesta en &lt;4h</li>
+      </ul>
+      <div class="price-note">Incluye todas las herramientas + soporte dedicado</div>
+    </div>
+
+  </div>
+
+  <div class="highlight-box" style="margin-top: 40px;">
+    <p><strong style="color:var(--lima)">ROI estimado Plan Pro:</strong> Si RedLine tiene 500 tickets/mes a un costo promedio de $8.000 COP/ticket en tiempo de agente, la automatización del 30% = $1.200.000 COP/mes en ahorro operativo. El plan se paga solo desde el primer mes.</p>
+  </div>
+</section>
+
+<!-- NEXT STEPS -->
+<section>
+  <div class="section-label">¿Qué sigue?</div>
+  <h2>Próximos pasos</h2>
+  <div class="next-steps">
+    <ol>
+      <li><strong>Confirmar capacidades de CRMinbox:</strong> Pedir a soporte de CRMinbox documentación de API + lista de webhooks disponibles. Esto define si arrancamos en Plan A o Plan B (con Supabase intermedio).</li>
+      <li><strong>Definir estructura de equipos RedLine:</strong> Confirmar los roles reales que existen hoy (¿tienen NOC? ¿agente de retención dedicado?). Esto ajusta las colas de ruteo.</li>
+      <li><strong>Aprobar plan de implementación:</strong> Seleccionar el plan (Esencial / Pro / Total) y firmar acuerdo de servicio.</li>
+      <li><strong>Semana 1 — Configuración técnica:</strong> Crear cuenta Make.com, conectar WhatsApp Business API con 360dialog, hacer test de webhook con CRMinbox.</li>
+      <li><strong>Semana 2 — Primera clasificación en vivo:</strong> El sistema empieza a clasificar mensajes reales. Los agentes validan — los errores de clasificación refinan el prompt de Claude.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Preparado por <strong>Nexora IA</strong> para RedLine · Mayo 2026</p>
+  <p style="margin-top: 8px;">Jerónimo Álvarez · +57 312 279 5696 · jeronimo.230211@gmail.com</p>
+</footer>
+
+</body>
+</html>

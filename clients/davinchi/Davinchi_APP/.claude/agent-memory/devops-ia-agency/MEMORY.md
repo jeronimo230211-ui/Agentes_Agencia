@@ -1,0 +1,1 @@
+- [Davinchi App - Infraestructura y estado de producción](project_davinchi_infra.md) — URLs, proxy Vercel, estructura de datos de productos, campo categoria ausente en Apps Script

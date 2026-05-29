@@ -1,0 +1,317 @@
+================================================================================
+         PROPUESTA COMERCIAL — DAVINCHI APP
+         Solución Digital Integral para Gestión de Pedidos y Catálogo
+================================================================================
+Fecha: 12 de abril de 2026
+Preparado por: Agencia de Automatización IA — Jerónimo Álvarez
+Cliente: Davinchi — Estuches & Vitrinas para Joyerías
+
+--------------------------------------------------------------------------------
+1. RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Davinchi App es una solución digital completa desarrollada a medida para
+automatizar el catálogo de productos, la toma de pedidos y la gestión
+operativa de Davinchi, empresa colombiana especializada en estuches y vitrinas
+para joyerías.
+
+La app reemplaza procesos manuales (catálogos en PDF, pedidos por WhatsApp sin
+estructura, seguimiento en papel) por una plataforma web moderna, accesible
+desde cualquier dispositivo sin necesidad de instalación.
+
+URL de producción: https://davinchi-app.vercel.app
+
+--------------------------------------------------------------------------------
+2. ALCANCE DEL DESARROLLO — LO QUE SE CONSTRUYÓ
+--------------------------------------------------------------------------------
+
+A. ARQUITECTURA TÉCNICA
+   • Single-Page Application (SPA) en HTML/CSS/JS — sin dependencias de framework
+   • Backend serverless en Vercel (3 endpoints: catalog.js, chat.js, data.js)
+   • Base de datos en Google Sheets con Apps Script como API REST
+   • Repositorio privado en GitHub con deploy automático a Vercel
+   • Dominio de producción con SSL incluido (Vercel)
+
+B. MÓDULO CATÁLOGO
+   • 70+ referencias activas con fotos, precio, stock, categoría y descripción
+   • 249+ imágenes de producto procesadas (vistas 1 a 8 por referencia)
+   • Script de corte automático de collages 1024x1024 → 4 vistas de 512x512
+   • Script de deploy automatizado (sync + git + push con un solo comando)
+   • Galería carousel en modal de detalle con swipe táctil, miniaturas y contador
+   • Grid 3 columnas con buscador en tiempo real y filtro por categoría
+   • Precio por unidad o por paquete (ej: $30.000 × 24 uds)
+   • Las categorías se gestionan directamente desde Google Sheets
+
+C. MÓDULO ASISTENTE IA (Claude de Anthropic)
+   • Asistente conversacional entrenado con el catálogo completo en tiempo real
+   • Conoce precios, stock, presentaciones (unidades por paquete) y descripciones
+   • Calcula precio por unidad cuando el cliente pregunta
+   • Genera resumen estructurado del pedido en JSON al detectar intención de compra
+   • Chips de sugerencia de conversación (onboarding guiado)
+   • Proxy seguro — la API key de Anthropic nunca llega al cliente
+
+D. MÓDULO CARRITO Y CHECKOUT
+   • Carrito persistente por sesión con control de cantidades
+   • Botón flotante (FAB) con contador de ítems
+   • Modal de checkout con campos: joyería, nombre, teléfono, ciudad/local
+   • Pre-llenado automático en visitas siguientes (localStorage)
+   • Resumen de pedido con detalle de presentación (× N uds · precio c/u)
+   • Confirmación y registro automático en Google Sheets (hoja APP_PEDIDOS)
+
+E. PANEL VENDEDOR
+   • Login seguro vía URL ?admin (separado del flujo del cliente)
+   • Vista de todos los pedidos con filtros por estado
+   • Cambio de estado de pedido (Nuevo → En proceso → Entregado / Parcial)
+   • Asignación de vendedor al pedido
+   • Resumen con KPIs: Total pedidos, Pendientes, Entregados, Valor vendido
+   • KPI "Referencias que más rotan" con ranking y barra de progreso
+   • Botones de filtro por KPI (ver solo lo que necesita)
+   • Actualización automática de pedidos cada 60 segundos
+
+F. PANEL CEO (Administrador)
+   • Todos los KPIs del vendedor +
+   • OTIF (On Time In Full) con semáforo y barra de progreso
+   • Ranking de vendedores con entregas, parciales y valor gestionado
+   • Top 5 clientes más activos
+   • Gestión de catálogo (crear, editar, desactivar productos)
+   • Panel con botones de filtro por indicador
+   • Vista exclusiva del tab "Catálogo" (edición en vivo)
+
+G. MÓDULO SEGUIMIENTO DE PEDIDOS (Cliente)
+   • Los clientes ven el estado de sus pedidos en tiempo real
+   • Historial de pedidos por joyería
+   • Notificación de badge cuando hay pedidos pendientes
+
+H. ONBOARDING / TOUR GUIADO
+   • 3 tours personalizados según rol: Cliente (6 pasos), Vendedor (5 pasos), CEO (6 pasos)
+   • Spotlight con overlay, flecha de posición y descripción contextual
+
+I. DISEÑO Y UX
+   • Identidad visual Davinchi: paleta crema-dorado-tinta oscura
+   • Tipografías Playfair Display (serif elegante) + Outfit (sans-serif moderna)
+   • Responsive completo: móvil, tablet y escritorio
+   • Sidebar fijo en desktop (240px) + nav bottom en móvil
+   • Transiciones fluidas, glassmorphism, microinteracciones
+   • Scrollbar personalizada estilo joyería (dorado sutil)
+
+J. SEGURIDAD
+   • ANTHROPIC_API_KEY protegida en Vercel (nunca expuesta al cliente)
+   • ADMIN_TOKEN para operaciones del catálogo
+   • SHEETS_SCRIPT_URL oculta en variables de entorno
+   • Separación de roles por URL (?admin vs. acceso directo)
+
+K. EDICIÓN DE IMÁGENES
+   • 56 productos editados manualmente: fondo crema, centrado, sin recorte
+   • Script normalizar-vistas.js (Sharp) para procesamiento batch
+   • Script cortar-collages.js para dividir collages 2×2 automáticamente
+   • Flujo de deploy de imágenes: editar → sync → git push → Vercel
+
+--------------------------------------------------------------------------------
+3. COSTOS MENSUALES DE OPERACIÓN (OPCIÓN BASE — SIN WHATSAPP)
+--------------------------------------------------------------------------------
+
+   Concepto                          Costo mensual (USD)    Costo mensual (COP)
+   ─────────────────────────────────────────────────────────────────────────────
+   Anthropic API (Claude Sonnet)     $30 – $60              $123.000 – $246.000
+   (estimado para 200-500 pedidos/mes, ~3K tokens c/u)
+
+   Vercel Pro (hosting + serverless) $0 – $20               $0 – $82.000
+   (el plan Free cubre el uso actual; Pro si se escala)
+
+   GitHub (repositorio privado)      $0                     $0
+   (plan Free cubre repos privados ilimitados)
+
+   Google Workspace / Sheets         $0                     $0
+   (cuenta personal cubre el uso actual)
+
+   ─────────────────────────────────────────────────────────────────────────────
+   TOTAL ESTIMADO BASE               $30 – $80/mes          $123.000 – $328.000
+   ─────────────────────────────────────────────────────────────────────────────
+
+   NOTA: El costo de la API de Anthropic varía según el volumen de uso del
+   asistente. A mayor número de clientes activos y pedidos, mayor consumo.
+   Se recomienda monitorear mensualmente en console.anthropic.com.
+
+--------------------------------------------------------------------------------
+4. OPCIÓN PREMIUM — CON INTEGRACIÓN WHATSAPP BUSINESS
+--------------------------------------------------------------------------------
+
+Esta opción agrega notificaciones automáticas por WhatsApp al grupo de
+vendedores cuando llega un nuevo pedido, y mensajes de seguimiento al cliente.
+
+ALCANCE TÉCNICO ADICIONAL:
+   • Integración con WhatsApp Business API (Meta Cloud API o Twilio)
+   • Webhook en Vercel que recibe el pedido confirmado y envía notificación
+   • Mensaje automático al grupo de vendedores: "Nuevo pedido de [Joyería] —
+     [Productos] — Total: [Valor] — Ver panel: davinchi-app.vercel.app?admin"
+   • Mensaje de confirmación al cliente con resumen del pedido
+   • Plantillas de mensaje aprobadas por Meta
+   • Configuración de número de WhatsApp Business dedicado
+
+COSTOS ADICIONALES MENSUALES (WhatsApp):
+
+   Concepto                              Costo mensual (USD)   Costo mensual (COP)
+   ──────────────────────────────────────────────────────────────────────────────
+   Meta Cloud API — conversaciones        $5 – $25             $20.000 – $103.000
+   (Colombia: ~$0.015 por conversación de 24h; 300-1.500 conv/mes estimado)
+
+   Número WhatsApp Business dedicado      $0 – $10             $0 – $41.000
+   (Meta permite 1 número gratuito; Twilio cobra por número)
+
+   Servicio de mensajería (si usa Twilio) $0.005/mensaje       variable
+   (alternativa a Meta directo; más fácil de implementar)
+
+   ──────────────────────────────────────────────────────────────────────────────
+   TOTAL ADICIONAL WHATSAPP               $5 – $35/mes         $20.000 – $144.000
+   ──────────────────────────────────────────────────────────────────────────────
+
+PROCESO PARA ACTIVAR WHATSAPP BUSINESS API:
+   1. Crear cuenta en Meta Business Suite (business.facebook.com)
+   2. Verificar el negocio con documentos legales de Davinchi
+   3. Registrar número de teléfono dedicado en WhatsApp Business
+   4. Crear y aprobar plantillas de mensaje (plazo Meta: 24-48 horas)
+   5. Desarrollo del webhook en Vercel (~4-6 horas de desarrollo adicional)
+   6. Pruebas y puesta en producción
+
+--------------------------------------------------------------------------------
+5. VALORACIÓN DEL DESARROLLO — PRECIO DE VENTA
+--------------------------------------------------------------------------------
+
+HORAS DE TRABAJO INVERTIDAS (estimado real):
+   • Arquitectura y setup inicial              8 horas
+   • Desarrollo del catálogo y galería        14 horas
+   • Asistente IA + integración Claude        10 horas
+   • Panel vendedor + CEO + KPIs             12 horas
+   • Carrito, checkout, pedidos               8 horas
+   • Diseño UI/UX, responsivo, animaciones    8 horas
+   • Procesamiento de imágenes (scripts)      6 horas
+   • Google Sheets + Apps Script              6 horas
+   • Seguridad, deploy, configuración         4 horas
+   • Iteraciones, correcciones, mejoras       14 horas
+   ─────────────────────────────────────────────────────
+   TOTAL                                      90 horas
+
+TARIFA HORA DESARROLLO IA + WEB (mercado CO 2026):
+   • Freelance senior Colombia:   $60.000 – $120.000 COP/hora
+   • Agencia especializada IA:    $120.000 – $250.000 COP/hora
+
+VALOR DE REFERENCIA DEL MERCADO:
+   90 horas × $120.000 COP = $10.800.000 COP (tarifa freelance media)
+   90 horas × $200.000 COP = $18.000.000 COP (tarifa agencia IA)
+
+────────────────────────────────────────────────────────────────────────────────
+   PRECIO DE VENTA RECOMENDADO — OPCIÓN BASE (sin WhatsApp)
+   ════════════════════════════════════════════════════════
+   Valor del proyecto:              $12.000.000 COP
+   Mantenimiento mensual:            $400.000 COP/mes
+   (incluye: actualizaciones, soporte, monitoreo API, ajustes menores)
+   Operación mensual (APIs):         $150.000 – $350.000 COP/mes
+                                     (se factura según consumo real)
+────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────
+   PRECIO DE VENTA RECOMENDADO — OPCIÓN PREMIUM (con WhatsApp Business)
+   ════════════════════════════════════════════════════════════════════════
+   Valor del proyecto:              $14.500.000 COP
+   (incluye desarrollo del módulo WhatsApp + integración Meta API)
+   Mantenimiento mensual:            $550.000 COP/mes
+   Operación mensual (APIs + WA):    $300.000 – $500.000 COP/mes
+                                     (se factura según consumo real)
+────────────────────────────────────────────────────────────────────────────────
+
+--------------------------------------------------------------------------------
+6. RESUMEN DE COSTOS TOTALES PRIMER AÑO
+--------------------------------------------------------------------------------
+
+OPCIÓN BASE:
+   Desarrollo (pago único):                  $12.000.000 COP
+   Mantenimiento 12 meses:                    $4.800.000 COP
+   Operación APIs 12 meses (promedio):        $2.760.000 COP
+   ─────────────────────────────────────────────────────────
+   INVERSIÓN TOTAL AÑO 1:                    $19.560.000 COP
+   COSTO MENSUAL DESDE MES 2:                  $580.000 – $780.000 COP
+
+OPCIÓN PREMIUM (con WhatsApp):
+   Desarrollo (pago único):                  $14.500.000 COP
+   Mantenimiento 12 meses:                    $6.600.000 COP
+   Operación APIs 12 meses (promedio):        $4.800.000 COP
+   ─────────────────────────────────────────────────────────
+   INVERSIÓN TOTAL AÑO 1:                    $25.900.000 COP
+   COSTO MENSUAL DESDE MES 2:                  $800.000 – $1.050.000 COP
+
+--------------------------------------------------------------------------------
+7. LO QUE INCLUYE EL MANTENIMIENTO MENSUAL
+--------------------------------------------------------------------------------
+   ✓ Actualizaciones de seguridad (Vercel, dependencias)
+   ✓ Ajustes menores de UI/UX según feedback del equipo
+   ✓ Adición de nuevas referencias al catálogo (hasta 20/mes)
+   ✓ Monitoreo de consumo de API y alertas de costo
+   ✓ Soporte técnico vía WhatsApp (respuesta en 24h hábiles)
+   ✓ Backup semanal del catálogo y configuración
+   ✗ No incluye rediseño completo ni módulos nuevos de gran escala
+     (estos se cotizan por separado)
+
+--------------------------------------------------------------------------------
+8. VENTAJAS COMPETITIVAS DE ESTA SOLUCIÓN
+--------------------------------------------------------------------------------
+   • Sin app store — el cliente accede desde el navegador, sin instalación
+   • Catálogo actualizable en tiempo real desde Google Sheets (sin dev)
+   • Asistente IA entrenado con el catálogo real, no genérico
+   • Precio por unidad calculado automáticamente para referencias en paquete
+   • Panel CEO con KPIs de negocio: OTIF, rotación, ranking vendedores
+   • Imágenes optimizadas: object-fit contain, fondo crema corporativo
+   • Deploy automático: cambiar una imagen → 1 comando → live en 60 segundos
+   • Separación de roles segura: URL diferente para clientes y vendedores
+   • Código propiedad del cliente (repositorio GitHub privado entregado)
+
+--------------------------------------------------------------------------------
+9. PENDIENTES TÉCNICOS Y MÓDULOS FUTUROS OPCIONALES
+--------------------------------------------------------------------------------
+   Prioridad Alta:
+   • Dominio propio: pedidos.davinchi.co (~$50.000 COP/año en GoDaddy)
+   • Autenticación server-side robusta para vendedores/CEO
+   • Agregar referencias faltantes: N017, N018, N019 (faltan fotos)
+
+   Prioridad Media:
+   • WhatsApp Business API (cotizado en Opción Premium)
+   • Historial de pedidos con filtros avanzados (fechas, estado, vendedor)
+   • Módulo de reportes exportables a Excel/PDF
+
+   Prioridad Baja:
+   • App móvil nativa (PWA instalable — poco esfuerzo adicional)
+   • Integración con sistema de facturación (Alegra, Siigo)
+   • Notificaciones push para nuevos pedidos
+
+--------------------------------------------------------------------------------
+10. CONDICIONES COMERCIALES
+--------------------------------------------------------------------------------
+   Forma de pago (desarrollo):
+   • 50% al inicio del proyecto
+   • 50% al entrega y aprobación final
+
+   Mantenimiento:
+   • Facturación mensual anticipada
+   • Contrato mínimo 3 meses
+   • Cancelación con 30 días de aviso
+
+   Entregables incluidos:
+   • Acceso al repositorio GitHub (código fuente completo)
+   • Documentación de uso para vendedores y CEO
+   • Capacitación virtual de 1 hora (uso del panel y catálogo)
+   • Variables de entorno y credenciales documentadas
+
+   Garantía:
+   • 30 días de corrección de bugs sin costo adicional post-entrega
+
+--------------------------------------------------------------------------------
+CONTACTO
+--------------------------------------------------------------------------------
+   Jerónimo Álvarez
+   Agencia de Automatización IA
+   WhatsApp: +57 312 279 5696
+   GitHub: github.com/jeronimo230211-ui
+
+================================================================================
+   Este documento es una propuesta comercial confidencial.
+   Los precios están expresados en pesos colombianos (COP).
+   TRM de referencia: $4.100 COP/USD (abril 2026)
+================================================================================

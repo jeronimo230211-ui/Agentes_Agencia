@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:script.google.com)",
+      "WebFetch(domain:script.googleusercontent.com)",
+      "WebFetch(domain:davinchi-app.vercel.app)",
+      "Bash(node \"C:/Users/Jeronimo/Desktop/Agentes_Agencia/scripts/sheets-utils.js\")",
+      "Bash(ls:*)",
+      "Bash(grep -v -E \"^[A-Za-z0-9]+_[0-9]+K_[0-9]+[Pp][Cc][Ss]\\\\.jpg$\")",
+      "Bash(node scripts/poblar-catalogo.js)",
+      "Bash(node scripts/poblar-catalogo.js --upload)",
+      "Bash(wait)",
+      "Bash(gh auth:*)",
+      "Bash(git --version)",
+      "Bash(git config:*)",
+      "Bash(node scripts/_copiar-fotos-temp.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://davinchi-app.vercel.app/N001\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://davinchi-app.vercel.app/N007\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://davinchi-app.vercel.app/N064_2\")",
+      "Bash(curl -s \"https://davinchi-app.vercel.app\")",
+      "WebFetch(domain:www.analuisa.com)",
+      "WebFetch(domain:www.monicavinader.com)",
+      "Bash(curl -s \"https://davinchi-app.vercel.app/api/data?action=getCatalogo\")",
+      "Bash(curl -s \"https://davinchi-app.vercel.app/api/data\")"
+    ]
+  }
+}

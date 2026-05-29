@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jerónimo Álvarez — Automatización con IA · Nexora IA</title>
+  <meta name="description" content="Ingeniero industrial con experiencia real en operaciones y supply chain. Construyo sistemas con IA que automatizan tus procesos y te dan los datos para tomar mejores decisiones."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --obs:    #0D0F0E;
+      --em:     #1A3C2E;
+      --lime:   #A8FF3E;
+      --warm:   #F2F0EB;
+      --pearl:  #C8C9C0;
+      --border: #1C1F1D;
+      --card:   rgba(255,255,255,0.025);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--obs);
+      color: var(--warm);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    section { padding: 96px 0; }
+
+    .fi {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .fi.on { opacity: 1; transform: translateY(0); }
+    .fi.d1 { transition-delay: 0.1s; }
+    .fi.d2 { transition-delay: 0.2s; }
+    .fi.d3 { transition-delay: 0.3s; }
+    .fi.d4 { transition-delay: 0.4s; }
+    .fi.d5 { transition-delay: 0.5s; }
+
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--lime);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: block;
+    }
+    h2 {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .sub {
+      font-size: 17px;
+      color: var(--pearl);
+      max-width: 560px;
+      margin-bottom: 52px;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(13,15,14,0.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-brand-text { display: flex; flex-direction: column; line-height: 1; gap: 3px; }
+    .nb-nexora { font-size: 14px; font-weight: 800; letter-spacing: 2.5px; color: var(--warm); }
+    .nb-ia     { font-size: 9px;  font-weight: 700; letter-spacing: 6px;   color: var(--lime); }
+    .nav-btn {
+      background: var(--lime); color: var(--obs);
+      font-weight: 700; font-size: 13px; padding: 10px 22px;
+      border-radius: 8px; text-decoration: none;
+      transition: opacity .2s, transform .2s;
+    }
+    .nav-btn:hover { opacity: .85; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh; padding-top: 90px;
+      display: flex; align-items: center;
+      position: relative; overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute; pointer-events: none;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(168,255,62,.06) 0%, transparent 65%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 780px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(168,255,62,.1); border: 1px solid rgba(168,255,62,.22);
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 12px; font-weight: 600; color: var(--lime);
+      letter-spacing: .4px; margin-bottom: 30px;
+    }
+    .hero-badge::before {
+      content: ''; width: 6px; height: 6px;
+      background: var(--lime); border-radius: 50%; flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.5; transform:scale(1.4); }
+    }
+    h1 {
+      font-size: clamp(36px, 6vw, 68px);
+      font-weight: 800; letter-spacing: -2px; line-height: 1.08;
+      margin-bottom: 26px;
+    }
+    h1 em { color: var(--lime); font-style: normal; }
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 18px);
+      color: var(--pearl); max-width: 580px;
+      font-weight: 400; margin-bottom: 44px; line-height: 1.75;
+    }
+    .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-p {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--lime); color: var(--obs);
+      font-weight: 700; font-size: 15px; padding: 15px 30px;
+      border-radius: 10px; text-decoration: none;
+      transition: opacity .2s, transform .2s;
+    }
+    .btn-p:hover { opacity: .85; transform: translateY(-2px); }
+    .btn-s {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--warm);
+      font-weight: 600; font-size: 15px; padding: 15px 30px;
+      border-radius: 10px; text-decoration: none;
+      border: 1px solid var(--border);
+      transition: border-color .2s, transform .2s;
+    }
+    .btn-s:hover { border-color: var(--pearl); transform: translateY(-2px); }
+
+    /* ── SOBRE MÍ ── */
+    #sobre-mi { background: #090B0A; }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 72px; align-items: start;
+    }
+    @media (max-width: 860px) {
+      .about-grid { grid-template-columns: 1fr; gap: 40px; }
+    }
+    .about-img-wrap {
+      position: relative;
+      width: 100%; max-width: 340px;
+    }
+    .about-img-frame {
+      border-radius: 20px; overflow: hidden;
+      background: var(--warm);
+      border: 1px solid rgba(168,255,62,.15);
+      aspect-ratio: 3/4;
+      position: relative;
+    }
+    .about-img-frame img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center top;
+      display: block;
+    }
+    .about-img-frame::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 30%;
+      background: linear-gradient(to top, #090B0A 0%, transparent 100%);
+    }
+    .about-accent {
+      position: absolute; bottom: -12px; right: -12px;
+      width: 80px; height: 80px;
+      background: rgba(168,255,62,.08);
+      border: 1px solid rgba(168,255,62,.2);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .about-name { font-size: 32px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
+    .about-role { font-size: 14px; font-weight: 600; color: var(--lime); letter-spacing: .5px; margin-bottom: 28px; }
+    .about-p    { font-size: 15px; color: var(--pearl); line-height: 1.85; margin-bottom: 16px; }
+    .about-p strong { color: var(--warm); font-weight: 700; }
+
+    .about-stats {
+      display: flex; gap: 28px; flex-wrap: wrap;
+      margin: 28px 0 32px;
+      padding: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    .stat-item { display: flex; flex-direction: column; gap: 4px; }
+    .stat-v {
+      font-size: 32px; font-weight: 800;
+      color: var(--lime); letter-spacing: -1px; line-height: 1;
+    }
+    .stat-l { font-size: 12px; color: var(--pearl); max-width: 100px; line-height: 1.4; }
+
+    .about-badges { display: flex; flex-direction: column; gap: 10px; }
+    .ab-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px; color: var(--warm);
+    }
+    .ab-item span { color: var(--pearl); font-size: 12px; display: block; margin-top: 1px; }
+
+    /* ── DIFERENCIADORES ── */
+    #diferenciador { }
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .diff-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      transition: border-color .25s, transform .25s;
+    }
+    .diff-card:hover { border-color: rgba(168,255,62,.25); transform: translateY(-3px); }
+    .diff-icon { font-size: 34px; margin-bottom: 18px; display: block; }
+    .diff-num  { font-size: 11px; font-weight: 700; color: var(--lime); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .diff-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.3px; }
+    .diff-desc  { font-size: 14px; color: var(--pearl); line-height: 1.75; }
+
+    /* ── PROBLEMAS ── */
+    #problemas { background: #090B0A; }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
+    }
+    .p-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 26px;
+      transition: border-color .25s, transform .25s;
+    }
+    .p-card:hover { border-color: rgba(168,255,62,.2); transform: translateY(-3px); }
+    .p-icon { font-size: 30px; margin-bottom: 14px; display: block; }
+    .p-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .p-desc  { font-size: 13px; color: var(--pearl); line-height: 1.65; }
+
+    /* ── PRICING ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .price-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 36px 28px;
+      display: flex; flex-direction: column; position: relative;
+    }
+    .price-card.featured { border-color: rgba(168,255,62,.4); background: rgba(168,255,62,.025); }
+    .price-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--lime); color: var(--obs);
+      font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 4px 16px; border-radius: 100px; white-space: nowrap;
+    }
+    .price-plan  { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--pearl); margin-bottom: 6px; }
+    .price-name  { font-size: 22px; font-weight: 800; margin-bottom: 20px; }
+    .price-usd   { font-size: 44px; font-weight: 800; color: var(--lime); letter-spacing: -2px; line-height: 1; }
+    .price-usd span { font-size: 16px; color: var(--pearl); font-weight: 400; letter-spacing: 0; }
+    .price-cop   { font-size: 12px; color: var(--pearl); margin-top: 4px; margin-bottom: 24px; }
+    .price-features { list-style: none; padding: 0; flex: 1; margin-bottom: 28px; }
+    .price-features li {
+      font-size: 13px; color: var(--pearl); padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
+    }
+    .price-features li:last-child { border-bottom: none; }
+    .price-features li::before { content: '✓'; color: var(--lime); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .price-trial { margin-top: 14px; font-size: 11px; color: var(--pearl); text-align: center; opacity: .7; }
+
+    /* ── DEMO CARDS ── */
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px; margin-bottom: 40px;
+    }
+    .demo-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px;
+      display: flex; flex-direction: column;
+      transition: border-color .25s, transform .25s;
+    }
+    .demo-card:hover { border-color: rgba(168,255,62,.25); transform: translateY(-3px); }
+    .demo-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 100px; margin-bottom: 16px; width: fit-content;
+    }
+    .demo-tag.live     { background: rgba(34,197,94,.12);  color: #22c55e; }
+    .demo-tag.demo-av  { background: rgba(96,165,250,.12);  color: #60a5fa; }
+    .demo-tag.building { background: rgba(245,158,11,.12); color: #f59e0b; }
+    .demo-title  { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+    .demo-sector { font-size: 12px; color: var(--lime); font-weight: 600; letter-spacing: .5px; margin-bottom: 12px; }
+    .demo-desc   { font-size: 13px; color: var(--pearl); line-height: 1.7; flex: 1; margin-bottom: 20px; }
+    .demo-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--lime); font-size: 12px; font-weight: 600; text-decoration: none;
+      border: 1px solid rgba(168,255,62,.25); padding: 8px 16px; border-radius: 8px;
+      transition: background .2s; width: fit-content;
+    }
+    .demo-link:hover { background: rgba(168,255,62,.07); }
+    .demo-no-link { font-size: 12px; color: var(--pearl); font-style: italic; }
+
+    /* ── PORTAFOLIO ── */
+    #portafolio { background: #090B0A; }
+    .case {
+      border: 1px solid rgba(168,255,62,.18);
+      border-radius: 20px;
+      background: rgba(26,60,46,.12);
+      overflow: hidden;
+    }
+    .case-head {
+      padding: 40px 40px 0;
+      display: flex; justify-content: space-between;
+      align-items: flex-start; gap: 20px; flex-wrap: wrap;
+    }
+    .case-tag {
+      display: inline-block; margin-bottom: 14px;
+      background: rgba(168,255,62,.1); color: var(--lime);
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      padding: 5px 12px; border-radius: 100px;
+    }
+    .case-title { font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+    .case-sub   { font-size: 15px; color: var(--pearl); max-width: 480px; line-height: 1.7; }
+    .case-live {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--lime); font-size: 13px; font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(168,255,62,.28);
+      padding: 9px 18px; border-radius: 9px; white-space: nowrap;
+      transition: background .2s;
+    }
+    .case-live:hover { background: rgba(168,255,62,.07); }
+    .live-dot {
+      width: 7px; height: 7px;
+      background: #22c55e; border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .case-cols {
+      padding: 32px 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 28px;
+      border-top: 1px solid var(--border);
+    }
+    .cb-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--lime); margin-bottom: 10px; }
+    .cb-text  { font-size: 14px; color: var(--pearl); line-height: 1.75; }
+    .case-metrics {
+      display: flex; gap: 40px; flex-wrap: wrap;
+      padding: 28px 40px;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,.15);
+    }
+    .metric-v { font-size: 34px; font-weight: 800; color: var(--lime); letter-spacing: -1px; line-height: 1; }
+    .metric-l { font-size: 12px; color: var(--pearl); margin-top: 4px; }
+
+    /* ── CONTACTO ── */
+    #contacto { }
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: start;
+    }
+    @media (max-width: 760px) {
+      .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+    }
+    .ch-list { display: flex; flex-direction: column; gap: 14px; margin-top: 28px; }
+    .ch-item {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 20px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; text-decoration: none; color: var(--warm);
+      transition: border-color .2s, transform .2s;
+    }
+    .ch-item:hover { border-color: rgba(168,255,62,.25); transform: translateX(5px); }
+    .ch-ico {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .ch-ico.wa  { background: rgba(37,211,102,.12); }
+    .ch-ico.em  { background: rgba(168,255,62,.1); }
+    .ch-lbl { font-size: 11px; color: var(--pearl); margin-bottom: 2px; }
+    .ch-val { font-size: 15px; font-weight: 600; }
+
+    form { display: flex; flex-direction: column; gap: 14px; }
+    .fg  { display: flex; flex-direction: column; gap: 6px; }
+    .fg label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .5px; color: var(--pearl); text-transform: uppercase;
+    }
+    .fg input, .fg textarea {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 16px;
+      font-family: 'Inter', sans-serif; font-size: 14px; color: var(--warm);
+      outline: none; transition: border-color .2s; resize: vertical;
+    }
+    .fg input:focus, .fg textarea:focus { border-color: rgba(168,255,62,.4); }
+    .fg input::placeholder, .fg textarea::placeholder { color: rgba(200,201,192,.35); }
+    .btn-form {
+      background: var(--lime); color: var(--obs);
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 15px;
+      padding: 14px; border-radius: 10px; border: none;
+      cursor: pointer; margin-top: 4px;
+      transition: opacity .2s, transform .2s;
+    }
+    .btn-form:hover { opacity: .85; transform: translateY(-1px); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 36px 24px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 10px; }
+    .footer-copy  { font-size: 12px; color: var(--pearl); }
+
+    /* ── FLOATING WA ── */
+    .wa-float {
+      position: fixed; bottom: 28px; right: 28px; z-index: 200;
+      width: 56px; height: 56px; background: #25D366; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(37,211,102,.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .wa-float:hover { transform: scale(1.1); box-shadow: 0 6px 32px rgba(37,211,102,.55); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      section { padding: 68px 0; }
+      .case-head, .case-cols, .case-metrics { padding-left: 22px; padding-right: 22px; }
+      .hero-ctas { flex-direction: column; }
+      .btn-p, .btn-s { justify-content: center; }
+      .about-stats { gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="#" class="nav-brand">
+    <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="20" fill="#111412"/>
+      <rect x="1.5" y="1.5" width="97" height="97" rx="19" stroke="#1A3C2E" stroke-width="1.2"/>
+      <g stroke="#A8FF3E" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="50" y1="65" x2="50" y2="34"/><line x1="50" y1="44" x2="27" y2="29"/>
+        <line x1="50" y1="44" x2="73" y2="29"/><line x1="50" y1="34" x2="50" y2="27"/>
+        <line x1="27" y1="29" x2="14" y2="17"/><line x1="27" y1="29" x2="37" y2="15"/>
+        <line x1="73" y1="29" x2="63" y2="15"/><line x1="73" y1="29" x2="86" y2="17"/>
+        <line x1="50" y1="65" x2="31" y2="76"/><line x1="50" y1="65" x2="50" y2="79"/>
+        <line x1="50" y1="65" x2="69" y2="76"/><line x1="31" y1="76" x2="18" y2="85"/>
+        <line x1="69" y1="76" x2="82" y2="85"/>
+      </g>
+      <g fill="#A8FF3E">
+        <circle cx="14" cy="17" r="2.8"/><circle cx="37" cy="15" r="2.8"/>
+        <circle cx="50" cy="27" r="2.8"/><circle cx="63" cy="15" r="2.8"/>
+        <circle cx="86" cy="17" r="2.8"/><circle cx="18" cy="85" r="2.8"/>
+        <circle cx="50" cy="79" r="2.8"/><circle cx="82" cy="85" r="2.8"/>
+      </g>
+      <g fill="#A8FF3E" opacity="0.65">
+        <circle cx="27" cy="29" r="2"/><circle cx="73" cy="29" r="2"/>
+        <circle cx="50" cy="44" r="2"/><circle cx="31" cy="76" r="2"/>
+        <circle cx="50" cy="65" r="2"/><circle cx="69" cy="76" r="2"/>
+      </g>
+    </svg>
+    <div class="nav-brand-text">
+      <span class="nb-nexora">NEXORA</span>
+      <span class="nb-ia">IA</span>
+    </div>
+  </a>
+  <a href="#contacto" class="nav-btn">Hablemos →</a>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-badge fi">Medellín, Colombia → Global · Ingeniero Industrial · IA & Automatización</div>
+      <h1 class="fi d1">Aprendí a resolver<br/>problemas de operaciones<br/><em>desde adentro.</em></h1>
+      <p class="hero-sub fi d2">Soy Jerónimo Álvarez — ingeniero industrial con experiencia real en planeación, logística y cadena de suministro. Construyo sistemas con IA que automatizan lo que te frena y te dan los datos para tomar decisiones que mueven tu empresa.</p>
+      <div class="hero-ctas fi d3">
+        <a href="#portafolio" class="btn-p">Ver casos de éxito</a>
+        <a href="https://wa.me/573122795696" target="_blank" rel="noopener" class="btn-s">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.848L.057 23.667a.5.5 0 0 0 .611.628l5.975-1.568A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.668-.5-5.21-1.377l-.374-.217-3.546.931.946-3.455-.237-.389A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Escríbeme directo
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOBRE MÍ ── -->
+<section id="sobre-mi">
+  <div class="container">
+    <div class="about-grid">
+
+      <div class="about-img-wrap fi">
+        <div class="about-img-frame">
+          <img src="assets/jero.jpeg" alt="Jerónimo Álvarez — Ingeniero Industrial · Nexora IA"/>
+        </div>
+        <div class="about-accent">
+          <svg width="36" height="36" viewBox="0 0 100 100" fill="none">
+            <g stroke="#A8FF3E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="50" y1="65" x2="50" y2="34"/><line x1="50" y1="44" x2="27" y2="29"/>
+              <line x1="50" y1="44" x2="73" y2="29"/><line x1="50" y1="34" x2="50" y2="27"/>
+              <line x1="27" y1="29" x2="14" y2="17"/><line x1="73" y1="29" x2="86" y2="17"/>
+              <line x1="50" y1="65" x2="31" y2="76"/><line x1="50" y1="65" x2="69" y2="76"/>
+            </g>
+            <g fill="#A8FF3E">
+              <circle cx="14" cy="17" r="3"/><circle cx="86" cy="17" r="3"/>
+              <circle cx="31" cy="76" r="3"/><circle cx="69" cy="76" r="3"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="fi d2">
+        <span class="label">Quién soy</span>
+        <h2 class="about-name">Jerónimo Álvarez</h2>
+        <p class="about-role">Ingeniero Industrial · Fundador de Nexora IA · Medellín, Colombia</p>
+
+        <p class="about-p">Trabajo como <strong>Analista de Planeación en Grupo Industrial UMO</strong>, donde no solo analizo — construyo. Genero planes de producción, proceso forecasts de demanda e identifico oportunidades de mejora que se convierten en herramientas reales con resultados medibles.</p>
+
+        <p class="about-p">Esa experiencia me enseñó algo que ningún curso de tecnología te da: <strong>saber exactamente dónde duele una operación</strong>, por qué duele, y cómo construir la solución precisa para que deje de doler.</p>
+
+        <p class="about-p">Hoy, a través de Nexora IA, llevo ese conocimiento a otras empresas — construyendo sistemas con IA que automatizan procesos y entregan los datos necesarios para tomar <strong>decisiones estratégicas que catapulten sus resultados</strong>.</p>
+
+        <div class="about-stats fi d3">
+          <div class="stat-item">
+            <div class="stat-v">−30%</div>
+            <div class="stat-l">desperdicios en proceso de corte</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-v">+40%</div>
+            <div class="stat-l">mejora en OTIF logístico</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-v">−20%</div>
+            <div class="stat-l">tiempos dentro del proceso</div>
+          </div>
+        </div>
+
+        <div class="about-badges fi d4">
+          <div class="ab-item">
+            🎓 Ingeniero Industrial <span>Universidad Católica Luis Amigó · 2020–2025</span>
+          </div>
+          <div class="ab-item">
+            ⚙️ Analista de Planeación <span>Grupo Industrial UMO · Mayo 2025 – Actualidad</span>
+          </div>
+          <div class="ab-item">
+            📦 Práctica Profesional — Supply <span>Colombina Helados · 6 meses</span>
+          </div>
+          <div class="ab-item">
+            🌎 Bilingüe <span>Español / Inglés · Sin miedo a proyectos globales</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── POR QUÉ YO ── -->
+<section id="diferenciador">
+  <div class="container">
+    <span class="label fi">Por qué elegirme</span>
+    <h2 class="fi d1">No solo programo.<br/>Entiendo tu negocio.</h2>
+    <p class="sub fi d2">Cualquier desarrollador puede construir un sistema. Yo me involucro en los resultados — y esa es la diferencia.</p>
+    <div class="diff-grid">
+      <div class="diff-card fi d1">
+        <span class="diff-icon">⚙️</span>
+        <div class="diff-num">01</div>
+        <div class="diff-title">Entiendo la operación antes de tocar el código</div>
+        <p class="diff-desc">Vengo del mundo de la planeación, la logística y las operaciones. Antes de proponer cualquier solución, entiendo cómo funciona tu empresa por dentro — los cuellos de botella, los desperdicios, los procesos que se hacen por inercia. Eso cambia todo.</p>
+      </div>
+      <div class="diff-card fi d2">
+        <span class="diff-icon">📊</span>
+        <div class="diff-num">02</div>
+        <div class="diff-title">Construyo, analizo y te explico qué está pasando</div>
+        <p class="diff-desc">Cada herramienta que entrego viene acompañada de reportes y análisis del comportamiento de tus datos. No te dejo con un sistema y te digo "suerte". Te explico qué dicen los números y qué decisiones deberías tomar con ellos. Eso es consultoría, no solo software.</p>
+      </div>
+      <div class="diff-card fi d3">
+        <span class="diff-icon">🤝</span>
+        <div class="diff-num">03</div>
+        <div class="diff-title">Soy tu aliado estratégico, no tu proveedor</div>
+        <p class="diff-desc">No cobro proyectos únicos para desaparecer. Trabajo contigo mes a mes, me involucro en tus resultados y me quedo hasta que veas el impacto real. Si tu empresa mejora, yo lo siento como un logro propio. Así es como trabajo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROBLEMAS ── -->
+<section id="problemas">
+  <div class="container">
+    <span class="label fi">Lo que resuelvo</span>
+    <h2 class="fi d1">Si vivís alguna de estas<br/>situaciones, sé cómo ayudarte.</h2>
+    <p class="sub fi d2">Las vi de primera mano dentro de empresas reales. Y construí las soluciones para resolverlas.</p>
+    <div class="grid-3">
+      <div class="p-card fi d1">
+        <span class="p-icon">📋</span>
+        <div class="p-title">Pedidos y procesos en papel o WhatsApp</div>
+        <p class="p-desc">Sin estructura, los pedidos se pierden y el equipo improvisa. Lo vi en producción — y hay una solución directa para esto.</p>
+      </div>
+      <div class="p-card fi d2">
+        <span class="p-icon">📊</span>
+        <div class="p-title">No sabés qué está pasando en tu operación</div>
+        <p class="p-desc">Cuando los datos están regados entre Excel, chats y cuadernos, las decisiones se toman de memoria. Eso es un riesgo que podés eliminar hoy.</p>
+      </div>
+      <div class="p-card fi d3">
+        <span class="p-icon">⏰</span>
+        <div class="p-title">Los reportes te toman horas de trabajo manual</div>
+        <p class="p-desc">Compilar información a mano cada semana es tiempo que debería ir a mejorar resultados. Lo automatizo — y además te lo interpreto.</p>
+      </div>
+      <div class="p-card fi d1">
+        <span class="p-icon">💾</span>
+        <div class="p-title">Tus datos no hablan entre sí</div>
+        <p class="p-desc">Si tu información está dispersa entre herramientas sin conexión, estás perdiendo dinero sin saberlo. Una sola fuente de verdad lo cambia todo.</p>
+      </div>
+      <div class="p-card fi d2">
+        <span class="p-icon">👥</span>
+        <div class="p-title">Sin métricas de tu equipo ni del proceso</div>
+        <p class="p-desc">OTIF, tiempos de respuesta, eficiencia por persona — sin estas métricas no podés mejorar lo que no podés ver. Yo te las construyo y te las explico.</p>
+      </div>
+      <div class="p-card fi d3">
+        <span class="p-icon">🔁</span>
+        <div class="p-title">Tu equipo hace trabajo que debería hacer una máquina</div>
+        <p class="p-desc">Notificaciones manuales, copias de datos, actualizaciones de estado. Todo eso puede funcionar solo — mientras tu equipo hace lo que realmente importa.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SERVICIOS / PRICING ── -->
+<section id="servicios">
+  <div class="container">
+    <span class="label fi">Planes y precios</span>
+    <h2 class="fi d1">Simple. Transparente.<br/>Sin sorpresas.</h2>
+    <p class="sub fi d2">Sin permanencia mínima. Cancelás con 30 días de aviso. Los primeros 7 días son a mitad de precio para que veas el valor antes de comprometerte.</p>
+    <div class="pricing-grid">
+
+      <div class="price-card fi d1">
+        <div class="price-plan">Esencial</div>
+        <div class="price-name">Arrancá</div>
+        <div class="price-usd">$79<span>/mes</span></div>
+        <div class="price-cop">~$332.000 COP/mes</div>
+        <ul class="price-features">
+          <li>1 sistema a medida para tu operación</li>
+          <li>Integración con WhatsApp o email</li>
+          <li>Dashboard en tiempo real</li>
+          <li>Soporte por chat (respuesta en 24h)</li>
+          <li>Actualizaciones y mantenimiento incluidos</li>
+        </ul>
+        <a href="#contacto" class="btn-s" style="justify-content:center;font-size:14px;">Empezar →</a>
+        <p class="price-trial">7 días a mitad de precio · Sin permanencia</p>
+      </div>
+
+      <div class="price-card featured fi d2">
+        <div class="price-badge">Más popular</div>
+        <div class="price-plan">Pro</div>
+        <div class="price-name">Crecé</div>
+        <div class="price-usd">$149<span>/mes</span></div>
+        <div class="price-cop">~$626.000 COP/mes</div>
+        <ul class="price-features">
+          <li>Hasta 2 sistemas integrados</li>
+          <li>Automatizaciones con IA incluidas</li>
+          <li>Informe mensual de métricas + análisis estratégico</li>
+          <li>Dashboard avanzado con KPIs</li>
+          <li>Soporte prioritario (respuesta en 4h)</li>
+          <li>Reunión mensual de revisión 30 min</li>
+        </ul>
+        <a href="#contacto" class="btn-p" style="justify-content:center;font-size:14px;">Empezar →</a>
+        <p class="price-trial">7 días a mitad de precio · Sin permanencia</p>
+      </div>
+
+      <div class="price-card fi d3">
+        <div class="price-plan">Scale</div>
+        <div class="price-name">Escalá</div>
+        <div class="price-usd">$249<span>/mes</span></div>
+        <div class="price-cop">~$1.047.000 COP/mes</div>
+        <ul class="price-features">
+          <li>Sistemas ilimitados</li>
+          <li>Automatizaciones avanzadas a medida</li>
+          <li>Informe mensual + análisis estratégico</li>
+          <li>Consultoría mensual 1 hora</li>
+          <li>Soporte directo WhatsApp (respuesta en 1h)</li>
+          <li>Integración con tu ERP o sistema actual</li>
+          <li>Alertas automáticas y métricas avanzadas</li>
+        </ul>
+        <a href="#contacto" class="btn-s" style="justify-content:center;font-size:14px;">Hablemos →</a>
+        <p class="price-trial">7 días a mitad de precio · Sin permanencia</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── PORTAFOLIO ── -->
+<section id="portafolio">
+  <div class="container">
+    <span class="label fi">Demos en vivo</span>
+    <h2 class="fi d1">Sistemas reales,<br/>funcionando hoy.</h2>
+    <p class="sub fi d2">No son mockups ni wireframes. Son aplicaciones construidas para clientes reales que podés explorar ahora mismo.</p>
+
+    <div class="portfolio-grid">
+
+      <div class="demo-card fi d1">
+        <span class="demo-tag live"><span class="live-dot" style="width:6px;height:6px;flex-shrink:0"></span>En producción</span>
+        <div class="demo-title">Davinchi App</div>
+        <div class="demo-sector">Distribución · Field Sales OS</div>
+        <p class="demo-desc">Sistema de pedidos con IA para vendedores en campo. Catálogo digital, carrito, asistente IA, panel de vendedores y dashboard CEO en tiempo real. Cero papel desde el primer día.</p>
+        <a href="https://davinchi-app.vercel.app" target="_blank" rel="noopener" class="demo-link">Ver en vivo →</a>
+      </div>
+
+      <div class="demo-card fi d2">
+        <span class="demo-tag demo-av">Demo disponible</span>
+        <div class="demo-title">Fijo — CRM para ISPs</div>
+        <div class="demo-sector">Telecomunicaciones · CRM Operativo</div>
+        <p class="demo-desc">CRM completo para proveedores de internet. Bot WhatsApp con IA, agenda de visitas técnicas, gestión de tickets, pipeline de ventas y dashboard de KPIs en tiempo real.</p>
+        <a href="https://fijo-six.vercel.app" target="_blank" rel="noopener" class="demo-link">Ver demo →</a>
+      </div>
+
+      <div class="demo-card fi d3">
+        <span class="demo-tag demo-av">Demo disponible</span>
+        <div class="demo-title">Control de Inventario y Ventas</div>
+        <div class="demo-sector">Retail · Tienda de ropa</div>
+        <p class="demo-desc">Sistema de inventario, ventas y gestión de clientes para tiendas físicas. Registro de productos, historial de ventas, alertas de stock bajo y reporte mensual automático.</p>
+        <a href="https://gloria-app-henna.vercel.app" target="_blank" rel="noopener" class="demo-link">Ver demo →</a>
+      </div>
+
+    </div>
+
+    <div class="case fi">
+      <div class="case-head">
+        <div>
+          <span class="case-tag">CASO DE ÉXITO — SISTEMA DE PEDIDOS CON IA</span>
+          <h3 class="case-title">Davinchi App</h3>
+          <p class="case-sub">Fabricante y distribuidor de vitrinas para joyerías en Colombia. Sus vendedores tomaban pedidos en papel y WhatsApp — sin estructura, sin trazabilidad, y el gerente sin visibilidad de nada hasta el día siguiente.</p>
+        </div>
+        <a href="https://davinchi-app.vercel.app" target="_blank" rel="noopener" class="case-live">
+          <span class="live-dot"></span>Ver en vivo
+        </a>
+      </div>
+
+      <div class="case-cols">
+        <div>
+          <div class="cb-title">El problema</div>
+          <p class="cb-text">Vendedores en campo con catálogos en PDF y pedidos por WhatsApp. Sin confirmaciones, sin historial, sin KPIs. El CEO no podía tomar decisiones con datos — todo era de memoria o con un día de retraso.</p>
+        </div>
+        <div>
+          <div class="cb-title">Lo que construí</div>
+          <p class="cb-text">App mobile-first con catálogo digital, carrito y asistente de IA entrenado con el catálogo real. Panel de vendedores en tiempo real y Dashboard CEO con OTIF, ranking de vendedores y top de referencias que más rotan.</p>
+        </div>
+        <div>
+          <div class="cb-title">El resultado</div>
+          <p class="cb-text">Cero pedidos en papel desde el primer día. El CEO ve su operación completa en tiempo real. Los vendedores tardan menos de 2 minutos en hacer un pedido. Y cada mes reciben un informe con el análisis de sus resultados.</p>
+        </div>
+      </div>
+
+      <div class="case-metrics">
+        <div>
+          <div class="metric-v">0</div>
+          <div class="metric-l">Pedidos en papel</div>
+        </div>
+        <div>
+          <div class="metric-v">100%</div>
+          <div class="metric-l">Trazabilidad de pedidos</div>
+        </div>
+        <div>
+          <div class="metric-v">&lt;2min</div>
+          <div class="metric-l">Del catálogo al pedido confirmado</div>
+        </div>
+        <div>
+          <div class="metric-v">24/7</div>
+          <div class="metric-l">Visibilidad para el CEO</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONTACTO ── -->
+<section id="contacto">
+  <div class="container">
+    <span class="label fi">Hablemos</span>
+    <h2 class="fi d1">¿Ves una oportunidad<br/>de mejora en tu empresa?</h2>
+    <p class="sub fi d2">Escribime directamente. Sin formularios que no lee nadie, sin semanas de espera. Hablamos, entiendo el problema y en días tenés una propuesta concreta.</p>
+
+    <div class="contact-grid">
+      <div class="fi">
+        <p style="font-size:15px;color:var(--pearl);line-height:1.75;margin-bottom:24px;">Trabajo con empresas en Colombia, Latinoamérica y cualquier parte del mundo. Si tenés un proceso que te quita tiempo o datos que no estás aprovechando, eso ya es suficiente para empezar a hablar.</p>
+        <div class="ch-list">
+          <a href="https://wa.me/573122795696" target="_blank" rel="noopener" class="ch-item">
+            <div class="ch-ico wa">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.848L.057 23.667a.5.5 0 0 0 .611.628l5.975-1.568A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.668-.5-5.21-1.377l-.374-.217-3.546.931.946-3.455-.237-.389A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            </div>
+            <div>
+              <div class="ch-lbl">WhatsApp — respondo el mismo día</div>
+              <div class="ch-val">+57 312 279 5696</div>
+            </div>
+          </a>
+          <a href="mailto:jeronimo.230211@gmail.com" class="ch-item">
+            <div class="ch-ico em">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A8FF3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <div>
+              <div class="ch-lbl">Email — respuesta en menos de 24h</div>
+              <div class="ch-val">jeronimo.230211@gmail.com</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <form class="fi d2" action="https://formspree.io/f/xdajnegz" method="POST">
+        <div class="fg">
+          <label>Tu nombre</label>
+          <input type="text" name="name" placeholder="Juan García" required/>
+        </div>
+        <div class="fg">
+          <label>Tu email</label>
+          <input type="email" name="email" placeholder="juan@empresa.com" required/>
+        </div>
+        <div class="fg">
+          <label>Empresa y sector</label>
+          <input type="text" name="company" placeholder="Mi Empresa S.A.S · Distribución"/>
+        </div>
+        <div class="fg">
+          <label>¿Cuál es el proceso que más te quita tiempo o dinero?</label>
+          <textarea name="message" rows="4" placeholder="Cuéntame qué pasa hoy y qué quisieras que pasara..."></textarea>
+        </div>
+        <button type="submit" class="btn-form">Enviar mensaje →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-brand">
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+      <rect width="100" height="100" rx="18" fill="#111412"/>
+      <g stroke="#A8FF3E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="50" y1="65" x2="50" y2="34"/><line x1="50" y1="44" x2="27" y2="29"/>
+        <line x1="50" y1="44" x2="73" y2="29"/><line x1="50" y1="34" x2="50" y2="27"/>
+        <line x1="27" y1="29" x2="14" y2="17"/><line x1="27" y1="29" x2="37" y2="15"/>
+        <line x1="73" y1="29" x2="63" y2="15"/><line x1="73" y1="29" x2="86" y2="17"/>
+        <line x1="50" y1="65" x2="31" y2="76"/><line x1="50" y1="65" x2="50" y2="79"/>
+        <line x1="50" y1="65" x2="69" y2="76"/><line x1="31" y1="76" x2="18" y2="85"/>
+        <line x1="69" y1="76" x2="82" y2="85"/>
+      </g>
+      <g fill="#A8FF3E">
+        <circle cx="14" cy="17" r="2.5"/><circle cx="37" cy="15" r="2.5"/><circle cx="50" cy="27" r="2.5"/>
+        <circle cx="63" cy="15" r="2.5"/><circle cx="86" cy="17" r="2.5"/><circle cx="18" cy="85" r="2.5"/>
+        <circle cx="50" cy="79" r="2.5"/><circle cx="82" cy="85" r="2.5"/>
+      </g>
+    </svg>
+    <span style="font-weight:800;font-size:14px;letter-spacing:2px;">NEXORA <span style="color:var(--lime);">IA</span></span>
+  </div>
+  <p class="footer-copy">© 2026 Jerónimo Álvarez · Nexora IA · Medellín, Colombia · Todos los derechos reservados.</p>
+</footer>
+
+<!-- ── FLOATING WHATSAPP ── -->
+<a href="https://wa.me/573122795696" target="_blank" rel="noopener" class="wa-float" title="Escríbeme por WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.848L.057 23.667a.5.5 0 0 0 .611.628l5.975-1.568A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.668-.5-5.21-1.377l-.374-.217-3.546.931.946-3.455-.237-.389A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+</a>
+
+<script>
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('on'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fi').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

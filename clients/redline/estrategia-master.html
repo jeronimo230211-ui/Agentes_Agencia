@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RedLine × Nexora IA — Estrategia Master</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --obsidiana: #0D0F0E;
+      --esmeralda: #1A3C2E;
+      --lima: #A8FF3E;
+      --blanco: #F2F0EB;
+      --gris: #C8C9C0;
+      --rojo: #FF4E4E;
+      --azul: #3E8EFF;
+      --amarillo: #FFD23F;
+      --morado: #A855F7;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--obsidiana);
+      color: var(--blanco);
+      line-height: 1.7;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,15,14,0.96);
+      border-bottom: 1px solid var(--esmeralda);
+      padding: 14px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo { font-weight: 800; font-size: 16px; color: var(--lima); }
+    .nav-logo span { color: var(--blanco); font-weight: 400; }
+    .nav-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    .nav-links a {
+      color: var(--gris);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--lima); }
+
+    /* HERO */
+    .hero {
+      padding: 100px 48px 80px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(168,255,62,0.1);
+      border: 1px solid rgba(168,255,62,0.3);
+      color: var(--lima);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 62px);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+    .hero h1 span { color: var(--lima); }
+    .hero p {
+      font-size: 18px;
+      color: var(--gris);
+      max-width: 680px;
+      margin-bottom: 40px;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      padding: 28px;
+      background: rgba(26,60,46,0.2);
+      border: 1px solid rgba(26,60,46,0.6);
+      border-radius: 16px;
+    }
+    .meta-item label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gris);
+      margin-bottom: 4px;
+    }
+    .meta-item span {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--blanco);
+    }
+    .meta-item span.ok { color: var(--lima); }
+    .meta-item span.warn { color: var(--amarillo); }
+    .meta-item span.risk { color: var(--rojo); }
+
+    /* SECTIONS */
+    section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 48px;
+      border-top: 1px solid rgba(26,60,46,0.35);
+    }
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--lima);
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: clamp(26px, 3vw, 40px);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--gris);
+      max-width: 680px;
+      margin-bottom: 48px;
+      line-height: 1.7;
+    }
+
+    /* GRIDS */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+
+    /* CARDS */
+    .card {
+      background: rgba(26,60,46,0.12);
+      border: 1px solid rgba(26,60,46,0.55);
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: rgba(168,255,62,0.4); transform: translateY(-2px); }
+    .card-icon { font-size: 26px; margin-bottom: 16px; display: block; }
+    .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+    .card p { font-size: 14px; color: var(--gris); line-height: 1.65; }
+
+    .tag {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .tag-green { background: rgba(168,255,62,0.12); color: var(--lima); }
+    .tag-red { background: rgba(255,78,78,0.12); color: var(--rojo); }
+    .tag-yellow { background: rgba(255,210,63,0.12); color: var(--amarillo); }
+    .tag-blue { background: rgba(62,142,255,0.12); color: var(--azul); }
+    .tag-purple { background: rgba(168,85,247,0.12); color: var(--morado); }
+
+    /* QUOTE CALLOUT */
+    .quote-box {
+      background: rgba(255,78,78,0.08);
+      border-left: 4px solid var(--rojo);
+      border-radius: 0 12px 12px 0;
+      padding: 24px 28px;
+      margin: 32px 0;
+    }
+    .quote-box blockquote {
+      font-size: 18px;
+      font-style: italic;
+      color: var(--blanco);
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .quote-box cite {
+      font-size: 12px;
+      color: var(--gris);
+      font-style: normal;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* INSIGHT BOX */
+    .insight {
+      background: rgba(168,255,62,0.07);
+      border: 1px solid rgba(168,255,62,0.25);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 24px 0;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .insight-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .insight-text { font-size: 14px; color: var(--gris); line-height: 1.65; }
+    .insight-text strong { color: var(--lima); }
+
+    .warn-box {
+      background: rgba(255,210,63,0.07);
+      border: 1px solid rgba(255,210,63,0.3);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 24px 0;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .warn-box .insight-text strong { color: var(--amarillo); }
+
+    /* ARCHITECTURE FLOW */
+    .arch-flow {
+      background: rgba(26,60,46,0.15);
+      border: 1px solid rgba(26,60,46,0.6);
+      border-radius: 20px;
+      padding: 40px;
+      margin: 32px 0;
+    }
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .flow-node {
+      background: rgba(26,60,46,0.5);
+      border: 1px solid rgba(168,255,62,0.3);
+      border-radius: 12px;
+      padding: 14px 22px;
+      text-align: center;
+      min-width: 130px;
+    }
+    .flow-node .node-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .flow-node .node-label { font-size: 12px; font-weight: 700; color: var(--blanco); }
+    .flow-node .node-sub { font-size: 10px; color: var(--gris); margin-top: 2px; }
+    .flow-arrow {
+      font-size: 20px;
+      color: rgba(168,255,62,0.5);
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+    .flow-node.highlight {
+      border-color: var(--lima);
+      background: rgba(168,255,62,0.12);
+    }
+    .flow-node.highlight .node-label { color: var(--lima); }
+    .flow-node.dim {
+      border-color: rgba(255,210,63,0.3);
+      background: rgba(255,210,63,0.05);
+    }
+    .flow-node.dim .node-label { color: var(--amarillo); }
+
+    /* PHASE TIMELINE */
+    .phase {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+      align-items: flex-start;
+    }
+    .phase-num {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--lima);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--lima);
+      margin-top: 4px;
+    }
+    .phase-content h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .phase-content .phase-meta {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gris);
+      margin-bottom: 12px;
+    }
+    .phase-content p { font-size: 14px; color: var(--gris); margin-bottom: 12px; }
+    .task-list { list-style: none; }
+    .task-list li {
+      font-size: 14px;
+      color: var(--gris);
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(26,60,46,0.3);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .task-list li:last-child { border-bottom: none; }
+    .task-list li::before { content: '→'; color: var(--lima); font-weight: 700; flex-shrink: 0; }
+    .task-list li strong { color: var(--blanco); }
+
+    /* COST TABLE */
+    .cost-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 24px 0;
+    }
+    .cost-table th {
+      text-align: left;
+      padding: 12px 16px;
+      background: rgba(26,60,46,0.4);
+      color: var(--gris);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(26,60,46,0.8);
+    }
+    .cost-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(26,60,46,0.25);
+      color: var(--gris);
+      vertical-align: top;
+    }
+    .cost-table td:first-child { color: var(--blanco); font-weight: 600; }
+    .cost-table td .price { color: var(--lima); font-weight: 700; font-size: 15px; }
+    .cost-table td .price-cop { color: var(--gris); font-size: 12px; display: block; margin-top: 2px; }
+    .cost-table tr.total td {
+      border-top: 2px solid rgba(168,255,62,0.4);
+      color: var(--blanco);
+      font-weight: 700;
+      padding-top: 16px;
+    }
+    .cost-table tr.total td .price { font-size: 18px; }
+    .cost-table tr:hover td { background: rgba(26,60,46,0.15); }
+
+    /* CHECKLIST */
+    .checklist { list-style: none; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(26,60,46,0.3);
+      font-size: 14px;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist .check-box {
+      width: 22px;
+      height: 22px;
+      border: 2px solid rgba(168,255,62,0.4);
+      border-radius: 6px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .checklist .check-title { font-weight: 700; color: var(--blanco); margin-bottom: 4px; }
+    .checklist .check-sub { color: var(--gris); line-height: 1.5; }
+
+    /* TOOL BREAKDOWN */
+    .tool-card {
+      background: rgba(26,60,46,0.12);
+      border: 1px solid rgba(26,60,46,0.55);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .tool-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .tool-icon { font-size: 32px; }
+    .tool-name { font-size: 20px; font-weight: 800; }
+    .tool-role { font-size: 12px; color: var(--gris); font-weight: 500; margin-top: 2px; }
+    .tool-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .tool-col h4 {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .tool-col h4.green { color: var(--lima); }
+    .tool-col h4.red { color: var(--rojo); }
+    .tool-col h4.blue { color: var(--azul); }
+    .tool-col ul { list-style: none; }
+    .tool-col ul li {
+      font-size: 13px;
+      color: var(--gris);
+      padding: 5px 0;
+      display: flex;
+      gap: 8px;
+    }
+    .tool-col ul li::before { content: '·'; color: var(--lima); font-weight: 900; flex-shrink: 0; }
+    .tool-col ul li.bad::before { content: '·'; color: var(--rojo); }
+    .tool-cost {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(26,60,46,0.4);
+      font-size: 13px;
+      color: var(--gris);
+    }
+    .tool-cost strong { color: var(--lima); }
+
+    /* SCRIPT SECTION */
+    .script-block {
+      background: rgba(13,15,14,0.6);
+      border: 1px solid rgba(26,60,46,0.6);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+    }
+    .script-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gris);
+      margin-bottom: 12px;
+    }
+    .script-label.you { color: var(--lima); }
+    .script-label.them { color: var(--azul); }
+    .script-text {
+      font-size: 15px;
+      color: var(--blanco);
+      line-height: 1.7;
+      font-style: italic;
+    }
+
+    /* DIVIDER */
+    .divider {
+      width: 48px;
+      height: 3px;
+      background: var(--lima);
+      border-radius: 2px;
+      margin: 24px 0;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 60px 48px;
+      border-top: 1px solid rgba(26,60,46,0.35);
+      color: var(--gris);
+      font-size: 13px;
+    }
+    footer strong { color: var(--lima); }
+
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .hero, section { padding-left: 20px; padding-right: 20px; }
+      .tool-cols { grid-template-columns: 1fr; }
+      .flow-row { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Fijo <span>× RedLine</span></div>
+  <div class="nav-links">
+    <a href="#diagnostico">Diagnóstico</a>
+    <a href="#stack">El Stack</a>
+    <a href="#crminbox">CRMinbox</a>
+    <a href="#arquitectura">Arquitectura</a>
+    <a href="#redline-necesita">Qué Pedir</a>
+    <a href="#costos">Costos</a>
+    <a href="#fases">Fases</a>
+    <a href="#fijo">Fijo</a>
+    <a href="#guion">Guión</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">📋 Estrategia Master — v2.0 — Mayo 2026</div>
+  <h1>Todo lo que necesitas<br>saber sobre <span>RedLine × Fijo</span></h1>
+  <p>Un documento completo: diagnóstico, stack técnico, costos reales, paso a paso de implementación y guión para hablar con confianza.</p>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <label>Cliente</label>
+      <span>RedLine (ISP)</span>
+    </div>
+    <div class="meta-item">
+      <label>Mensajes/día</label>
+      <span class="warn">150–200</span>
+    </div>
+    <div class="meta-item">
+      <label>Agentes WA</label>
+      <span>2 recepcionistas</span>
+    </div>
+    <div class="meta-item">
+      <label>WA actual</label>
+      <span class="risk">Business App (sin API)</span>
+    </div>
+    <div class="meta-item">
+      <label>Servidor propio</label>
+      <span class="ok">Sí ✓</span>
+    </div>
+    <div class="meta-item">
+      <label>Estado del proyecto</label>
+      <span class="warn">Pre-implementación</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SECCIÓN 1: DIAGNÓSTICO ============================== -->
+<section id="diagnostico">
+  <div class="section-label">01 — Diagnóstico</div>
+  <h2>El problema real de RedLine</h2>
+  <p class="section-sub">Antes de proponer soluciones hay que entender qué está pasando exactamente. Los datos de la reunión revelan tres problemas sistémicos.</p>
+
+  <div class="quote-box">
+    <blockquote>"Cuando ya es un cliente amigo de Mara, le pasa mi número y yo lo atiendo."</blockquote>
+    <cite>— Ingeniero de RedLine, durante la reunión de diagnóstico</cite>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon">💡</div>
+    <div class="insight-text">
+      Esta frase resume todo el problema. <strong>El sistema informal ha reemplazado al proceso.</strong> Los técnicos dan su número personal porque el canal oficial está colapsado. El dueño de RedLine no tiene visibilidad de lo que se habla en esas conversaciones. Cuando el técnico se va, el cliente se queda sin respuesta.
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top: 32px;">
+    <div class="card">
+      <span class="card-icon">🔴</span>
+      <h3>Un solo canal para todo</h3>
+      <p>Un número de WhatsApp + 2 agentes para 150-200 mensajes diarios. Sin clasificación, sin cola, sin prioridades. Todo llega al mismo inbox mezclado.</p>
+      <span class="tag tag-red">Cuello de botella</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔴</span>
+      <h3>Números personales expuestos</h3>
+      <p>Los técnicos dan su WhatsApp personal para evitar el cuello de botella. Eso significa: sin historial, sin visibilidad del dueño, sin continuidad cuando el técnico no está.</p>
+      <span class="tag tag-red">Sin control</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🟡</span>
+      <h3>Sin ruteo inteligente</h3>
+      <p>Los agentes de recepción deben decidir manualmente quién atiende cada caso: soporte técnico, cobranza, instalaciones. No hay criterios formales ni automatización.</p>
+      <span class="tag tag-yellow">Manual 100%</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🟡</span>
+      <h3>WA Business App ≠ API</h3>
+      <p>RedLine usa la app gratuita de WhatsApp Business. Esta app NO tiene webhooks. Eso significa que ninguna automatización (Make.com, Claude) puede escuchar mensajes entrantes.</p>
+      <span class="tag tag-yellow">Migración necesaria</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🟡</span>
+      <h3>CRMinbox mal utilizado</h3>
+      <p>CRMinbox es una herramienta de envío masivo, no un inbox de atención al cliente. Usarlo como canal de entrada es como usar un megáfono como teléfono.</p>
+      <span class="tag tag-yellow">Rol incorrecto</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🟢</span>
+      <h3>Oportunidades reales</h3>
+      <p>Tienen servidor propio (Chatwoot gratis), WA Business (migración posible), CRMinbox (outbound válido), y 2 agentes dispuestos a trabajar en plataformas digitales.</p>
+      <span class="tag tag-green">Base sólida</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECCIÓN 2: EL STACK ============================== -->
+<section id="stack">
+  <div class="section-label">02 — El Stack</div>
+  <h2>Qué es cada herramienta y para qué sirve</h2>
+  <p class="section-sub">Explicación de cada pieza del sistema. Esto es lo que necesitas entender a fondo para hablar con confianza con RedLine y con cualquier técnico.</p>
+
+  <!-- WhatsApp Business API -->
+  <div class="tool-card">
+    <div class="tool-header">
+      <div class="tool-icon">📱</div>
+      <div>
+        <div class="tool-name">WhatsApp Business API</div>
+        <div class="tool-role">El canal oficial — la puerta de entrada de todos los mensajes</div>
+      </div>
+    </div>
+    <div class="tool-cols">
+      <div class="tool-col">
+        <h4 class="green">Qué es</h4>
+        <ul>
+          <li>Es la versión "profesional" de WhatsApp para empresas</li>
+          <li>Requiere registro ante Meta (Facebook)</li>
+          <li>Se accede a través de un BSP (proveedor autorizado)</li>
+          <li>Diferente a la app gratuita: esta sí tiene webhooks</li>
+          <li>El mismo número puede conectarse a múltiples herramientas</li>
+        </ul>
+      </div>
+      <div class="tool-col">
+        <h4 class="green">Por qué RedLine la necesita</h4>
+        <ul>
+          <li>Sin API no hay automatización de entrada</li>
+          <li>Permite que Make.com y Claude escuchen mensajes en tiempo real</li>
+          <li>Permite inbox multi-agente (Chatwoot)</li>
+          <li>Mensajes con botones, listas, templates</li>
+          <li>Cumple ToS de Meta (sin riesgo de ban)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tool-cost">
+      <strong>BSP recomendado: 360Dialog</strong> — ~$5-10 USD/mes + Meta cobra por conversación (~$0.005 USD conversación de servicio = prácticamente gratis). Para 200 msgs/día son ~$3-5 USD/mes adicionales en conversaciones.
+    </div>
+  </div>
+
+  <!-- Chatwoot -->
+  <div class="tool-card">
+    <div class="tool-header">
+      <div class="tool-icon">💬</div>
+      <div>
+        <div class="tool-name">Chatwoot</div>
+        <div class="tool-role">El inbox central — donde los agentes ven y responden conversaciones</div>
+      </div>
+    </div>
+    <div class="tool-cols">
+      <div class="tool-col">
+        <h4 class="green">Qué hace</h4>
+        <ul>
+          <li>Recibe todos los mensajes de WhatsApp en un solo lugar</li>
+          <li>Múltiples agentes atienden desde una misma interfaz</li>
+          <li>Asignación de conversaciones a agentes específicos</li>
+          <li>Etiquetas, estados, notas internas por conversación</li>
+          <li>Historial completo de cada cliente</li>
+          <li>Reportes: tiempo de respuesta, conversaciones resueltas</li>
+        </ul>
+      </div>
+      <div class="tool-col">
+        <h4 class="green">Por qué es la solución</h4>
+        <ul>
+          <li>Es open source y gratuito (self-hosted)</li>
+          <li>Reemplaza los números personales de los técnicos</li>
+          <li>El dueño tiene visibilidad total de todas las conversaciones</li>
+          <li>Se instala en el servidor propio de RedLine</li>
+          <li>Soporta WhatsApp Business API nativamente</li>
+          <li>Webhook para conectar con Make.com</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tool-cost">
+      <strong>Costo: $0 USD/mes</strong> — Self-hosted en el servidor de RedLine. Solo se necesita Docker y un dominio/subdominio.
+    </div>
+  </div>
+
+  <!-- Make.com -->
+  <div class="tool-card">
+    <div class="tool-header">
+      <div class="tool-icon">⚙️</div>
+      <div>
+        <div class="tool-name">Make.com</div>
+        <div class="tool-role">El cerebro de automatizaciones — conecta todo sin código</div>
+      </div>
+    </div>
+    <div class="tool-cols">
+      <div class="tool-col">
+        <h4 class="green">Qué hace</h4>
+        <ul>
+          <li>Escucha eventos (nuevo mensaje, ticket creado, etc.)</li>
+          <li>Ejecuta lógica condicional (si X entonces Y)</li>
+          <li>Conecta herramientas: WA API → Claude → Chatwoot → Fijo</li>
+          <li>Envía notificaciones, crea tickets, actualiza datos</li>
+          <li>Programa tareas recurrentes (recordatorios de cita, cobranza)</li>
+        </ul>
+      </div>
+      <div class="tool-col">
+        <h4 class="green">Flujos que construiremos</h4>
+        <ul>
+          <li>Recibir mensaje → Claude clasifica → asignar agente</li>
+          <li>Técnico dice "llegué" → ticket pasa a "En proceso"</li>
+          <li>24h antes de cita → WhatsApp recordatorio automático</li>
+          <li>Ticket abierto +48h → alerta al supervisor</li>
+          <li>Factura vencida → mensaje de cobranza automático</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tool-cost">
+      <strong>Plan Free: 1,000 ops/mes</strong> (suficiente para pruebas) | <strong>Plan Core: $9 USD/mes</strong> (10,000 ops — suficiente para Fase 1) | <strong>Plan Pro: $16 USD/mes</strong> (100,000 ops — Fases 2 y 3)
+    </div>
+  </div>
+
+  <!-- Claude API -->
+  <div class="tool-card">
+    <div class="tool-header">
+      <div class="tool-icon">🤖</div>
+      <div>
+        <div class="tool-name">Claude API (Anthropic)</div>
+        <div class="tool-role">La inteligencia — entiende el mensaje y decide qué hacer</div>
+      </div>
+    </div>
+    <div class="tool-cols">
+      <div class="tool-col">
+        <h4 class="green">Qué hace</h4>
+        <ul>
+          <li>Lee el mensaje del cliente en lenguaje natural</li>
+          <li>Clasifica: soporte / cobranza / instalación / avería / reclamo</li>
+          <li>Detecta urgencia y prioridad</li>
+          <li>Responde automáticamente preguntas frecuentes</li>
+          <li>Extrae datos: nombre, cédula, dirección, descripción del problema</li>
+        </ul>
+      </div>
+      <div class="tool-col">
+        <h4 class="green">Por qué Claude y no ChatGPT</h4>
+        <ul>
+          <li>Mejor comprensión del español colombiano coloquial</li>
+          <li>Respuestas más conservadoras (no inventa información)</li>
+          <li>Costo más bajo para volúmenes medianos</li>
+          <li>Mejor para seguir instrucciones precisas de triage</li>
+          <li>API confiable con buen uptime</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tool-cost">
+      <strong>Costo estimado para RedLine: ~$2-4 USD/mes</strong> — Con 200 mensajes/día = ~6,000/mes. Usando Claude Haiku (el más económico): $0.001 USD por mensaje procesado. Total ~$6/mes en el peor caso.
+    </div>
+  </div>
+
+  <!-- Fijo -->
+  <div class="tool-card">
+    <div class="tool-header">
+      <div class="tool-icon">📊</div>
+      <div>
+        <div class="tool-name">Fijo (el app que construimos)</div>
+        <div class="tool-role">El panel de control — vista gerencial y operacional del sistema</div>
+      </div>
+    </div>
+    <div class="tool-cols">
+      <div class="tool-col">
+        <h4 class="green">Qué hace Fijo hoy (demo)</h4>
+        <ul>
+          <li>Vista de conversaciones de WhatsApp + datos del cliente</li>
+          <li>Agenda de visitas técnicas (Lista / Semana / Mes)</li>
+          <li>Kanban de tickets por estado</li>
+          <li>CRM: base de clientes con plan y estado</li>
+          <li>Dashboard de KPIs operacionales</li>
+          <li>Plantillas de mensajes masivos</li>
+        </ul>
+      </div>
+      <div class="tool-col">
+        <h4 class="blue">Qué hará Fijo conectado</h4>
+        <ul>
+          <li>Mostrar datos reales desde Chatwoot y Make.com</li>
+          <li>El técnico actualiza el estado de su cita desde el celular</li>
+          <li>El supervisor ve KPIs en tiempo real</li>
+          <li>Agendar o reasignar visitas desde el calendario</li>
+          <li>Ver el funnel de conversión automáticamente</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tool-cost">
+      <strong>Fijo es el diferenciador:</strong> Chatwoot es una herramienta genérica. Fijo es el panel hecho a medida para un ISP colombiano. El dueño de RedLine no ve "software americano" — ve <strong>su negocio</strong>.
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECCIÓN 3: CRMINBOX ============================== -->
+<section id="crminbox">
+  <div class="section-label">03 — CRMinbox a Fondo</div>
+  <h2>Qué es CRMinbox, qué sirve y qué no</h2>
+  <p class="section-sub">RedLine ya usa CRMinbox. Entendamos exactamente qué es, por qué tiene limitaciones, y cuál es su rol correcto en la arquitectura.</p>
+
+  <div class="warn-box">
+    <div class="insight-icon">⚠️</div>
+    <div class="insight-text">
+      <strong>CRMinbox NO es un CRM.</strong> A pesar del nombre, es una herramienta de <strong>mensajería masiva por WhatsApp</strong>. Funciona conectando un número de WhatsApp mediante código QR (emulando WhatsApp Web). Esto <strong>viola técnicamente los Términos de Servicio de Meta</strong> y expone el número a ser baneado sin previo aviso.
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top: 32px;">
+    <div class="card">
+      <span class="card-icon">✅</span>
+      <h3>Qué SÍ hace bien CRMinbox</h3>
+      <ul class="task-list" style="margin-top: 8px;">
+        <li>Envío masivo de mensajes a listas de contactos</li>
+        <li>Plantillas de mensajes con variables personalizadas</li>
+        <li>Programar envíos para fecha/hora específica</li>
+        <li>Adjuntar archivos, imágenes, documentos</li>
+        <li>Campañas de cobranza, alertas, recordatorios</li>
+        <li>Importar contactos desde Excel o CSV</li>
+        <li>Estadísticas básicas de entrega</li>
+      </ul>
+      <span class="tag tag-green">Outbound masivo = su fuerte</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">❌</span>
+      <h3>Qué NO tiene CRMinbox</h3>
+      <ul class="task-list" style="margin-top: 8px;">
+        <li class="bad">Inbox para recibir y gestionar mensajes entrantes</li>
+        <li class="bad">Asignación de conversaciones a agentes</li>
+        <li class="bad">Historial estructurado de cliente</li>
+        <li class="bad">Webhooks para integración con Make.com/Claude</li>
+        <li class="bad">Múltiples agentes respondiendo en simultaneo</li>
+        <li class="bad">Tickets, estados, etiquetas por conversación</li>
+        <li class="bad">API oficial de WhatsApp (usa QR = riesgo de ban)</li>
+      </ul>
+      <span class="tag tag-red">No sirve para inbound</span>
+    </div>
+  </div>
+
+  <div class="divider" style="margin-top: 40px;"></div>
+  <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Qué explorar en tu cuenta gratuita de CRMinbox</h3>
+  <p style="font-size: 14px; color: var(--gris); margin-bottom: 24px;">Cuando entres a la cuenta gratuita, revisa estos puntos específicos. Esto nos dirá exactamente cómo integrarlo:</p>
+
+  <div class="grid-3">
+    <div class="card">
+      <span class="card-icon">🔗</span>
+      <h3>API / Webhooks</h3>
+      <p>Busca en la configuración o ajustes: ¿hay una sección de API Keys? ¿Webhooks? ¿Integrations? Esto define si podemos conectarlo con Make.com.</p>
+      <span class="tag tag-blue">Prioridad alta</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">📋</span>
+      <h3>Estructura de contactos</h3>
+      <p>¿Qué campos tiene cada contacto? ¿Nombre, teléfono, email, etiquetas, notas? ¿Se puede exportar? ¿Se puede importar desde CSV?</p>
+      <span class="tag tag-blue">Para migrar datos</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">📨</span>
+      <h3>Campañas y plantillas</h3>
+      <p>¿Cómo se crean plantillas? ¿Qué variables acepta ({nombre}, {plan}, etc.)? ¿Se puede disparar una campaña desde una llamada API externa?</p>
+      <span class="tag tag-blue">Para Make.com</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">📊</span>
+      <h3>Reportes y métricas</h3>
+      <p>¿Qué datos exporta? ¿Tasas de entrega, lectura, respuesta? ¿Hay reportes descargables? Esto nos dice qué KPIs podemos mostrar en Fijo.</p>
+      <span class="tag tag-yellow">Para dashboard</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔌</span>
+      <h3>Método de conexión WA</h3>
+      <p>¿Es QR code (riesgoso) o ya ofrece integración con WA Business API oficial? Algunos providers evolucionaron. Hay que confirmarlo.</p>
+      <span class="tag tag-red">Riesgo de ban</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">💰</span>
+      <h3>Plan gratuito vs pago</h3>
+      <p>¿Qué límites tiene el plan gratuito? ¿Mensajes/mes, contactos, usuarios? ¿Qué plan tiene RedLine hoy y qué funciones incluye?</p>
+      <span class="tag tag-yellow">Para presupuesto</span>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top: 32px;">
+    <div class="insight-icon">🎯</div>
+    <div class="insight-text">
+      <strong>El rol correcto de CRMinbox en la arquitectura final:</strong> Lo usamos SOLO para outbound masivo — alertas de avería a toda una zona, recordatorios de pago, notificaciones de instalación programada. El inbound (mensajes que llegan de clientes) va todo a Chatwoot. Así no botamos lo que RedLine ya tiene, y añadimos lo que le falta.
+    </div>
+  </div>
+
+  <div class="divider" style="margin-top: 40px;"></div>
+  <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--lima);">Nuevo hallazgo: CRMinbox SÍ tiene API</h3>
+  <p style="font-size: 14px; color: var(--gris); margin-bottom: 24px;">Al explorar la cuenta gratuita se confirmó que CRMinbox tiene capacidades de integración via API y webhooks. Esto amplía su rol potencial en el sistema.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="card-icon">✅</span>
+      <h3>Lo que ya sabemos que tiene</h3>
+      <ul class="task-list" style="margin-top: 12px;">
+        <li>Sección "Peticiones HTTP" — consumir endpoints externos</li>
+        <li>API Keys para autenticación (Header: Api-Key)</li>
+        <li>Requests POST con JSON (application/json)</li>
+        <li>Automatizaciones disparadas por eventos/flujos</li>
+        <li>Integración bidireccional: CRMinbox → Make y Make → CRMinbox</li>
+        <li>Sincronización de contactos vía API</li>
+      </ul>
+      <span class="tag tag-green">Integración confirmada</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">❓</span>
+      <h3>Lo que falta confirmar con soporte</h3>
+      <ul class="task-list" style="margin-top: 12px;">
+        <li>¿Puede enviar webhook cuando llega un mensaje nuevo?</li>
+        <li>¿Cuál es el payload exacto de cada evento?</li>
+        <li>¿Qué endpoints CRUD tiene para contactos?</li>
+        <li>¿Se puede disparar una campaña desde Make.com vía API?</li>
+        <li>¿Cuáles son los rate limits?</li>
+        <li>¿Documentación Swagger/Postman disponible?</li>
+      </ul>
+      <span class="tag tag-yellow">Pendiente con soporte</span>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top: 24px;">
+    <div class="insight-icon">⚠️</div>
+    <div class="insight-text">
+      <strong>La pregunta más importante para soporte CRMinbox:</strong> ¿CRMinbox puede enviar un webhook cuando llega un mensaje nuevo de un cliente? Si la respuesta es SÍ, abre la posibilidad de usarlo como canal de entrada temporal mientras se migra a WA Business API — reduciendo el esfuerzo de implementación en Fase 1. Si es NO, el rol de CRMinbox se mantiene solo como outbound.
+    </div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 32px 0 16px;">Preguntas exactas para enviar a soporte de CRMinbox</h3>
+  <div class="script-block">
+    <div class="script-label you">Mensaje para soporte CRMinbox</div>
+    <div class="script-text" style="font-style: normal; font-size: 14px; line-height: 1.8;">
+      Hola, estoy evaluando CRMinbox para un cliente ISP y necesito entender las capacidades de integración API antes de tomar una decisión. Tengo las siguientes preguntas técnicas:<br><br>
+      1. ¿CRMinbox puede enviar un webhook hacia un endpoint externo cuando llega un mensaje nuevo de un cliente? ¿Cómo sería el payload JSON de ese evento?<br>
+      2. ¿Tienen documentación completa de la API? ¿Hay un Swagger, Postman collection, o equivalente?<br>
+      3. ¿Qué eventos están disponibles para disparar webhooks? (nuevo mensaje, nuevo contacto, cambio de estado de conversación, etc.)<br>
+      4. ¿Es posible crear o actualizar contactos vía API desde un sistema externo?<br>
+      5. ¿Se puede disparar el envío de un mensaje o el lanzamiento de una campaña desde Make.com mediante una llamada API?<br>
+      6. ¿Cuáles son los rate limits de la API?<br>
+      7. ¿El número de WhatsApp se conecta por QR (WhatsApp Web) o mediante la API oficial de Meta (WhatsApp Business API)?<br><br>
+      Agradezco si pueden compartir la documentación técnica o ejemplos de integración con Make.com o n8n.
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECCIÓN 4: ARQUITECTURA ============================== -->
+<section id="arquitectura">
+  <div class="section-label">04 — Arquitectura</div>
+  <h2>Cómo se conecta todo el sistema</h2>
+  <p class="section-sub">El flujo completo de un mensaje entrante y de una alerta saliente. Cuando entiendas esto puedes explicarlo en 2 minutos.</p>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 24px; color: var(--lima);">Flujo A — Mensaje entrante de un cliente</h3>
+
+  <div class="arch-flow">
+    <div class="flow-row">
+      <div class="flow-node">
+        <span class="node-icon">👤</span>
+        <div class="node-label">Cliente</div>
+        <div class="node-sub">Escribe por WhatsApp</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node highlight">
+        <span class="node-icon">📱</span>
+        <div class="node-label">WA Business API</div>
+        <div class="node-sub">360Dialog (BSP)</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node highlight">
+        <span class="node-icon">⚙️</span>
+        <div class="node-label">Make.com</div>
+        <div class="node-sub">Recibe el webhook</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node highlight">
+        <span class="node-icon">🤖</span>
+        <div class="node-label">Claude IA</div>
+        <div class="node-sub">Clasifica el mensaje</div>
+      </div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node">
+        <span class="node-icon">💬</span>
+        <div class="node-label">Chatwoot</div>
+        <div class="node-sub">Asigna al agente correcto</div>
+      </div>
+      <div class="flow-arrow">←</div>
+      <div class="flow-node">
+        <span class="node-icon">↩️</span>
+        <div class="node-label">Make.com</div>
+        <div class="node-sub">Crea ticket + asigna</div>
+      </div>
+      <div class="flow-arrow">←</div>
+      <div class="flow-node">
+        <span class="node-icon">📋</span>
+        <div class="node-label">Resultado IA</div>
+        <div class="node-sub">Soporte / Cobro / etc.</div>
+      </div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node highlight">
+        <span class="node-icon">📊</span>
+        <div class="node-label">Fijo</div>
+        <div class="node-sub">Panel del supervisor</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 36px 0 24px; color: var(--lima);">Flujo B — Alerta saliente masiva (ej. avería de zona)</h3>
+
+  <div class="arch-flow">
+    <div class="flow-row">
+      <div class="flow-node highlight">
+        <span class="node-icon">📊</span>
+        <div class="node-label">Fijo / Make.com</div>
+        <div class="node-sub">Trigger manual o automático</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node dim">
+        <span class="node-icon">📣</span>
+        <div class="node-label">CRMinbox</div>
+        <div class="node-sub">Envío masivo WA</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <span class="node-icon">👥</span>
+        <div class="node-label">Clientes zona X</div>
+        <div class="node-sub">Reciben notificación</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top: 36px;">
+    <div class="card">
+      <h3>📥 Inbound — responsabilidad de Chatwoot</h3>
+      <ul class="task-list" style="margin-top: 12px;">
+        <li><strong>Soporte técnico</strong> → agente de soporte</li>
+        <li><strong>Cobranza / pagos</strong> → agente de cobranza</li>
+        <li><strong>Instalaciones nuevas</strong> → coordinador comercial</li>
+        <li><strong>Averías urgentes</strong> → técnico disponible</li>
+        <li><strong>Preguntas frecuentes</strong> → respuesta automática de Claude</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📤 Outbound — responsabilidad de CRMinbox</h3>
+      <ul class="task-list" style="margin-top: 12px;">
+        <li><strong>Alertas de avería masiva</strong> → zona afectada</li>
+        <li><strong>Recordatorios de pago</strong> → clientes en mora</li>
+        <li><strong>Confirmación de cita</strong> → 24h antes de visita</li>
+        <li><strong>Encuesta CSAT</strong> → post-resolución</li>
+        <li><strong>Campañas comerciales</strong> → upgrade de plan, referidos</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECCIÓN 5: QUÉ PEDIR A REDLINE ============================== -->
+<section id="redline-necesita">
+  <div class="section-label">05 — Qué Necesitamos de RedLine</div>
+  <h2>Lo que debes pedir antes de empezar</h2>
+  <p class="section-sub">Checklist completo de accesos, información y decisiones que RedLine debe proveer para poder implementar el sistema.</p>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Accesos técnicos</h3>
+  <ul class="checklist">
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Número de WhatsApp Business para migrar a API</div>
+        <div class="check-sub">El número principal que los clientes ya conocen (+57 XXX...). Necesitamos acceso a la cuenta de WA Business para iniciar la migración con 360Dialog. Este proceso tarda 1-3 días hábiles y el número sigue funcionando durante la transición.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Cuenta de Facebook / Meta Business</div>
+        <div class="check-sub">Para registrar el número en la API de WhatsApp se necesita una cuenta de Meta Business verificada. Si no tienen una, la creamos juntos. Si ya tienen, necesitamos acceso de administrador.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Acceso al servidor propio</div>
+        <div class="check-sub">Credenciales SSH o acceso al panel de control del servidor (cPanel, Plesk, o acceso directo). Se necesita instalar Docker para desplegar Chatwoot. Especificaciones mínimas: 2 GB RAM, 20 GB disco, Ubuntu 20+ o Debian.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Subdominio para Chatwoot</div>
+        <div class="check-sub">Ejemplo: chat.redline.net.co. Necesitamos que apunten un subdominio al servidor donde instalaremos Chatwoot. El dueño o el ingeniero puede hacer esto en 5 minutos desde el panel de dominios.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Credenciales de CRMinbox</div>
+        <div class="check-sub">Usuario y contraseña de la cuenta actual de CRMinbox para revisar qué funciones tienen activas y cómo están organizados los contactos.</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 36px 0 20px;">Información del negocio</h3>
+  <ul class="checklist">
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Base de datos de clientes</div>
+        <div class="check-sub">Excel o CSV con: nombre, número de WhatsApp, plan contratado, estado de cuenta, dirección. Esto es para cargar el CRM en Fijo y en Chatwoot con datos reales desde el día 1.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Catálogo de planes y precios</div>
+        <div class="check-sub">Nombres, precios y características de cada plan. Claude necesita esto para responder preguntas de clientes correctamente (ej: "¿cuánto vale el plan de 20 megas?").</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Preguntas frecuentes de clientes</div>
+        <div class="check-sub">Las 10-20 preguntas que más les hacen por WhatsApp. Con esto construimos la base de conocimiento que Claude usa para responder automáticamente sin necesitar un agente.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">Áreas y nombres del equipo</div>
+        <div class="check-sub">Lista de personas que atienden: nombre, área (soporte / cobranza / instalaciones), número de celular. Para configurar la asignación automática en Chatwoot.</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 36px 0 20px;">Decisiones que debe tomar el dueño</h3>
+  <ul class="checklist">
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">¿El técnico tiene su propio login o no?</div>
+        <div class="check-sub">Esto define la arquitectura de roles. Opción A: el técnico entra a Chatwoot con su usuario y ve solo sus citas asignadas. Opción B: los técnicos no tienen login, solo recepción y supervisor lo tienen.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">¿Qué número migra a WA API?</div>
+        <div class="check-sub">¿El número actual de WhatsApp Business? ¿O prefieren un número nuevo? Lo recomendado es migrar el número actual para no perder la confianza de los clientes que ya lo tienen guardado.</div>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <div class="check-title">¿Qué quieren que responda el bot automáticamente?</div>
+        <div class="check-sub">¿Solo saludar y clasificar? ¿También responder FAQs? ¿O solo enrutar al agente correcto? Esto define el nivel de automatización de Fase 1 y el costo de Claude API.</div>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<!-- ============================== SECCIÓN 6: COSTOS ============================== -->
+<section id="costos">
+  <div class="section-label">06 — Costos</div>
+  <h2>Cuánto cuesta todo, real y detallado</h2>
+  <p class="section-sub">Desglose completo de costos en USD y COP. Separado en costos únicos de setup y costos mensuales recurrentes de operación.</p>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Costos de infraestructura (lo que paga RedLine a terceros)</h3>
+
+  <table class="cost-table">
+    <thead>
+      <tr>
+        <th>Herramienta</th>
+        <th>Para qué sirve</th>
+        <th>Costo mensual</th>
+        <th>Nota</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>WhatsApp Business API (360Dialog)</td>
+        <td>Canal oficial de mensajería</td>
+        <td><span class="price">$5–10 USD</span><span class="price-cop">~$21.000–42.000 COP</span></td>
+        <td>Más ~$3-5 USD en conversaciones de Meta</td>
+      </tr>
+      <tr>
+        <td>Chatwoot</td>
+        <td>Inbox multi-agente</td>
+        <td><span class="price">$0 USD</span><span class="price-cop">Self-hosted en su servidor</span></td>
+        <td>Solo usa recursos del servidor que ya tienen</td>
+      </tr>
+      <tr>
+        <td>Make.com (Core)</td>
+        <td>Automatizaciones</td>
+        <td><span class="price">$9 USD</span><span class="price-cop">~$38.000 COP</span></td>
+        <td>10,000 ops/mes — suficiente para Fase 1</td>
+      </tr>
+      <tr>
+        <td>Claude API (Haiku)</td>
+        <td>Triage inteligente con IA</td>
+        <td><span class="price">~$4–6 USD</span><span class="price-cop">~$17.000–25.000 COP</span></td>
+        <td>Basado en ~6,000 clasificaciones/mes</td>
+      </tr>
+      <tr>
+        <td>CRMinbox</td>
+        <td>Alertas masivas outbound</td>
+        <td><span class="price">Ya lo tienen</span><span class="price-cop">No hay costo adicional</span></td>
+        <td>Se mantiene para campañas masivas</td>
+      </tr>
+      <tr>
+        <td>Fijo (Next.js en Vercel)</td>
+        <td>Panel de control</td>
+        <td><span class="price">$0 USD</span><span class="price-cop">Plan hobby de Vercel</span></td>
+        <td>O ~$20 USD/mes si necesitan equipo Pro</td>
+      </tr>
+      <tr class="total">
+        <td>Total infraestructura</td>
+        <td></td>
+        <td><span class="price">~$20–25 USD/mes</span><span class="price-cop">~$84.000–105.000 COP/mes</span></td>
+        <td>RedLine paga esto directamente a los proveedores</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 40px 0 20px;">Honorarios de Nexora IA (lo que te paga a ti)</h3>
+
+  <table class="cost-table">
+    <thead>
+      <tr>
+        <th>Plan</th>
+        <th>Qué incluye</th>
+        <th>Setup (único)</th>
+        <th>Mensual</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Plan Esencial<br><small style="color: var(--gris); font-weight: 400;">Fase 1</small></td>
+        <td style="font-size: 13px;">WA API + Chatwoot instalado + triage básico (5 categorías) + Fijo conectado + capacitación</td>
+        <td><span class="price">$1.800.000 COP</span></td>
+        <td><span class="price">$990.000 COP/mes</span></td>
+      </tr>
+      <tr>
+        <td>Plan Pro ⭐<br><small style="color: var(--lima); font-weight: 400;">Fases 1+2 — Recomendado</small></td>
+        <td style="font-size: 13px;">Todo lo anterior + 8 automatizaciones (alertas, cobranza, CSAT, recordatorios, churn) + dashboard KPIs avanzado</td>
+        <td><span class="price">$3.500.000 COP</span></td>
+        <td><span class="price">$1.990.000 COP/mes</span></td>
+      </tr>
+      <tr>
+        <td>Plan Total<br><small style="color: var(--gris); font-weight: 400;">Fases 1+2+3</small></td>
+        <td style="font-size: 13px;">Todo lo anterior + Fijo mobile/PWA + módulo de instalaciones + análisis de churn predictivo</td>
+        <td><span class="price">$6.000.000 COP</span></td>
+        <td><span class="price">$3.500.000 COP/mes</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="insight" style="margin-top: 24px;">
+    <div class="insight-icon">💡</div>
+    <div class="insight-text">
+      <strong>Cómo presentar los costos:</strong> El Plan Pro cuesta ~$2M COP/mes. Si el sistema evita que una sola visita técnica se pierda por mala comunicación, RedLine ya recuperó el costo. Con 150-200 mensajes/día, <strong>incluso ahorrar 30 minutos de tiempo de agente por día</strong> a ~$15,000 COP/hora ya paga el servicio. La conversación es de ROI, no de precio.
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECCIÓN 7: FASES ============================== -->
+<section id="fases">
+  <div class="section-label">07 — Implementación</div>
+  <h2>El paso a paso real, semana a semana</h2>
+  <p class="section-sub">Desde cero hasta el sistema funcionando en producción. Cada fase tiene entregables concretos que RedLine puede ver y usar.</p>
+
+  <div class="phase">
+    <div class="phase-num">0</div>
+    <div class="phase-content">
+      <h3>Fase 0 — Preparación</h3>
+      <div class="phase-meta">Semana 0 · Antes de firmar · Sin costo</div>
+      <p>Todo lo que se define y configura antes de tocar un solo código o herramienta. Esta fase es crítica para no empezar con el pie izquierdo.</p>
+      <ul class="task-list">
+        <li>Explorar CRMinbox en la cuenta gratuita — mapear contactos, API, campañas</li>
+        <li>RedLine provee: base de clientes CSV, catálogo de planes, equipo y áreas</li>
+        <li>Decisión: ¿técnico tiene login propio?</li>
+        <li>Decisión: ¿qué número migra a WA API?</li>
+        <li>Decisión: ¿qué automatiza el bot en Fase 1?</li>
+        <li>Crear cuenta en 360Dialog y registrar número de RedLine</li>
+        <li>Confirmar specs del servidor propio</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">1</div>
+    <div class="phase-content">
+      <h3>Fase 1 — La Base del Sistema</h3>
+      <div class="phase-meta">Semanas 1–4 · Plan Esencial · $1.800.000 setup</div>
+      <p>Al final de esta fase, RedLine tiene un sistema funcional: mensajes entrantes clasificados, agentes con inbox propio, historial centralizado, cero números personales.</p>
+      <ul class="task-list">
+        <li><strong>Semana 1:</strong> Instalar Chatwoot en servidor de RedLine — configurar dominio chat.redline.net.co</li>
+        <li><strong>Semana 1:</strong> Conectar número de WA Business API (360Dialog) con Chatwoot</li>
+        <li><strong>Semana 1:</strong> Crear usuarios en Chatwoot: 2 recepcionistas + supervisor</li>
+        <li><strong>Semana 2:</strong> Configurar Make.com — escuchar mensajes entrantes</li>
+        <li><strong>Semana 2:</strong> Construir primer flujo de triage con Claude (5 categorías: soporte, cobranza, instalación, avería, FAQ)</li>
+        <li><strong>Semana 2:</strong> Configurar respuestas automáticas para las 10 FAQs principales</li>
+        <li><strong>Semana 3:</strong> Conectar Fijo con datos reales de Chatwoot (vía API)</li>
+        <li><strong>Semana 3:</strong> Importar base de clientes al CRM de Fijo y Chatwoot</li>
+        <li><strong>Semana 4:</strong> Pruebas reales con equipo de RedLine</li>
+        <li><strong>Semana 4:</strong> Capacitación: recepcionistas (Chatwoot), supervisor (Fijo)</li>
+        <li><strong>Semana 4:</strong> Definir reglas del bot con el equipo de RedLine</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">2</div>
+    <div class="phase-content">
+      <h3>Fase 2 — Automatización Avanzada</h3>
+      <div class="phase-meta">Meses 1–3 · Plan Pro · incluido en $1.990.000/mes</div>
+      <p>Con la base funcionando, se construyen las automatizaciones de alto valor que reducen trabajo manual y mejoran la experiencia del cliente.</p>
+      <ul class="task-list">
+        <li>Recordatorios automáticos de visita técnica (24h antes, vía WA API)</li>
+        <li>Alerta masiva de avería por zona (Make.com → CRMinbox)</li>
+        <li>Flujo de cobranza: cliente en mora → mensaje escalonado D-3, D-1, D+0</li>
+        <li>Encuesta CSAT automática post-resolución (botones en WA)</li>
+        <li>Alerta al supervisor si ticket lleva +48h sin respuesta</li>
+        <li>Dashboard KPIs en Fijo: tiempo respuesta, tickets resueltos, CSAT promedio</li>
+        <li>Detección de churn: cliente sin actividad + factura pendiente → alerta</li>
+        <li>Flujo de instalaciones nuevas: confirmar fecha, coordinar técnico, confirmar al cliente</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">3</div>
+    <div class="phase-content">
+      <h3>Fase 3 — Fijo Mobile y Analítica</h3>
+      <div class="phase-meta">Meses 3–6 · Plan Total · incluido en $3.500.000/mes</div>
+      <p>El técnico en campo con su app, el dueño con métricas para tomar decisiones. El sistema se convierte en infraestructura central del negocio.</p>
+      <ul class="task-list">
+        <li>Fijo Mobile: responsive + PWA instalable en celular del técnico</li>
+        <li>Vista del técnico: "Mis citas hoy" + botón "Llegué" + "Resuelto"</li>
+        <li>Actualización de estado del ticket desde el celular (sin entrar al computador)</li>
+        <li>Módulo de instalaciones: pipeline Prospecto → Agendado → Instalado → Activo</li>
+        <li>Reportes mensuales automáticos para el dueño (PDF generado por el sistema)</li>
+        <li>Análisis predictivo de churn (clientes en riesgo de cancelar)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECCIÓN 8: FIJO ============================== -->
+<section id="fijo">
+  <div class="section-label">08 — Fijo</div>
+  <h2>Qué hace Fijo y por qué importa</h2>
+  <p class="section-sub">Fijo no es solo un panel bonito. Es el diferenciador estratégico: la capa que hace que RedLine vea TODO su negocio en un solo lugar, en español, hecho para un ISP colombiano.</p>
+
+  <div class="insight">
+    <div class="insight-icon">🎯</div>
+    <div class="insight-text">
+      <strong>La propuesta de valor central de Fijo:</strong> Chatwoot, Make.com y Claude son herramientas americanas, en inglés, genéricas para cualquier negocio. <strong>Fijo es el panel que habla el idioma de RedLine.</strong> El dueño no ve "inbox" — ve sus técnicos. No ve "labels" — ve "soporte", "cobranza", "instalaciones". Eso es lo que se paga.
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top: 32px;">
+    <div class="card">
+      <span class="card-icon">💬</span>
+      <h3>/whatsapp</h3>
+      <p>Simula el flujo del bot de atención. El supervisor puede ver cómo el sistema recopila datos del cliente y puede "intervenir" tomando el control manual en cualquier momento.</p>
+      <span class="tag tag-green">Hoy: demo</span>
+      <span class="tag tag-blue" style="margin-left: 4px;">Futuro: datos reales</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">📅</span>
+      <h3>/agenda</h3>
+      <p>Vista de citas técnicas en Lista / Semana / Mes. El coordinador ve qué técnico tiene qué cita. El técnico (móvil) ve solo sus citas del día.</p>
+      <span class="tag tag-green">Demo funcional</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🎫</span>
+      <h3>/tickets</h3>
+      <p>Kanban: Abierto → En proceso → Resuelto → Cerrado. Cada ticket tiene cliente, área responsable, prioridad y tiempo de resolución.</p>
+      <span class="tag tag-green">Demo funcional</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">👥</span>
+      <h3>/clientes</h3>
+      <p>CRM propio: tabla con todos los clientes, su plan, estado de cuenta, bot activo/inactivo. Búsqueda y filtros por estado.</p>
+      <span class="tag tag-green">Demo funcional</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">📊</span>
+      <h3>/dashboard</h3>
+      <p>KPIs operacionales: tickets abiertos, tiempo promedio de respuesta, CSAT, % automatización. El dueño lo ve de un vistazo.</p>
+      <span class="tag tag-yellow">Datos mock → reales</span>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔀</span>
+      <h3>/funnel</h3>
+      <p>Pipeline visual del proceso de atención: Contacto → Datos → Ticket → Cita → Resuelto. Con tasas de conversión por etapa.</p>
+      <span class="tag tag-green">Demo funcional</span>
+    </div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 36px 0 16px;">Cómo se conecta Fijo con el resto del sistema</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Fijo ← lee de</h3>
+      <ul class="task-list" style="margin-top: 12px;">
+        <li><strong>Chatwoot API:</strong> conversaciones, tickets, agentes, tiempos</li>
+        <li><strong>Make.com Webhooks:</strong> actualizaciones en tiempo real de estado</li>
+        <li><strong>Base de datos propia:</strong> clientes, citas, historial de Fijo</li>
+        <li><strong>CRMinbox (futuro):</strong> estadísticas de campañas enviadas</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Fijo → escribe a</h3>
+      <ul class="task-list" style="margin-top: 12px;">
+        <li><strong>Chatwoot:</strong> crear/actualizar tickets, asignar agentes</li>
+        <li><strong>Make.com:</strong> disparar automatizaciones (ej: "enviar recordatorio")</li>
+        <li><strong>WA API (vía Make.com):</strong> enviar mensaje puntual a un cliente</li>
+        <li><strong>CRMinbox (vía API):</strong> lanzar campaña masiva desde Fijo</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECCIÓN 9: GUIÓN ============================== -->
+<section id="guion">
+  <div class="section-label">09 — Guión</div>
+  <h2>Cómo hablar de esto con confianza</h2>
+  <p class="section-sub">Las frases exactas para los momentos más difíciles de la conversación con el dueño o el ingeniero de RedLine.</p>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--amarillo);">Cuando te pregunten "¿por qué necesitamos cambiar de WhatsApp?"</h3>
+
+  <div class="script-block">
+    <div class="script-label you">Tú dices:</div>
+    <div class="script-text">"El WhatsApp Business que tienen hoy funciona perfectamente para responder mensajes. El problema es que ese WhatsApp no tiene una 'puerta trasera' — no hay forma de que un sistema externo escuche esos mensajes y haga algo con ellos automáticamente. La versión API de WhatsApp sí la tiene. Es como pasar de un teléfono fijo a una central telefónica: el número sigue siendo el mismo, los clientes no notan nada, pero ahora podemos enrutar, grabar y automatizar."</div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 32px 0 20px; color: var(--amarillo);">Cuando te pregunten "¿y CRMinbox para qué queda entonces?"</h3>
+
+  <div class="script-block">
+    <div class="script-label you">Tú dices:</div>
+    <div class="script-text">"CRMinbox sigue haciendo lo que hace bien: enviar mensajes masivos. Cuando hay una avería en una zona, ustedes necesitan notificar a 200 clientes en 5 minutos — eso CRMinbox lo hace perfecto. Lo que CRMinbox no hace es recibir y gestionar los mensajes que llegan de los clientes. Para eso usamos Chatwoot. Son herramientas distintas para momentos distintos."</div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 32px 0 20px; color: var(--amarillo);">Cuando el ingeniero pregunte sobre el riesgo de migrar el número</h3>
+
+  <div class="script-block">
+    <div class="script-label you">Tú dices:</div>
+    <div class="script-text">"La migración a WA Business API no borra el número ni pierde los contactos. El proceso de 360Dialog incluye verificación con Meta, que tarda entre 1 y 3 días hábiles. Durante ese tiempo el número sigue recibiendo mensajes normalmente en la app. El día que se activa la API, simplemente los mensajes nuevos empiezan a entrar también por Chatwoot. Es un switch, no una migración dolorosa."</div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 32px 0 20px; color: var(--amarillo);">Cuando el dueño pregunte por el precio</h3>
+
+  <div class="script-block">
+    <div class="script-label you">Tú dices:</div>
+    <div class="script-text">"El Plan Pro son $1.990.000 al mes. Piénselo así: con 150 mensajes diarios, sus dos recepcionistas están dedicadas al 100% solo a WhatsApp. Si el sistema triage automático atiende el 40% de esos mensajes sin necesitar una persona — que es lo conservador — eso son 60 mensajes diarios que no necesitan agente. A un costo de $15.000 pesos por hora de trabajo, eso son más de $900.000 al mes en tiempo recuperado. Y eso no cuenta las citas que se pierden hoy porque nadie hizo el seguimiento."</div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 32px 0 20px; color: var(--amarillo);">Cuando te digan "eso lo puede hacer ChatGPT/otro proveedor más barato"</h3>
+
+  <div class="script-block">
+    <div class="script-label you">Tú dices:</div>
+    <div class="script-text">"Pueden. Lo que nosotros hacemos diferente es que no les entregamos herramientas — les entregamos el sistema funcionando. Cualquier proveedor les puede dar acceso a ChatGPT. Yo les instalo Chatwoot en su servidor, registro el número en la API de WhatsApp, construyo los flujos en Make.com, entreno al bot con el idioma y los procesos de RedLine específicamente, y les doy un panel en español hecho para un ISP colombiano. Además, soy el que responde cuando algo falla."</div>
+  </div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin: 32px 0 20px; color: var(--amarillo);">El cierre — si el dueño está convencido pero dice "necesito pensarlo"</h3>
+
+  <div class="script-block">
+    <div class="script-label you">Tú dices:</div>
+    <div class="script-text">"Perfecto. Mientras lo piensan, lo único que les pido es que Mara deje de darle su número a clientes esta semana y contemos cuántos tickets quedan sin respuesta. Ese número es exactamente lo que el sistema resuelve."</div>
+  </div>
+
+  <div class="divider" style="margin-top: 40px;"></div>
+
+  <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Los 5 datos que debes tener memorizados</h3>
+  <div class="grid-4">
+    <div class="card">
+      <span class="card-icon">📊</span>
+      <h3>150–200</h3>
+      <p>Mensajes de WhatsApp por día. Con 2 agentes = ~75-100 c/u. Es insostenible manualmente.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">⚡</span>
+      <h3>~40%</h3>
+      <p>Mensajes que se pueden resolver automáticamente (FAQs, confirmaciones, estados). Sin agente.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">💰</span>
+      <h3>~$20–25 USD</h3>
+      <p>Costo mensual de infraestructura completa. Lo que RedLine paga a terceros (WA API, Make, Claude).</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">⏱️</span>
+      <h3>4 semanas</h3>
+      <p>De la firma al sistema funcionando en producción con datos reales de RedLine.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Documento preparado por <strong>Nexora IA</strong> para el proyecto <strong>Fijo × RedLine</strong></p>
+  <p style="margin-top: 8px; font-size: 12px;">Mayo 2026 · Confidencial · Para uso interno del equipo de Nexora IA</p>
+</footer>
+
+</body>
+</html>
