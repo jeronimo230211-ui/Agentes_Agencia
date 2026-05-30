@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { createServiceClient } from "@/lib/supabase"
-import type { GymConfig } from "@/lib/supabase"
+import type { GymConfig, Provider } from "@/lib/supabase"
 
 function slugify(name: string): string {
   return name
@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
     whatsappNumber?: string
     config?: GymConfig
     apiToken?: string | null
+    provider?: Provider
+    providerConfig?: Record<string, string>
   }
   try {
     body = await request.json()
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
-  const { name, city, country, contactName, whatsappNumber, config, apiToken } = body
+  const { name, city, country, contactName, whatsappNumber, config, apiToken, provider, providerConfig } = body
 
   if (!name || !whatsappNumber) {
     return Response.json({ error: "name and whatsappNumber are required" }, { status: 400 })
@@ -71,6 +73,8 @@ export async function POST(request: NextRequest) {
       plan: "piloto",
       whatsapp_number: whatsappNumber,
       api_token: apiToken || null,
+      provider: provider || "meta",
+      provider_config: providerConfig || {},
       config: gymConfig,
       active: true,
     })
@@ -175,14 +179,14 @@ export async function GET(request: NextRequest) {
 
 // PUT /api/gyms — update gym config
 export async function PUT(request: NextRequest) {
-  let body: { id?: string; config?: GymConfig; apiToken?: string }
+  let body: { id?: string; config?: GymConfig; apiToken?: string; providerConfig?: Record<string, string>; provider?: Provider }
   try {
     body = await request.json()
   } catch {
     return Response.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
-  const { id, config, apiToken } = body
+  const { id, config, apiToken, providerConfig, provider } = body
 
   if (!id) {
     return Response.json({ error: "id is required" }, { status: 400 })
@@ -193,6 +197,8 @@ export async function PUT(request: NextRequest) {
   const updates: Record<string, unknown> = {}
   if (config) updates.config = config
   if (apiToken) updates.api_token = apiToken
+  if (providerConfig) updates.provider_config = providerConfig
+  if (provider) updates.provider = provider
 
   const { data, error } = await db
     .from("gyms")

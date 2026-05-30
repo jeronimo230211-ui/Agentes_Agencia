@@ -1,5 +1,12 @@
 import { createClient } from "@supabase/supabase-js"
 
+export type Provider = "meta" | "360dialog" | "twilio"
+
+export type ProviderConfig =
+  | { api_token: string }                                           // 360dialog
+  | { access_token: string; phone_number_id: string; verify_token: string } // meta
+  | { account_sid: string; auth_token: string; from_number: string }        // twilio
+
 export type Gym = {
   id: string
   name: string
@@ -8,6 +15,8 @@ export type Gym = {
   whatsapp_number: string
   webhook_url: string | null
   api_token: string | null
+  provider: Provider
+  provider_config: Record<string, string>
   config: GymConfig
   active: boolean
   created_at: string
