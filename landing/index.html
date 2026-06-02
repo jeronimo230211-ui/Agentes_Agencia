@@ -7,18 +7,19 @@
   <meta name="description" content="Ingeniero industrial con experiencia real en operaciones y supply chain. Construyo sistemas con IA que automatizan tus procesos y te dan los datos para tomar mejores decisiones."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --obs:    #0D0F0E;
-      --em:     #1A3C2E;
-      --lime:   #A8FF3E;
-      --warm:   #F2F0EB;
-      --pearl:  #C8C9C0;
-      --border: #1C1F1D;
-      --card:   rgba(255,255,255,0.025);
+      --obs:     #0D0F0E;
+      --em:      #1A3C2E;
+      --lime:    #A8FF3E;
+      --warm:    #F2F0EB;
+      --pearl:   #C8C9C0;
+      --border:  #1C1F1D;
+      --card:    rgba(255,255,255,0.025);
+      --display: 'Space Grotesk', system-ui, sans-serif;
     }
 
     html { scroll-behavior: smooth; }
@@ -54,9 +55,12 @@
       margin-bottom: 14px;
       display: block;
     }
+    h1, h2 {
+      font-family: var(--display);
+    }
     h2 {
       font-size: clamp(28px, 4vw, 44px);
-      font-weight: 800;
+      font-weight: 700;
       letter-spacing: -0.5px;
       line-height: 1.15;
       margin-bottom: 16px;
@@ -101,7 +105,89 @@
       background: radial-gradient(circle, rgba(168,255,62,.06) 0%, transparent 65%);
       top: 50%; left: 50%; transform: translate(-50%,-50%);
     }
-    .hero-inner { position: relative; z-index: 1; max-width: 780px; }
+    .hero-grid {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 64px;
+      align-items: center;
+      width: 100%;
+    }
+    @media (max-width: 960px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-panel { display: none; }
+    }
+    .hero-inner { max-width: 680px; }
+
+    /* Hero metrics panel */
+    .hero-panel {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(168,255,62,.15);
+      border-radius: 20px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-panel::before {
+      content: '';
+      position: absolute; top: 0; right: 0;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(168,255,62,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--pearl); }
+    .panel-live {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: #22c55e; font-weight: 600;
+    }
+    .panel-live::before {
+      content: ''; width: 6px; height: 6px;
+      border-radius: 50%; background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+    .panel-metrics { display: flex; flex-direction: column; gap: 14px; }
+    .pm-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: border-color .2s, background .2s;
+    }
+    .pm-row:hover { border-color: rgba(168,255,62,.2); background: rgba(168,255,62,.03); }
+    .pm-label { font-size: 13px; color: var(--pearl); }
+    .pm-value { font-family: var(--display); font-size: 22px; font-weight: 700; color: var(--lime); letter-spacing: -0.5px; }
+
+    /* ── TRUST STRIP ── */
+    #trust-strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    #trust-strip::-webkit-scrollbar { display: none; }
+    .trust-inner {
+      display: flex; align-items: center; gap: 32px;
+      white-space: nowrap;
+      min-width: max-content;
+    }
+    .trust-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--pearl); flex-shrink: 0; }
+    .trust-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+    .trust-items { display: flex; align-items: center; gap: 40px; }
+    .trust-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 600; color: var(--warm);
+    }
+    .trust-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); flex-shrink: 0; }
+    .trust-sector { font-size: 11px; color: var(--pearl); font-weight: 400; margin-left: 2px; }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
       background: rgba(168,255,62,.1); border: 1px solid rgba(168,255,62,.22);
@@ -119,8 +205,9 @@
       50%      { opacity:.5; transform:scale(1.4); }
     }
     h1 {
+      font-family: var(--display);
       font-size: clamp(36px, 6vw, 68px);
-      font-weight: 800; letter-spacing: -2px; line-height: 1.08;
+      font-weight: 700; letter-spacing: -2px; line-height: 1.08;
       margin-bottom: 26px;
     }
     h1 em { color: var(--lime); font-style: normal; }
@@ -189,7 +276,7 @@
       display: flex; align-items: center; justify-content: center;
     }
 
-    .about-name { font-size: 32px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
+    .about-name { font-family: var(--display); font-size: 32px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.5px; }
     .about-role { font-size: 14px; font-weight: 600; color: var(--lime); letter-spacing: .5px; margin-bottom: 28px; }
     .about-p    { font-size: 15px; color: var(--pearl); line-height: 1.85; margin-bottom: 16px; }
     .about-p strong { color: var(--warm); font-weight: 700; }
@@ -204,7 +291,8 @@
     }
     .stat-item { display: flex; flex-direction: column; gap: 4px; }
     .stat-v {
-      font-size: 32px; font-weight: 800;
+      font-family: var(--display);
+      font-size: 32px; font-weight: 700;
       color: var(--lime); letter-spacing: -1px; line-height: 1;
     }
     .stat-l { font-size: 12px; color: var(--pearl); max-width: 100px; line-height: 1.4; }
@@ -221,23 +309,29 @@
 
     /* ── DIFERENCIADORES ── */
     #diferenciador { }
-    .diff-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
+    .diff-list { display: flex; flex-direction: column; }
+    .diff-item {
+      display: flex; gap: 40px; align-items: flex-start;
+      padding: 40px 0;
+      border-bottom: 1px solid var(--border);
     }
-    .diff-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px 28px;
-      transition: border-color .25s, transform .25s;
+    .diff-item:first-child { border-top: 1px solid var(--border); }
+    .diff-item { transition: padding-left .25s ease; }
+    .diff-item:hover { padding-left: 12px; }
+    .diff-num {
+      font-family: var(--display);
+      font-size: 56px; font-weight: 700; letter-spacing: -2px; line-height: 1;
+      color: rgba(168,255,62,.2);
+      min-width: 80px; flex-shrink: 0;
+      padding-top: 4px;
     }
-    .diff-card:hover { border-color: rgba(168,255,62,.25); transform: translateY(-3px); }
-    .diff-icon { font-size: 34px; margin-bottom: 18px; display: block; }
-    .diff-num  { font-size: 11px; font-weight: 700; color: var(--lime); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-    .diff-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.3px; }
-    .diff-desc  { font-size: 14px; color: var(--pearl); line-height: 1.75; }
+    .diff-content { flex: 1; }
+    .diff-title { font-family: var(--display); font-size: 22px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.3px; }
+    .diff-desc  { font-size: 15px; color: var(--pearl); line-height: 1.75; max-width: 560px; }
+    @media (max-width: 600px) {
+      .diff-item { gap: 20px; }
+      .diff-num { font-size: 40px; min-width: 56px; }
+    }
 
     /* ── PROBLEMAS ── */
     #problemas { background: #090B0A; }
@@ -277,7 +371,7 @@
     }
     .price-plan  { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--pearl); margin-bottom: 6px; }
     .price-name  { font-size: 22px; font-weight: 800; margin-bottom: 20px; }
-    .price-usd   { font-size: 44px; font-weight: 800; color: var(--lime); letter-spacing: -2px; line-height: 1; }
+    .price-usd   { font-family: var(--display); font-size: 44px; font-weight: 700; color: var(--lime); letter-spacing: -2px; line-height: 1; }
     .price-usd span { font-size: 16px; color: var(--pearl); font-weight: 400; letter-spacing: 0; }
     .price-cop   { font-size: 12px; color: var(--pearl); margin-top: 4px; margin-bottom: 24px; }
     .price-features { list-style: none; padding: 0; flex: 1; margin-bottom: 28px; }
@@ -373,7 +467,7 @@
       border-top: 1px solid var(--border);
       background: rgba(0,0,0,.15);
     }
-    .metric-v { font-size: 34px; font-weight: 800; color: var(--lime); letter-spacing: -1px; line-height: 1; }
+    .metric-v { font-family: var(--display); font-size: 34px; font-weight: 700; color: var(--lime); letter-spacing: -1px; line-height: 1; }
     .metric-l { font-size: 12px; color: var(--pearl); margin-top: 4px; }
 
     /* ── CONTACTO ── */
@@ -500,16 +594,74 @@
 <section id="hero">
   <div class="hero-glow"></div>
   <div class="container">
-    <div class="hero-inner">
-      <div class="hero-badge fi">Medellín, Colombia → Global · Ingeniero Industrial · IA & Automatización</div>
-      <h1 class="fi d1">Aprendí a resolver<br/>problemas de operaciones<br/><em>desde adentro.</em></h1>
-      <p class="hero-sub fi d2">Soy Jerónimo Álvarez — ingeniero industrial con experiencia real en planeación, logística y cadena de suministro. Construyo sistemas con IA que automatizan lo que te frena y te dan los datos para tomar decisiones que mueven tu empresa.</p>
-      <div class="hero-ctas fi d3">
-        <a href="#portafolio" class="btn-p">Ver casos de éxito</a>
-        <a href="https://wa.me/573122795696" target="_blank" rel="noopener" class="btn-s">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.848L.057 23.667a.5.5 0 0 0 .611.628l5.975-1.568A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.668-.5-5.21-1.377l-.374-.217-3.546.931.946-3.455-.237-.389A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-          Escríbeme directo
-        </a>
+    <div class="hero-grid">
+
+      <div class="hero-inner">
+        <div class="hero-badge fi">Medellín, Colombia → Global · Ingeniero Industrial · IA & Automatización</div>
+        <h1 class="fi d1">Aprendí a resolver<br/>problemas de operaciones<br/><em>desde adentro.</em></h1>
+        <p class="hero-sub fi d2">Soy Jerónimo Álvarez — ingeniero industrial con experiencia real en planeación, logística y cadena de suministro. Construyo sistemas con IA que automatizan lo que te frena y te dan los datos para tomar decisiones que mueven tu empresa.</p>
+        <div class="hero-ctas fi d3">
+          <a href="#portafolio" class="btn-p">Ver casos de éxito</a>
+          <a href="https://wa.me/573122795696" target="_blank" rel="noopener" class="btn-s">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.848L.057 23.667a.5.5 0 0 0 .611.628l5.975-1.568A11.956 11.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.668-.5-5.21-1.377l-.374-.217-3.546.931.946-3.455-.237-.389A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            Escríbeme directo
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero metrics panel -->
+      <div class="hero-panel fi d2">
+        <div class="panel-header">
+          <span class="panel-title">Nexora IA · Resultados</span>
+          <span class="panel-live">En vivo</span>
+        </div>
+        <div class="panel-metrics">
+          <div class="pm-row">
+            <span class="pm-label">Desperdicio en corte</span>
+            <span class="pm-value">-30%</span>
+          </div>
+          <div class="pm-row">
+            <span class="pm-label">OTIF logístico</span>
+            <span class="pm-value">+40%</span>
+          </div>
+          <div class="pm-row">
+            <span class="pm-label">Tiempos de proceso</span>
+            <span class="pm-value">-20%</span>
+          </div>
+          <div class="pm-row">
+            <span class="pm-label">Pedidos en papel</span>
+            <span class="pm-value">0</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── TRUST STRIP ── -->
+<section id="trust-strip">
+  <div class="container">
+    <div class="trust-inner">
+      <span class="trust-label fi on">Proyectos en producción</span>
+      <div class="trust-sep"></div>
+      <div class="trust-items">
+        <div class="trust-item fi d1">
+          <span class="trust-dot"></span>
+          Davinchi App <span class="trust-sector">· Distribución</span>
+        </div>
+        <div class="trust-item fi d2">
+          <span class="trust-dot"></span>
+          Fijo CRM <span class="trust-sector">· Telecomunicaciones</span>
+        </div>
+        <div class="trust-item fi d3">
+          <span class="trust-dot"></span>
+          Gloria Inventario <span class="trust-sector">· Retail</span>
+        </div>
+        <div class="trust-item fi d4">
+          <span class="trust-dot"></span>
+          GymBot IA <span class="trust-sector">· SaaS Fitness</span>
+        </div>
       </div>
     </div>
   </div>
@@ -541,7 +693,6 @@
       </div>
 
       <div class="fi d2">
-        <span class="label">Quién soy</span>
         <h2 class="about-name">Jerónimo Álvarez</h2>
         <p class="about-role">Ingeniero Industrial · Fundador de Nexora IA · Medellín, Colombia</p>
 
@@ -589,27 +740,29 @@
 <!-- ── POR QUÉ YO ── -->
 <section id="diferenciador">
   <div class="container">
-    <span class="label fi">Por qué elegirme</span>
     <h2 class="fi d1">No solo programo.<br/>Entiendo tu negocio.</h2>
-    <p class="sub fi d2">Cualquier desarrollador puede construir un sistema. Yo me involucro en los resultados — y esa es la diferencia.</p>
-    <div class="diff-grid">
-      <div class="diff-card fi d1">
-        <span class="diff-icon">⚙️</span>
+    <p class="sub fi d2">Cualquier desarrollador puede construir un sistema. Yo me involucro en los resultados, y esa es la diferencia.</p>
+    <div class="diff-list">
+      <div class="diff-item fi d1">
         <div class="diff-num">01</div>
-        <div class="diff-title">Entiendo la operación antes de tocar el código</div>
-        <p class="diff-desc">Vengo del mundo de la planeación, la logística y las operaciones. Antes de proponer cualquier solución, entiendo cómo funciona tu empresa por dentro — los cuellos de botella, los desperdicios, los procesos que se hacen por inercia. Eso cambia todo.</p>
+        <div class="diff-content">
+          <div class="diff-title">Entiendo la operación antes de tocar el código</div>
+          <p class="diff-desc">Vengo del mundo de la planeación, la logística y las operaciones. Antes de proponer cualquier solución, entiendo cómo funciona tu empresa por dentro: los cuellos de botella, los desperdicios, los procesos que se hacen por inercia. Eso cambia todo.</p>
+        </div>
       </div>
-      <div class="diff-card fi d2">
-        <span class="diff-icon">📊</span>
+      <div class="diff-item fi d2">
         <div class="diff-num">02</div>
-        <div class="diff-title">Construyo, analizo y te explico qué está pasando</div>
-        <p class="diff-desc">Cada herramienta que entrego viene acompañada de reportes y análisis del comportamiento de tus datos. No te dejo con un sistema y te digo "suerte". Te explico qué dicen los números y qué decisiones deberías tomar con ellos. Eso es consultoría, no solo software.</p>
+        <div class="diff-content">
+          <div class="diff-title">Construyo, analizo y te explico qué está pasando</div>
+          <p class="diff-desc">Cada herramienta que entrego viene acompañada de análisis del comportamiento de tus datos. No te dejo con un sistema y te digo "suerte". Te explico qué dicen los números y qué decisiones deberías tomar con ellos.</p>
+        </div>
       </div>
-      <div class="diff-card fi d3">
-        <span class="diff-icon">🤝</span>
+      <div class="diff-item fi d3">
         <div class="diff-num">03</div>
-        <div class="diff-title">Soy tu aliado estratégico, no tu proveedor</div>
-        <p class="diff-desc">No cobro proyectos únicos para desaparecer. Trabajo contigo mes a mes, me involucro en tus resultados y me quedo hasta que veas el impacto real. Si tu empresa mejora, yo lo siento como un logro propio. Así es como trabajo.</p>
+        <div class="diff-content">
+          <div class="diff-title">Aliado estratégico, no proveedor</div>
+          <p class="diff-desc">No cobro proyectos únicos para desaparecer. Trabajo contigo mes a mes, me involucro en tus resultados y me quedo hasta que veas el impacto real. Si tu empresa mejora, yo lo siento como un logro propio.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -618,7 +771,6 @@
 <!-- ── PROBLEMAS ── -->
 <section id="problemas">
   <div class="container">
-    <span class="label fi">Lo que resuelvo</span>
     <h2 class="fi d1">Si vivís alguna de estas<br/>situaciones, sé cómo ayudarte.</h2>
     <p class="sub fi d2">Las vi de primera mano dentro de empresas reales. Y construí las soluciones para resolverlas.</p>
     <div class="grid-3">
@@ -659,7 +811,6 @@
 <!-- ── SERVICIOS / PRICING ── -->
 <section id="servicios">
   <div class="container">
-    <span class="label fi">Planes y precios</span>
     <h2 class="fi d1">Simple. Transparente.<br/>Sin sorpresas.</h2>
     <p class="sub fi d2">Sin permanencia mínima. Cancelás con 30 días de aviso. Los primeros 7 días son a mitad de precio para que veas el valor antes de comprometerte.</p>
     <div class="pricing-grid">

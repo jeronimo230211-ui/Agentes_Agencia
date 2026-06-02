@@ -7,6 +7,7 @@
 ## WHO WE ARE
 
 **Founder:** Jerónimo Álvarez | Medellín, Colombia | Market: Global (ES + EN)
+**Agency:** Nexora IA
 **Mission:** Build AI-powered automation systems that eliminate manual, repetitive work for SMBs.
 **Philosophy:** *"Reduce manual work. Maximize time. Solve frequent problems."*
 
@@ -35,17 +36,27 @@ Agentes_Agencia/
 ├── SERVICES_CATALOG.md        ← Services & pricing reference
 │
 ├── clients/                   ← One subfolder per client project
-│   └── davinchi/              ← Reference project (Field Sales OS)
+│   ├── davinchi/              ← Reference project (Field Sales OS, vanilla HTML/JS)
+│   ├── bracarli/              ← Next.js 16 client project
+│   ├── gloria/                ← Next.js 16 client project
+│   └── redline/               ← Next.js 16 client project
+│
+├── saas/                      ← SaaS products (multi-tenant)
+│   └── gymbot-ia/             ← GymBot IA — WhatsApp AI for gyms (Next.js + Supabase)
 │
 ├── templates/                 ← White-label product templates
-│   └── field-sales-os/        ← Abstracted Davinchi → reusable product
+│   └── field-sales-os/        ← Abstracted Davinchi → reusable product (WIP)
 │
-├── agents/                    ← Claude agent configurations per role
-│   ├── developer/
-│   ├── designer/
-│   ├── qa/
-│   ├── sales/
-│   └── analyst/
+├── agents/                    ← System prompts per role (legacy)
+│   └── ...
+│
+├── .claude/                   ← Claude Code configuration
+│   ├── agents/                ← Subagent definitions (9 roles) ← USE THESE
+│   ├── agent-memory/          ← Per-agent persistent memory
+│   └── settings.local.json    ← Pre-approved tool permissions
+│
+├── landing/                   ← Nexora IA agency landing page
+├── prospecting/               ← Lead generation pipeline (Apify + scripts)
 │
 ├── sales/                     ← Proposals, decks, one-pagers
 │   ├── proposals/
@@ -53,11 +64,14 @@ Agentes_Agencia/
 │
 ├── docs/                      ← Agency-level documentation
 │   ├── processes/
-│   └── guides/
+│   ├── guides/
+│   └── brand/                 ← Nexora IA brand identity (colors, logo)
 │
 └── scripts/                   ← Reusable utility scripts
     ├── apps-script/           ← Google Apps Script templates
-    └── make/                  ← Make.com scenario blueprints
+    ├── make/                  ← Make.com scenario blueprints
+    ├── report-status.sh       ← Agent status reporting to Agency OS
+    └── watch-tasks.sh         ← Poll pending tasks from Agency OS
 ```
 
 ---
@@ -68,19 +82,22 @@ Use this stack by default. **Always justify deviations.**
 
 | Layer | Technology |
 |---|---|
-| Frontend | HTML/CSS/JS (single file) or React |
+| Frontend (simple tools) | HTML/CSS/JS (single file) |
+| Frontend (client apps) | Next.js 16 + TypeScript + Tailwind v4 + shadcn/ui |
 | Hosting | Vercel (free tier) |
-| Database | Google Sheets + Google Apps Script |
+| Database (client apps) | Google Sheets + Google Apps Script |
+| Database (SaaS products) | Supabase (PostgreSQL) |
 | AI | Claude API — `claude-sonnet-4-6` |
 | Automation | Make.com (free tier) |
 | Notifications | Gmail via Make |
+| WhatsApp integration | 360Dialog (real WABA — use this, not CallMeBot) |
 | Repository | GitHub |
 | API Security | Vercel serverless functions (`/api/*.js`) |
 
 **Upgrade rules:**
-- Real-time multi-user → **Supabase**
+- SaaS / multi-tenant / real-time → **Supabase** (already in use for GymBot)
 - Complex automations → **n8n** over Make
-- Complex UI → **React** (justify it)
+- Complex UI → **Next.js 16 + shadcn** (standard for new client apps)
 
 ### Vercel environment variables (always use these names):
 - `ANTHROPIC_API_KEY`
@@ -107,6 +124,26 @@ project-name/
     ├── CLIENT_GUIDE.md     # 1-page user guide for the client
     └── TECHNICAL_NOTES.md  # Architecture notes
 ```
+
+---
+
+## SUBAGENT SYSTEM
+
+Nine role-specific subagents are defined in `.claude/agents/`. Use these for delegation:
+
+| File | Role | When to use |
+|---|---|---|
+| `agency-orchestrator.md` | Orchestrator | Discovery, planning, client workflow coordination |
+| `agency-developer.md` | Developer | Code, APIs, deployment |
+| `agency-ceo.md` | CEO | Strategic decisions, pricing, client negotiations |
+| `ui-ux-designer.md` | Designer | UI/UX, Figma specs, component design |
+| `qa-tester-agencia.md` | QA | Testing, bug reports |
+| `sales-copywriter.md` | Sales | Proposals, pitches, copy |
+| `marketing-specialist.md` | Marketing | Campaigns, content, lead gen |
+| `project-manager.md` | PM | Task planning, timelines |
+| `data-analyst.md` | Analyst | KPIs, Sheets structure, reporting |
+
+Each agent has persistent memory in `.claude/agent-memory/<role>/`. Always report status to Agency OS before and after tasks (see AGENCY OS section below).
 
 ---
 
@@ -183,6 +220,25 @@ index.html (Vercel)
 
 ---
 
+## REFERENCE PROJECT — GYMBOT IA (SaaS Architecture)
+
+Use as architecture reference for **multi-tenant SaaS products** (vs. Davinchi for client apps).
+
+- **Repo:** `saas/gymbot-ia/`
+- **What it is:** WhatsApp AI assistant for gyms — member queries, class schedules, attendance via WhatsApp
+- **Stack:** Next.js 16 + TypeScript + Tailwind v4 + Supabase + 360Dialog WhatsApp API + Claude API
+
+### Architecture:
+```
+Next.js (Vercel)
+  → /api/webhook (360Dialog WhatsApp webhook)
+  → Claude API (claude-sonnet-4-6)
+  → Supabase (multi-tenant PostgreSQL)
+  → 360Dialog API (send WhatsApp replies)
+```
+
+---
+
 ## AGENCY OS — REPORTAR ESTADO (OBLIGATORIO)
 
 Cada agente **debe** reportar su estado a Agency OS usando el script `scripts/report-status.sh`.
@@ -233,10 +289,12 @@ bash scripts/report-status.sh \
 ## CURRENT PRIORITIES
 
 1. Finalize Davinchi App (admin panel, WhatsApp integration, custom domain)
-2. Document Davinchi as white-label template → "Field Sales OS" in `templates/field-sales-os/`
-3. Define agency name and identity
-4. Build second client project
-5. Create agent templates for each role in `agents/`
+2. Extract Davinchi → white-label template in `templates/field-sales-os/` (WIP — stub only)
+3. ~~Define agency name~~ ✅ **Nexora IA** — brand in `docs/brand/`
+4. ~~Build second client project~~ ✅ Three new clients: bracarli, gloria, redline
+5. ~~Create agent templates~~ ✅ 9 subagents in `.claude/agents/`
+6. Launch GymBot IA (`saas/gymbot-ia/`) — first SaaS product
+7. Activate prospecting pipeline (`prospecting/`) → convert leads to clients
 
 ---
 
@@ -256,4 +314,4 @@ bash scripts/report-status.sh \
 
 ---
 
-*Last updated: March 2026 | Maintained by Jerónimo Álvarez + Claude Code*
+*Last updated: June 2026 | Maintained by Jerónimo Álvarez + Claude Code*

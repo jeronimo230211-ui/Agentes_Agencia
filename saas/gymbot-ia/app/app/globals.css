@@ -25,6 +25,17 @@
   --color-card: var(--card);
   --color-destructive: var(--destructive);
   --font-sans: var(--font-inter);
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ping-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.6); opacity: 0; }
 }
 
 * {
