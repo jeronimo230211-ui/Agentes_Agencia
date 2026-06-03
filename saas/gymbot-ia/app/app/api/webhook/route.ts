@@ -204,8 +204,9 @@ function shouldCaptureLead(userText: string, history: Message[]): boolean {
 }
 
 function extractName(userText: string, history: Message[]): string | null {
-  // Try prefix patterns first
-  for (const text of [...history.map((m) => m.content), userText]) {
+  // Only check USER messages for name prefixes (not bot messages)
+  const userMessages = history.filter((m) => m.role === "user").map((m) => m.content)
+  for (const text of [...userMessages, userText]) {
     for (const prefix of ["soy ", "me llamo ", "mi nombre es "]) {
       const idx = text.toLowerCase().indexOf(prefix)
       if (idx !== -1) {
@@ -214,15 +215,19 @@ function extractName(userText: string, history: Message[]): string | null {
       }
     }
   }
-  // Fallback: look for message after bot asked for name — first line likely is the name
-  const botAskIdx = history.findIndex(
+  // Fallback: bot asked for name → current userText or next user message is the name
+  const botAskIdx = history.findLastIndex(
     (m) => m.role === "assistant" && (m.content.includes("nombre") || m.content.includes("teléfono"))
   )
   if (botAskIdx !== -1) {
+    // Check if userText (current message) is the name response
+    const firstLine = userText.split("\n")[0].trim()
+    if (firstLine.length > 2 && !/^\d+$/.test(firstLine)) return firstLine
+    // Otherwise check next user message in history
     const nextUserMsg = history.slice(botAskIdx + 1).find((m) => m.role === "user")
     if (nextUserMsg) {
-      const firstLine = nextUserMsg.content.split("\n")[0].trim()
-      if (firstLine.length > 2 && !/^\d+$/.test(firstLine)) return firstLine
+      const line = nextUserMsg.content.split("\n")[0].trim()
+      if (line.length > 2 && !/^\d+$/.test(line)) return line
     }
   }
   return null
