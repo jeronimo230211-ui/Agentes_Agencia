@@ -15,7 +15,13 @@ export async function GET(request: NextRequest) {
     return new Response("Bad request", { status: 400 })
   }
 
-  // Find gym with matching verify_token in provider_config
+  // Accept global verify token from env var (simpler, no DB lookup needed)
+  const envToken = process.env.WEBHOOK_VERIFY_TOKEN
+  if (envToken && token === envToken) {
+    return new Response(challenge, { status: 200 })
+  }
+
+  // Fallback: find gym with matching verify_token in provider_config
   const db = createServiceClient()
   const { data: gym } = await db
     .from("gyms")
