@@ -29,7 +29,7 @@ async function send360Dialog(cfg: ProviderCfg, to: string, body: string) {
 }
 
 async function sendMeta(cfg: ProviderCfg, to: string, body: string) {
-  await fetch(
+  const res = await fetch(
     `https://graph.facebook.com/v19.0/${cfg.phone_number_id}/messages`,
     {
       method: "POST",
@@ -45,6 +45,11 @@ async function sendMeta(cfg: ProviderCfg, to: string, body: string) {
       }),
     }
   )
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    console.error("[sendMeta] Error:", JSON.stringify(err))
+    throw new Error(`Meta API error ${res.status}`)
+  }
 }
 
 async function sendTwilio(cfg: ProviderCfg, to: string, body: string) {
