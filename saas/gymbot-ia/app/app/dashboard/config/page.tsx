@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import type { Gym, GymConfig } from "@/lib/supabase"
 
+const WEBHOOK_URL = "https://agentes-agencia.vercel.app/api/webhook"
+
 export default function ConfigPage() {
   const [gym, setGym] = useState<Gym | null>(null)
   const [config, setConfig] = useState<GymConfig>({
@@ -17,6 +19,11 @@ export default function ConfigPage() {
     location: "",
     contact_name: "",
   })
+  // Meta fields
+  const [accessToken, setAccessToken] = useState("")
+  const [phoneNumberId, setPhoneNumberId] = useState("")
+  const [verifyToken, setVerifyToken] = useState("")
+  // 360Dialog field
   const [apiToken, setApiToken] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -46,6 +53,14 @@ export default function ConfigPage() {
     setSaving(true)
     setError("")
     setSaved(false)
+
+    const providerConfig: Record<string, string> = {}
+    if (gym.provider === "meta") {
+      if (accessToken) providerConfig.access_token = accessToken
+      if (phoneNumberId) providerConfig.phone_number_id = phoneNumberId
+      if (verifyToken) providerConfig.verify_token = verifyToken
+    }
+
     try {
       const res = await fetch("/api/gyms", {
         method: "PUT",
@@ -53,7 +68,8 @@ export default function ConfigPage() {
         body: JSON.stringify({
           id: gym.id,
           config,
-          apiToken: apiToken || undefined,
+          apiToken: gym.provider === "360dialog" ? (apiToken || undefined) : undefined,
+          providerConfig: Object.keys(providerConfig).length > 0 ? providerConfig : undefined,
         }),
       })
       if (!res.ok) {
@@ -176,31 +192,88 @@ export default function ConfigPage() {
       </div>
 
       <div className="rounded-xl border border-[#2A2D2C] bg-[#141716] p-6 space-y-4">
-        <h2 className="font-bold text-[#F2F0EB]">Conexión WhatsApp (360Dialog)</h2>
+        <h2 className="font-bold text-[#F2F0EB]">
+          Conexión WhatsApp ({gym.provider === "meta" ? "Meta Cloud API" : gym.provider === "twilio" ? "Twilio" : "360Dialog"})
+        </h2>
         <div className="rounded-lg bg-[#0D0F0E] p-3 text-sm text-[#8B8F8D]">
-          <p className="font-semibold text-[#F2F0EB] mb-1">URL del webhook a configurar en 360Dialog:</p>
-          <code className="text-[#A8FF3E] text-xs break-all">
-            https://gymbot-ia.vercel.app/api/webhook
-          </code>
+          <p className="font-semibold text-[#F2F0EB] mb-1">URL del webhook:</p>
+          <code className="text-[#A8FF3E] text-xs break-all">{WEBHOOK_URL}</code>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="apiToken">API Key de 360Dialog</Label>
-          <Input
-            id="apiToken"
-            type="password"
-            value={apiToken}
-            onChange={(e) => setApiToken(e.target.value)}
-            placeholder="Pega tu API key aquí para actualizar"
-          />
-          <p className="text-xs text-[#8B8F8D]">
-            Deja en blanco para mantener la actual.{" "}
-            {gym.api_token ? (
-              <span className="text-[#A8FF3E]">✓ API key configurada</span>
-            ) : (
-              <span className="text-yellow-500">⚠ No hay API key. El bot no responde por WhatsApp.</span>
-            )}
-          </p>
-        </div>
+
+        {gym.provider === "meta" && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="accessToken">Access Token</Label>
+              <Input
+                id="accessToken"
+                type="password"
+                value={accessToken}
+                onChange={(e) => setAccessToken(e.target.value)}
+                placeholder="Deja en blanco para mantener el actual"
+              />
+              <p className="text-xs text-[#8B8F8D]">
+                {gym.provider_config?.access_token ? (
+                  <span className="text-[#A8FF3E]">✓ Configurado</span>
+                ) : (
+                  <span className="text-yellow-500">⚠ No configurado</span>
+                )}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumberId">Phone Number ID</Label>
+              <Input
+                id="phoneNumberId"
+                value={phoneNumberId}
+                onChange={(e) => setPhoneNumberId(e.target.value)}
+                placeholder="Deja en blanco para mantener el actual"
+              />
+              <p className="text-xs text-[#8B8F8D]">
+                {gym.provider_config?.phone_number_id ? (
+                  <span className="text-[#A8FF3E]">✓ {gym.provider_config.phone_number_id}</span>
+                ) : (
+                  <span className="text-yellow-500">⚠ No configurado</span>
+                )}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="verifyToken">Verify Token</Label>
+              <Input
+                id="verifyToken"
+                value={verifyToken}
+                onChange={(e) => setVerifyToken(e.target.value)}
+                placeholder="Deja en blanco para mantener el actual"
+              />
+              <p className="text-xs text-[#8B8F8D]">
+                {gym.provider_config?.verify_token ? (
+                  <span className="text-[#A8FF3E]">✓ {gym.provider_config.verify_token}</span>
+                ) : (
+                  <span className="text-yellow-500">⚠ No configurado</span>
+                )}
+              </p>
+            </div>
+          </>
+        )}
+
+        {gym.provider === "360dialog" && (
+          <div className="space-y-2">
+            <Label htmlFor="apiToken">API Key de 360Dialog</Label>
+            <Input
+              id="apiToken"
+              type="password"
+              value={apiToken}
+              onChange={(e) => setApiToken(e.target.value)}
+              placeholder="Pega tu API key aquí para actualizar"
+            />
+            <p className="text-xs text-[#8B8F8D]">
+              Deja en blanco para mantener la actual.{" "}
+              {gym.api_token ? (
+                <span className="text-[#A8FF3E]">✓ API key configurada</span>
+              ) : (
+                <span className="text-yellow-500">⚠ No hay API key. El bot no responde por WhatsApp.</span>
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       <Button onClick={handleSave} disabled={saving} className="w-full">
