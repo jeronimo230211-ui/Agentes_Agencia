@@ -231,24 +231,37 @@ export default function DashboardPage() {
       </div>
 
       {/* WhatsApp status */}
-      {!gym.api_token && (
-        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-5">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <p className="font-semibold text-[#F2F0EB]">WhatsApp no conectado</p>
-              <p className="text-sm text-[#8B8F8D] mt-1">
-                Tu bot está configurado pero necesitas conectar 360Dialog para que responda en
-                WhatsApp. Ve a{" "}
-                <a href="/dashboard/config" className="text-[#A8FF3E] hover:underline">
-                  Configuración
-                </a>{" "}
-                para agregar tu API key.
-              </p>
+      {(() => {
+        const isConnected =
+          gym.provider === "meta"
+            ? !!(gym.provider_config?.access_token && gym.provider_config?.phone_number_id)
+            : gym.provider === "twilio"
+            ? !!(gym.provider_config?.account_sid && gym.provider_config?.auth_token)
+            : !!gym.api_token
+
+        const providerName =
+          gym.provider === "meta" ? "Meta Cloud API" : gym.provider === "twilio" ? "Twilio" : "360Dialog"
+
+        if (isConnected) return null
+
+        return (
+          <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-5">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <p className="font-semibold text-[#F2F0EB]">WhatsApp no conectado</p>
+                <p className="text-sm text-[#8B8F8D] mt-1">
+                  Tu bot está configurado pero necesitas completar las credenciales de {providerName}. Ve a{" "}
+                  <a href="/dashboard/config" className="text-[#A8FF3E] hover:underline">
+                    Configuración
+                  </a>{" "}
+                  para completar la conexión.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
