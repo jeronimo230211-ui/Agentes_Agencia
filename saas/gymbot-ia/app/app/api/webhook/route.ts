@@ -184,14 +184,27 @@ export async function POST(request: NextRequest) {
 
 function shouldCaptureLead(userText: string, history: Message[]): boolean {
   const allText = [...history.map((m) => m.content), userText].join(" ").toLowerCase()
-  const hasName = ["soy ", "me llamo ", "mi nombre es "].some((p) => allText.includes(p))
-  const hasInterest = ["inscribir", "membresía", "membresia", "precio", "clase"].some((p) =>
-    userText.toLowerCase().includes(p)
+  const interestKeywords = [
+    "inscribir", "inscripción", "inscripcion",
+    "membresía", "membresia", "mensualidad", "mensual",
+    "trimestral", "semestral", "anual",
+    "precio", "costo", "cuánto", "cuanto",
+    "quiero", "interesa", "me apunto", "clase",
+  ]
+  const hasInterest = interestKeywords.some((p) => allText.includes(p))
+  // Has phone number pattern in conversation
+  const hasPhone = /\d{7,}/.test(allText)
+  // Has name prefix OR the bot asked for name and got a multi-word response
+  const hasNamePrefix = ["soy ", "me llamo ", "mi nombre es "].some((p) => allText.includes(p))
+  const botAskedName = history.some(
+    (m) => m.role === "assistant" && (m.content.includes("nombre") || m.content.includes("teléfono") || m.content.includes("telefono"))
   )
-  return hasName && hasInterest
+  const hasName = hasNamePrefix || (botAskedName && hasPhone)
+  return hasInterest && hasName
 }
 
 function extractName(userText: string, history: Message[]): string | null {
+  // Try prefix patterns first
   for (const text of [...history.map((m) => m.content), userText]) {
     for (const prefix of ["soy ", "me llamo ", "mi nombre es "]) {
       const idx = text.toLowerCase().indexOf(prefix)
@@ -199,6 +212,17 @@ function extractName(userText: string, history: Message[]): string | null {
         const name = text.slice(idx + prefix.length).split(/[\s,!.]/)[0]
         if (name.length > 1) return name
       }
+    }
+  }
+  // Fallback: look for message after bot asked for name — first line likely is the name
+  const botAskIdx = history.findIndex(
+    (m) => m.role === "assistant" && (m.content.includes("nombre") || m.content.includes("teléfono"))
+  )
+  if (botAskIdx !== -1) {
+    const nextUserMsg = history.slice(botAskIdx + 1).find((m) => m.role === "user")
+    if (nextUserMsg) {
+      const firstLine = nextUserMsg.content.split("\n")[0].trim()
+      if (firstLine.length > 2 && !/^\d+$/.test(firstLine)) return firstLine
     }
   }
   return null
