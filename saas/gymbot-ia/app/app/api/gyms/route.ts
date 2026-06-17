@@ -100,7 +100,12 @@ export async function GET(request: NextRequest) {
   if (resource === "leads") {
     const query = db
       .from("leads")
-      .select("*")
+      .select(`
+        id, name, phone, email, interest, status, lead_value,
+        stage_id, person_id, created_at, last_activity_at, updated_at,
+        persons(id, name, contact_numbers),
+        lead_pipeline_stages(id, name, code, probability)
+      `)
       .order("created_at", { ascending: false })
       .limit(100)
 

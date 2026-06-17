@@ -22,6 +22,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Resumen
           </Link>
           <Link
+            href="/dashboard/pipeline"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#F2F0EB] hover:bg-[#1A1D1C] hover:text-[#A8FF3E] transition-colors"
+          >
+            <span>🎯</span>
+            Pipeline
+          </Link>
+          <Link
             href="/dashboard/leads"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#F2F0EB] hover:bg-[#1A1D1C] hover:text-[#A8FF3E] transition-colors"
           >

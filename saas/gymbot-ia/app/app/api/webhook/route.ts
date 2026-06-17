@@ -15,13 +15,11 @@ export async function GET(request: NextRequest) {
     return new Response("Bad request", { status: 400 })
   }
 
-  // Accept global verify token from env var (simpler, no DB lookup needed)
   const envToken = process.env.WEBHOOK_VERIFY_TOKEN
   if (envToken && token === envToken) {
     return new Response(challenge, { status: 200 })
   }
 
-  // Fallback: find gym with matching verify_token in provider_config
   const db = createServiceClient()
   const { data: gym } = await db
     .from("gyms")
@@ -42,14 +40,12 @@ export async function POST(request: NextRequest) {
   let userText: string | null = null
   let gymId: string | null = null
 
-  // ── 360Dialog ────────────────────────────────────────────────────────────────
+  // ── Parse provider ────────────────────────────────────────────────────────────
   if (contentType.includes("application/json") && !request.headers.get("x-twilio-signature")) {
     let payload: Record<string, unknown>
     try { payload = await request.json() } catch { return new Response("OK", { status: 200 }) }
 
-    // Detect Meta vs 360Dialog by payload shape
     if (payload.object === "whatsapp_business_account") {
-      // Meta Cloud API
       const parsed = parseMeta(payload)
       if (!parsed) return new Response("OK", { status: 200 })
       fromNumber = parsed.from
@@ -64,7 +60,6 @@ export async function POST(request: NextRequest) {
         .single()
       if (gym) gymId = gym.id
     } else {
-      // 360Dialog
       const parsed = parse360Dialog(payload)
       if (!parsed) return new Response("OK", { status: 200 })
       fromNumber = parsed.from
@@ -82,7 +77,6 @@ export async function POST(request: NextRequest) {
           .single()
         if (gym) gymId = gym.id
       }
-      // Fallback: match by api_token legacy field
       if (!gymId) {
         const { data: gym } = await db
           .from("gyms")
@@ -95,7 +89,6 @@ export async function POST(request: NextRequest) {
       }
     }
   } else {
-    // Twilio (form-encoded)
     const body = await request.text()
     const parsed = parseTwilio(body)
     if (!parsed) return new Response("OK", { status: 200 })
@@ -114,10 +107,11 @@ export async function POST(request: NextRequest) {
 
   if (!gymId || !fromNumber || !userText) return new Response("OK", { status: 200 })
 
-  // ── Process with Claude ───────────────────────────────────────────────────────
+  // ── Load gym ──────────────────────────────────────────────────────────────────
   const { data: gym } = await db.from("gyms").select("*").eq("id", gymId).single()
   if (!gym) return new Response("OK", { status: 200 })
 
+  // ── Load or create conversation ───────────────────────────────────────────────
   const { data: existing } = await db
     .from("conversations")
     .select("*")
@@ -144,34 +138,99 @@ export async function POST(request: NextRequest) {
     { role: "assistant", content: reply, ts: now },
   ]
 
+  // ── Capture lead (person-first) ───────────────────────────────────────────────
   if (!leadCaptured && shouldCaptureLead(userText, history)) {
     leadCaptured = true
     const name = extractName(userText, history)
-    await db.from("leads").insert({
+    const interest = detectInterest(newHistory)
+
+    // 1. Find or create person by WhatsApp number
+    const personId = await upsertPerson(db, gymId, fromNumber, name)
+
+    // 2. Get default pipeline + first stage
+    const { data: pipeline } = await db
+      .from("lead_pipelines")
+      .select("id, lead_pipeline_stages(id, sort_order)")
+      .eq("gym_id", gymId)
+      .eq("is_default", true)
+      .single()
+
+    const stages = (pipeline?.lead_pipeline_stages as { id: string; sort_order: number }[] | null) || []
+    stages.sort((a, b) => a.sort_order - b.sort_order)
+    const firstStageId = stages[0]?.id || null
+
+    // 3. Create lead
+    const { data: lead } = await db.from("leads").insert({
       gym_id: gymId,
       name,
       phone: fromNumber,
-      interest: detectInterest(newHistory),
-    })
+      interest,
+      person_id: personId,
+      pipeline_id: pipeline?.id || null,
+      stage_id: firstStageId,
+      status: "open",
+      last_activity_at: now,
+    }).select("id").single()
+
+    // 4. Log the full conversation as a WhatsApp activity
+    if (lead) {
+      await db.from("activities").insert({
+        gym_id: gymId,
+        lead_id: lead.id,
+        person_id: personId,
+        type: "whatsapp",
+        title: "Conversación inicial WhatsApp",
+        comment: userText,
+        additional: { messages: newHistory },
+        is_done: true,
+      })
+    }
+
+    // 5. Notify via Make.com
     const makeUrl = process.env.MAKE_WEBHOOK_URL
     if (makeUrl) {
       await fetch(makeUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gym: gym.name, lead_name: name, lead_phone: fromNumber, interest: detectInterest(newHistory) }),
+        body: JSON.stringify({
+          gym: gym.name,
+          lead_name: name,
+          lead_phone: fromNumber,
+          interest,
+          stage: "Prospecto",
+        }),
       }).catch(() => {})
+    }
+  } else if (leadCaptured && existing) {
+    // Update activity log for ongoing conversations of known leads
+    const { data: existingLead } = await db
+      .from("leads")
+      .select("id")
+      .eq("gym_id", gymId)
+      .eq("phone", fromNumber)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single()
+
+    if (existingLead) {
+      await db.from("leads")
+        .update({ last_activity_at: now })
+        .eq("id", existingLead.id)
     }
   }
 
+  // ── Save conversation ─────────────────────────────────────────────────────────
   if (existing) {
-    await db.from("conversations").update({ messages: newHistory, lead_captured: leadCaptured }).eq("id", existing.id)
+    await db.from("conversations")
+      .update({ messages: newHistory, lead_captured: leadCaptured })
+      .eq("id", existing.id)
   } else {
-    await db.from("conversations").insert({ gym_id: gymId, from_number: fromNumber, messages: newHistory, lead_captured: leadCaptured })
+    await db.from("conversations")
+      .insert({ gym_id: gymId, from_number: fromNumber, messages: newHistory, lead_captured: leadCaptured })
   }
 
   await sendWhatsAppMessage(gym.provider, gym.provider_config, fromNumber, reply)
 
-  // Twilio expects TwiML response
   if (request.headers.get("x-twilio-signature")) {
     return new Response("<Response></Response>", {
       status: 200,
@@ -180,6 +239,42 @@ export async function POST(request: NextRequest) {
   }
 
   return new Response("OK", { status: 200 })
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function upsertPerson(
+  db: ReturnType<typeof createServiceClient>,
+  gymId: string,
+  phone: string,
+  name: string | null
+): Promise<string | null> {
+  const whatsappEntry = [{ value: phone, label: "whatsapp" }]
+
+  // Try to find existing person by WhatsApp number
+  const { data: existing } = await db
+    .from("persons")
+    .select("id, name")
+    .eq("gym_id", gymId)
+    .contains("contact_numbers", whatsappEntry)
+    .single()
+
+  if (existing) {
+    // Update name if we now know it and didn't before
+    if (name && !existing.name) {
+      await db.from("persons").update({ name, updated_at: new Date().toISOString() }).eq("id", existing.id)
+    }
+    return existing.id
+  }
+
+  // Create new person
+  const { data: created } = await db.from("persons").insert({
+    gym_id: gymId,
+    name,
+    contact_numbers: whatsappEntry,
+  }).select("id").single()
+
+  return created?.id || null
 }
 
 function shouldCaptureLead(userText: string, history: Message[]): boolean {
@@ -192,9 +287,7 @@ function shouldCaptureLead(userText: string, history: Message[]): boolean {
     "quiero", "interesa", "me apunto", "clase",
   ]
   const hasInterest = interestKeywords.some((p) => allText.includes(p))
-  // Has phone number pattern in conversation
   const hasPhone = /\d{7,}/.test(allText)
-  // Has name prefix OR the bot asked for name and got a multi-word response
   const hasNamePrefix = ["soy ", "me llamo ", "mi nombre es "].some((p) => allText.includes(p))
   const botAskedName = history.some(
     (m) => m.role === "assistant" && (m.content.includes("nombre") || m.content.includes("teléfono") || m.content.includes("telefono"))
@@ -204,7 +297,6 @@ function shouldCaptureLead(userText: string, history: Message[]): boolean {
 }
 
 function extractName(userText: string, history: Message[]): string | null {
-  // Only check USER messages for name prefixes (not bot messages)
   const userMessages = history.filter((m) => m.role === "user").map((m) => m.content)
   for (const text of [...userMessages, userText]) {
     for (const prefix of ["soy ", "me llamo ", "mi nombre es "]) {
@@ -215,15 +307,12 @@ function extractName(userText: string, history: Message[]): string | null {
       }
     }
   }
-  // Fallback: bot asked for name → current userText or next user message is the name
   const botAskIdx = history.findLastIndex(
     (m) => m.role === "assistant" && (m.content.includes("nombre") || m.content.includes("teléfono"))
   )
   if (botAskIdx !== -1) {
-    // Check if userText (current message) is the name response
     const firstLine = userText.split("\n")[0].trim()
     if (firstLine.length > 2 && !/^\d+$/.test(firstLine)) return firstLine
-    // Otherwise check next user message in history
     const nextUserMsg = history.slice(botAskIdx + 1).find((m) => m.role === "user")
     if (nextUserMsg) {
       const line = nextUserMsg.content.split("\n")[0].trim()
