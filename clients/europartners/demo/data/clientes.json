@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "nombre": "Constructora Miramar S.A.",
+    "contacto": "Carlos Herrera",
+    "email": "cherrera@miramar.com.pa",
+    "telefono": "+507 6500-1234",
+    "tipo": "Constructora",
+    "historialCompras": 12450.00
+  },
+  {
+    "id": 2,
+    "nombre": "Ferretería La Central",
+    "contacto": "Ana Rodríguez",
+    "email": "arodriguez@lacentral.pa",
+    "telefono": "+507 6711-5678",
+    "tipo": "Distribuidor",
+    "historialCompras": 8720.00
+  },
+  {
+    "id": 3,
+    "nombre": "Diseño & Espacio Interior",
+    "contacto": "Marcela Vargas",
+    "email": "mvargas@disenioyespacio.com",
+    "telefono": "+507 6822-9012",
+    "tipo": "Decoradora",
+    "historialCompras": 5340.00
+  },
+  {
+    "id": 4,
+    "nombre": "Proyectos Residenciales Torres",
+    "contacto": "Roberto Torres",
+    "email": "rtorres@prtorres.com.pa",
+    "telefono": "+507 6933-3456",
+    "tipo": "Constructora",
+    "historialCompras": 22100.00
+  },
+  {
+    "id": 5,
+    "nombre": "Acabados Premium Panamá",
+    "contacto": "Sofía Mendoza",
+    "email": "smendoza@acabadosp.pa",
+    "telefono": "+507 6044-7890",
+    "tipo": "Distribuidor",
+    "historialCompras": 15680.00
+  },
+  {
+    "id": 6,
+    "nombre": "Hotel Pacífico Boutique",
+    "contacto": "Javier Castillo",
+    "email": "jcastillo@hpacifico.com",
+    "telefono": "+507 6155-2345",
+    "tipo": "Hotelería",
+    "historialCompras": 31200.00
+  },
+  {
+    "id": 7,
+    "nombre": "Arq. Patricia Núñez",
+    "contacto": "Patricia Núñez",
+    "email": "pnunez@arquitectura.pa",
+    "telefono": "+507 6266-6789",
+    "tipo": "Arquitecta",
+    "historialCompras": 9870.00
+  },
+  {
+    "id": 8,
+    "nombre": "Condominios Bahía Verde",
+    "contacto": "Luis Espinoza",
+    "email": "lespinoza@bahiaverde.pa",
+    "telefono": "+507 6377-0123",
+    "tipo": "Constructora",
+    "historialCompras": 44500.00
+  }
+]

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Europartners — Lo que vamos a construir juntos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy: #1E3A5F;
+    --gold: #D4A017;
+    --gold-light: #F5D060;
+    --bg: #F5F7FA;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #000;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .slides-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px;
+    text-align: center;
+    transition: opacity 0.4s ease;
+  }
+
+  .slide.active { display: flex; }
+
+  /* ── Slide themes ── */
+  .slide-cover { background: linear-gradient(135deg, #1E3A5F 60%, #0d2240); color: white; }
+  .slide-problem { background: #FFF5F5; color: #1A1A2E; }
+  .slide-solution { background: linear-gradient(135deg, #1E3A5F, #2E5A8F); color: white; }
+  .slide-module { background: var(--bg); color: #1A1A2E; }
+  .slide-module-gold { background: linear-gradient(135deg, #7A5F1E, #A07A10); color: white; }
+  .slide-dashboard { background: linear-gradient(135deg, #1E5F5A, #145A56); color: white; }
+  .slide-timeline { background: var(--bg); color: #1A1A2E; }
+  .slide-changes { background: white; color: #1A1A2E; }
+  .slide-needs { background: linear-gradient(135deg, #1E3A5F, #2E5A8F); color: white; }
+  .slide-cta { background: linear-gradient(135deg, #1E3A5F 40%, var(--gold) 150%); color: white; }
+
+  /* ── Typography ── */
+  .tag {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+
+  .tag-white {
+    background: rgba(255,255,255,0.2);
+    color: white;
+  }
+
+  h1 { font-size: clamp(2.2rem, 4vw, 3.5rem); font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
+  h2 { font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 800; line-height: 1.15; margin-bottom: 16px; }
+  .subtitle { font-size: clamp(1rem, 1.8vw, 1.35rem); opacity: 0.75; max-width: 680px; line-height: 1.5; }
+
+  /* ── Logo ── */
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  .logo-circle {
+    width: 52px; height: 52px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 16px; color: var(--navy);
+  }
+  .logo-text { font-size: 22px; font-weight: 800; letter-spacing: 0.05em; color: white; }
+
+  /* ── Cards ── */
+  .cards-grid {
+    display: grid;
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+    margin-top: 32px;
+  }
+  .cards-2 { grid-template-columns: 1fr 1fr; }
+  .cards-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px 24px;
+    text-align: left;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  }
+
+  .card-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .card-title { font-size: 1.05rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+  .card-text { font-size: 0.88rem; color: #555; line-height: 1.5; }
+
+  /* ── Before/After ── */
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: center;
+    width: 100%;
+    max-width: 860px;
+    margin-top: 32px;
+  }
+  .before-box { background: #FFF0F0; border: 2px solid #FECACA; border-radius: 20px; padding: 28px 24px; text-align: left; }
+  .after-box { background: #F0FFF4; border: 2px solid #A7F3D0; border-radius: 20px; padding: 28px 24px; text-align: left; }
+  .ba-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+  .before-box .ba-label { color: #DC2626; }
+  .after-box .ba-label { color: #15803D; }
+  .ba-list { list-style: none; space: 8px; }
+  .ba-list li { font-size: 0.92rem; padding: 5px 0; display: flex; align-items: flex-start; gap: 8px; }
+  .arrow-big { font-size: 2.5rem; color: #D4A017; font-weight: 900; }
+
+  /* ── Module slide layout ── */
+  .module-content {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    width: 100%;
+    max-width: 960px;
+    text-align: left;
+  }
+  .module-icon-big { font-size: 6rem; flex-shrink: 0; }
+  .module-num {
+    font-size: 7rem;
+    font-weight: 900;
+    opacity: 0.08;
+    position: absolute;
+    top: 30px;
+    right: 50px;
+    color: var(--navy);
+    line-height: 1;
+  }
+
+  /* ── Timeline ── */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 700px;
+    margin-top: 28px;
+    text-align: left;
+  }
+  .timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border-radius: 14px;
+    padding: 14px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .phase-num {
+    width: 36px; height: 36px;
+    background: var(--navy);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .phase-text { flex: 1; }
+  .phase-title { font-weight: 700; font-size: 0.95rem; color: var(--navy); }
+  .phase-desc { font-size: 0.82rem; color: #666; }
+  .phase-time {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    background: #FFF8E7;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* ── Navigation ── */
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+  }
+  .nav-btn {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+  .nav-count {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: rgba(0,0,0,0.3);
+    padding: 6px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+  }
+
+  /* ── Dots ── */
+  .dots {
+    position: fixed;
+    top: 20px;
+    right: 28px;
+    display: flex;
+    gap: 7px;
+    z-index: 100;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .dot.active { background: var(--gold); transform: scale(1.3); }
+
+  /* ── Misc ── */
+  .ep-logo-mini {
+    position: fixed;
+    top: 20px;
+    left: 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.6;
+    z-index: 100;
+  }
+  .ep-logo-mini .c { width: 28px; height: 28px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: var(--navy); }
+  .ep-logo-mini span { color: white; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+
+  .highlight { color: var(--gold); }
+
+  .stat-row {
+    display: flex;
+    gap: 32px;
+    margin-top: 32px;
+  }
+  .stat { text-align: center; }
+  .stat-num { font-size: 3rem; font-weight: 900; color: var(--gold); line-height: 1; }
+  .stat-label { font-size: 0.85rem; opacity: 0.7; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="ep-logo-mini" id="logo-mini">
+  <div class="c">EP</div>
+  <span>EUROPARTNERS</span>
+</div>
+
+<div class="dots" id="dots-container"></div>
+
+<div class="slides-container" id="slides">
+
+  <!-- SLIDE 1: PORTADA -->
+  <div class="slide slide-cover active">
+    <div class="logo">
+      <div class="logo-circle">EP</div>
+      <div class="logo-text">EUROPARTNERS</div>
+    </div>
+    <div class="tag">Presentación del Proyecto</div>
+    <h1>Lo que vamos a<br/>construir juntos</h1>
+    <p class="subtitle" style="margin-top:12px">Un sistema que va a hacer el trabajo aburrido por ustedes —<br/>para que el equipo se enfoque en vender y crecer.</p>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">Módulos</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Excel manuales</div></div>
+      <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Tiempo ahorrado</div></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: EL PROBLEMA -->
+  <div class="slide slide-problem">
+    <div class="tag" style="background:#FEE2E2; color:#DC2626;">El Problema de Hoy</div>
+    <h2>Es como tener una tienda<br/>sin etiquetas de precio<br/>y sin caja registradora</h2>
+    <div class="before-after" style="margin-top:28px; grid-template-columns:1fr;">
+      <div class="before-box" style="max-width:640px; margin:0 auto;">
+        <div class="ba-label">Así funciona hoy Europartners</div>
+        <ul class="ba-list">
+          <li>📄 Los productos están en PDFs imposibles de buscar</li>
+          <li>🧮 Los precios se calculan a mano — un error y la cotización sale mal</li>
+          <li>⏰ Hacer una cotización tarda 30+ minutos de tecleo</li>
+          <li>📋 Las facturas se escriben desde cero, copiando de la cotización</li>
+          <li>🤷 No saben cuánto han vendido ni cuánto les deben en este momento</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: LA SOLUCIÓN -->
+  <div class="slide slide-solution">
+    <div class="tag tag-white">La Solución</div>
+    <h2>Un sistema que hace<br/>automáticamente lo que<br/>hoy hacen a mano</h2>
+    <p class="subtitle" style="margin-top:16px">
+      Está construido sobre herramientas que ya conocen —<br/>
+      <span class="highlight">se parece a Excel pero trabaja solo.</span>
+    </p>
+    <div class="cards-grid cards-2" style="margin-top:36px; max-width:660px;">
+      <div class="card" style="text-align:center;">
+        <div class="card-icon">🏗️</div>
+        <div class="card-title">Construido para ustedes</div>
+        <div class="card-text">No hay que aprender software nuevo. Es familiar desde el primer día.</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="card-icon">🤖</div>
+        <div class="card-title">La IA hace el trabajo</div>
+        <div class="card-text">Extrae datos de PDFs, calcula precios y genera documentos automáticamente.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: MÓDULO 1 -->
+  <div class="slide slide-module" style="position:relative;">
+    <div class="module-num">01</div>
+    <div class="tag">Módulo 1</div>
+    <div class="module-content">
+      <div class="module-icon-big">📦</div>
+      <div>
+        <h2>El Catálogo</h2>
+        <p style="font-size:1.1rem; color:#444; margin-bottom:24px; line-height:1.6;">
+          Todos sus productos — sanitarios, griferías, puertas, espejos, cabinas, gypsum —<br/>
+          en un solo lugar. <strong>Buscas en 2 segundos lo que antes tardabas 10 minutos en encontrar.</strong>
+        </p>
+        <div class="before-after" style="grid-template-columns:1fr auto 1fr; max-width:520px;">
+          <div class="before-box">
+            <div class="ba-label">Antes</div>
+            <ul class="ba-list">
+              <li>❌ 6 PDFs de proveedores</li>
+              <li>❌ Sin poder buscar</li>
+              <li>❌ Info incompleta</li>
+            </ul>
+          </div>
+          <div class="arrow-big">→</div>
+          <div class="after-box">
+            <div class="ba-label">Después</div>
+            <ul class="ba-list">
+              <li>✅ Todo en 1 tabla</li>
+              <li>✅ Búsqueda instantánea</li>
+              <li>✅ Completo y actualizado</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: MÓDULO 2 -->
+  <div class="slide slide-module" style="position:relative;">
+    <div class="module-num">02</div>
+    <div class="tag">Módulo 2</div>
+    <div class="module-content">
+      <div class="module-icon-big">💰</div>
+      <div>
+        <h2>Los Precios</h2>
+        <p style="font-size:1.1rem; color:#444; margin-bottom:24px; line-height:1.6;">
+          Cuando el flete sube o el proveedor cambia el precio FOB,<br/>
+          <strong>el sistema recalcula TODOS los precios automáticamente.</strong><br/>
+          Sin errores. Sin cotizaciones con precios viejos.
+        </p>
+        <div style="background:#EEF2FF; border-radius:16px; padding:16px 20px; max-width:460px;">
+          <p style="font-size:0.85rem; color:#4338CA; font-weight:700; margin-bottom:6px;">LA FÓRMULA QUE SE APLICA SOLA</p>
+          <p style="font-family:monospace; font-size:1rem; color:#312E81;">
+            Precio = (FOB + flete + arancel) × (1 + margen)
+          </p>
+        </div>
+        <p style="margin-top:16px; font-size:0.9rem; color:#888;">
+          ⚡ Si el flete cambia hoy, mañana ya todos los precios están actualizados.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: MÓDULO 3 -->
+  <div class="slide slide-module" style="position:relative;">
+    <div class="module-num">03</div>
+    <div class="tag" style="background:#FEF3C7; color:#92400E;">Módulo 3</div>
+    <div class="module-content">
+      <div class="module-icon-big">📝</div>
+      <div>
+        <h2>El Cotizador</h2>
+        <p style="font-size:1.1rem; color:#444; margin-bottom:24px; line-height:1.6;">
+          Antes: 30 minutos buscando precios, copiando, pegando, calculando.<br/>
+          <strong>Ahora: seleccionas el cliente, buscas los productos y el sistema hace todo lo demás.</strong>
+        </p>
+        <div style="display:flex; gap:16px; align-items:stretch; max-width:520px;">
+          <div style="background:#FEF3C7; border-radius:16px; padding:16px; flex:1; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:6px;">⏱️</div>
+            <div style="font-size:2rem; font-weight:900; color:#92400E;">30 min</div>
+            <div style="font-size:0.8rem; color:#B45309;">Antes</div>
+          </div>
+          <div style="display:flex; align-items:center; font-size:2rem; color:#D4A017;">→</div>
+          <div style="background:#D1FAE5; border-radius:16px; padding:16px; flex:1; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:6px;">⚡</div>
+            <div style="font-size:2rem; font-weight:900; color:#065F46;">2 min</div>
+            <div style="font-size:0.8rem; color:#047857;">Con el sistema</div>
+          </div>
+        </div>
+        <p style="margin-top:16px; font-size:0.88rem; color:#888;">
+          La cotización sale en PDF lista para enviar por correo desde el mismo sistema.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: MÓDULO 4 -->
+  <div class="slide slide-module" style="position:relative;">
+    <div class="module-num">04</div>
+    <div class="tag" style="background:#FCE7F3; color:#9D174D;">Módulo 4</div>
+    <div class="module-content">
+      <div class="module-icon-big">🧾</div>
+      <div>
+        <h2>Las Facturas</h2>
+        <p style="font-size:1.1rem; color:#444; margin-bottom:24px; line-height:1.6;">
+          Cuando el cliente aprueba la cotización,<br/>
+          <strong>un solo botón genera la factura con todos los datos ya llenados.</strong><br/>
+          Sin volver a teclear nada. Sin copiar de un papel a otro.
+        </p>
+        <div class="before-after" style="grid-template-columns:1fr auto 1fr; max-width:520px;">
+          <div class="before-box">
+            <div class="ba-label">Antes</div>
+            <ul class="ba-list">
+              <li>❌ Copiar cotización a factura</li>
+              <li>❌ Riesgo de error manual</li>
+              <li>❌ Sin saber qué facturas están pendientes</li>
+            </ul>
+          </div>
+          <div class="arrow-big">→</div>
+          <div class="after-box">
+            <div class="ba-label">Después</div>
+            <ul class="ba-list">
+              <li>✅ 1 clic genera la factura</li>
+              <li>✅ Datos exactos, sin errores</li>
+              <li>✅ Lista de cobros en tiempo real</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: DASHBOARD -->
+  <div class="slide slide-dashboard">
+    <div class="tag tag-white">El Tablero de Control</div>
+    <h2>Como el velocímetro de un carro<br/>— pero para el negocio</h2>
+    <p class="subtitle" style="margin-top:12px">
+      En cualquier momento pueden ver: cuánto han vendido, cuánto les deben,<br/>qué productos se mueven más y cuántas cotizaciones se convierten en ventas.
+    </p>
+    <div class="cards-grid cards-4" style="margin-top:36px; max-width:900px;">
+      <div class="card" style="text-align:center; padding:20px 16px;">
+        <div style="font-size:2rem; margin-bottom:8px;">📊</div>
+        <div class="card-title" style="font-size:0.9rem;">Cotizaciones<br/>este mes</div>
+      </div>
+      <div class="card" style="text-align:center; padding:20px 16px;">
+        <div style="font-size:2rem; margin-bottom:8px;">🎯</div>
+        <div class="card-title" style="font-size:0.9rem;">Tasa de<br/>conversión</div>
+      </div>
+      <div class="card" style="text-align:center; padding:20px 16px;">
+        <div style="font-size:2rem; margin-bottom:8px;">💵</div>
+        <div class="card-title" style="font-size:0.9rem;">Facturas<br/>por cobrar</div>
+      </div>
+      <div class="card" style="text-align:center; padding:20px 16px;">
+        <div style="font-size:2rem; margin-bottom:8px;">🏆</div>
+        <div class="card-title" style="font-size:0.9rem;">Productos<br/>más vendidos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: TIMELINE -->
+  <div class="slide slide-timeline">
+    <div class="tag">¿Cómo lo vamos a construir?</div>
+    <h2>6 pasos, uno a la vez</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="phase-num">1</div>
+        <div class="phase-text">
+          <div class="phase-title">Base de datos de productos</div>
+          <div class="phase-desc">Digitalizamos todo el catálogo con IA — PDFs adentro, tabla ordenada afuera</div>
+        </div>
+        <div class="phase-time">Semanas 1–2</div>
+      </div>
+      <div class="timeline-item">
+        <div class="phase-num">2</div>
+        <div class="phase-text">
+          <div class="phase-title">Motor de precios</div>
+          <div class="phase-desc">La fórmula de precios queda configurada y se actualiza sola</div>
+        </div>
+        <div class="phase-time">Semana 3</div>
+      </div>
+      <div class="timeline-item">
+        <div class="phase-num">3</div>
+        <div class="phase-text">
+          <div class="phase-title">Base de datos de clientes</div>
+          <div class="phase-desc">Extraemos el historial de cotizaciones y facturas existentes</div>
+        </div>
+        <div class="phase-time">Semana 4</div>
+      </div>
+      <div class="timeline-item">
+        <div class="phase-num">4</div>
+        <div class="phase-text">
+          <div class="phase-title">Cotizador automático</div>
+          <div class="phase-desc">El equipo puede generar cotizaciones en 2 minutos</div>
+        </div>
+        <div class="phase-time">Semanas 5–6</div>
+      </div>
+      <div class="timeline-item">
+        <div class="phase-num">5</div>
+        <div class="phase-text">
+          <div class="phase-title">Facturador</div>
+          <div class="phase-desc">Cotización aprobada → factura en 1 clic</div>
+        </div>
+        <div class="phase-time">Semana 7</div>
+      </div>
+      <div class="timeline-item">
+        <div class="phase-num" style="background: var(--gold); color: var(--navy);">6</div>
+        <div class="phase-text">
+          <div class="phase-title">Dashboard de métricas</div>
+          <div class="phase-desc">Panel de control con todo el negocio en tiempo real</div>
+        </div>
+        <div class="phase-time">Semana 8</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: QUÉ CAMBIA -->
+  <div class="slide slide-changes">
+    <div class="tag">¿Qué cambia para el equipo?</div>
+    <h2>Menos trabajo aburrido,<br/>misma herramienta familiar</h2>
+    <div class="cards-grid cards-2" style="margin-top:28px; max-width:800px;">
+      <div class="card" style="border: 2px solid #FEE2E2;">
+        <div style="font-size:1.5rem; margin-bottom:12px;">❌ Lo que DESAPARECE</div>
+        <ul class="ba-list">
+          <li style="color:#DC2626;">✕ Buscar en PDFs sin encontrar</li>
+          <li style="color:#DC2626;">✕ Calcular precios a mano</li>
+          <li style="color:#DC2626;">✕ Teclear la misma info dos veces</li>
+          <li style="color:#DC2626;">✕ No saber qué facturas están pendientes</li>
+          <li style="color:#DC2626;">✕ Perder cotizaciones en correos</li>
+        </ul>
+      </div>
+      <div class="card" style="border: 2px solid #A7F3D0;">
+        <div style="font-size:1.5rem; margin-bottom:12px;">✅ Lo que NO cambia</div>
+        <ul class="ba-list">
+          <li style="color:#15803D;">✓ Trabajan en algo similar a Excel</li>
+          <li style="color:#15803D;">✓ No hay que aprender software complicado</li>
+          <li style="color:#15803D;">✓ El sistema está en la nube (Google)</li>
+          <li style="color:#15803D;">✓ Funciona desde celular o computador</li>
+          <li style="color:#15803D;">✓ Nosotros los capacitamos paso a paso</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: LO QUE NECESITAMOS -->
+  <div class="slide slide-needs">
+    <div class="tag tag-white">Lo que necesitamos de ustedes</div>
+    <h2>Su información<br/>y dos horas de su tiempo</h2>
+    <div class="cards-grid cards-2" style="margin-top:32px; max-width:700px;">
+      <div class="card" style="text-align:center;">
+        <div class="card-icon">📂</div>
+        <div class="card-title">Los catálogos de proveedores</div>
+        <div class="card-text">Los PDFs que tienen de cada proveedor chino. La IA los lee y los organiza sola.</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Cotizaciones y facturas históricas</div>
+        <div class="card-text">Los archivos de Excel o correos con el historial. Los convertimos en la base de clientes.</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="card-icon">🗣️</div>
+        <div class="card-title">Una reunión de detalles</div>
+        <div class="card-text">1 hora para entender su fórmula de precios exacta y sus procesos actuales.</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="card-icon">✍️</div>
+        <div class="card-title">Feedback en el camino</div>
+        <div class="card-text">Revisiones rápidas para asegurarnos que el sistema se adapte a como trabajan.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: CTA -->
+  <div class="slide slide-cta">
+    <div class="logo" style="margin-bottom:32px;">
+      <div class="logo-circle">EP</div>
+      <div class="logo-text">EUROPARTNERS</div>
+    </div>
+    <div class="tag tag-white">Siguiente Paso</div>
+    <h1>¿Listos para empezar?</h1>
+    <p class="subtitle" style="margin-top:16px; margin-bottom:36px;">
+      El primer paso es una reunión de 1 hora para entender los detalles.<br/>
+      A partir de ahí, construimos juntos.
+    </p>
+    <div class="cards-grid cards-2" style="max-width:560px; gap:16px;">
+      <div class="card" style="text-align:center; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:white;">
+        <div class="card-icon">📅</div>
+        <div class="card-title" style="color:white;">Agendar reunión</div>
+        <div class="card-text" style="color:rgba(255,255,255,0.7);">1 hora para definir los últimos detalles técnicos</div>
+      </div>
+      <div class="card" style="text-align:center; background: var(--gold); color: var(--navy);">
+        <div class="card-icon">🚀</div>
+        <div class="card-title" style="color: var(--navy);">Demo en vivo</div>
+        <div class="card-text" style="color:rgba(0,0,0,0.6);">Ver el sistema funcionando con datos de Europartners</div>
+      </div>
+    </div>
+    <p style="margin-top:40px; opacity:0.5; font-size:0.8rem;">Presentado por Nexora IA · Junio 2026</p>
+  </div>
+
+</div><!-- /slides-container -->
+
+<nav class="nav">
+  <button class="nav-btn" onclick="prevSlide()">←</button>
+  <span class="nav-count" id="nav-count">1 / 12</span>
+  <button class="nav-btn" onclick="nextSlide()">→</button>
+</nav>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('dots-container');
+  const navCount = document.getElementById('nav-count');
+  let current = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsContainer.appendChild(d);
+  });
+
+  function goTo(idx) {
+    slides[current].classList.remove('active');
+    document.querySelectorAll('.dot')[current].classList.remove('active');
+    current = (idx + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot')[current].classList.add('active');
+    navCount.textContent = `${current + 1} / ${slides.length}`;
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
+  });
+
+  // Touch/swipe
+  let startX = 0;
+  document.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) diff > 0 ? nextSlide() : prevSlide();
+  });
+
+  // Click anywhere to advance (except nav)
+  document.getElementById('slides').addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-btn')) nextSlide();
+  });
+</script>
+</body>
+</html>

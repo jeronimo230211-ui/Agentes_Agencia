@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ep-navy: #1E3A5F;
+  --ep-gold: #D4A017;
+  --ep-gold-light: #F0C040;
+  --ep-light: #F5F7FA;
+  --ep-text: #1A1A2E;
+  --background: #F5F7FA;
+  --foreground: #1A1A2E;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.ep-badge-activo {
+  @apply bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full;
+}
+.ep-badge-descontinuado {
+  @apply bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full;
+}
+.ep-badge-pendiente {
+  @apply bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

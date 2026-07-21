@@ -1,0 +1,22 @@
+{
+  "name": "europartners-migrate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate": "node --experimental-vm-modules index.js",
+    "migrate:hl": "node index.js --cliente hl",
+    "migrate:designer": "node index.js --cliente designer",
+    "migrate:er": "node index.js --cliente er",
+    "migrate:hjb": "node index.js --cliente hjb",
+    "migrate:prohardware": "node index.js --cliente prohardware"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.10",
+    "dotenv": "^16.4.7",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "adm-zip": "^0.5.18"
+  }
+}
