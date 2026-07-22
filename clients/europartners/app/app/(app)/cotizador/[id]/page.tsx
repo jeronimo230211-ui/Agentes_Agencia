@@ -14,8 +14,7 @@ interface Categoria { id: string; nombre: string; orden: number }
 
 interface ProductoOpcion {
   id: string
-  codigo_tangshan: string
-  codigo_interno: string
+  codigo: string
   descripcion: string
   precio_fob_usd: number
   categoria: { nombre: string }
@@ -131,7 +130,7 @@ function SelectorProductoModal({
                     className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
                   >
                     <td className="p-3 font-mono text-xs text-gray-600">
-                      {p.codigo_tangshan || p.codigo_interno || '—'}
+                      {p.codigo || '—'}
                     </td>
                     <td className="p-3">{p.descripcion}</td>
                     <td className="p-3 text-right text-gray-500">{formatUSD(p.precio_fob_usd || 0)}</td>
@@ -249,7 +248,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       return {
         ...l,
         producto_id: producto.id,
-        codigo_pdf: producto.codigo_tangshan || producto.codigo_interno || '',
+        codigo_pdf: producto.codigo || '',
         descripcion_pdf: producto.descripcion,
         precio_costo_usd: producto.precio_fob_usd || 0,
         precio_cliente_usd: precioCliente,

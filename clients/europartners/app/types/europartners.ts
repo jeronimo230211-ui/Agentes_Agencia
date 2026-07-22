@@ -42,8 +42,7 @@ export interface Producto {
   id: string
   categoria_id?: string
   categoria?: CategoriaProducto
-  codigo_tangshan?: string
-  codigo_interno?: string
+  codigo?: string
   descripcion: string
   proveedor: string
   precio_fob_usd?: number
