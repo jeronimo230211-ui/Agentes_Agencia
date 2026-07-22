@@ -187,7 +187,7 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <div className="flex gap-3 mt-6 mb-10">
-        <Link href="/cotizador/nueva"
+        <Link href="/proformas"
           className="px-5 py-2.5 rounded-lg font-medium text-sm text-white flex items-center gap-2"
           style={{ background: '#1E3A5F' }}>
           <FileText size={16} />
