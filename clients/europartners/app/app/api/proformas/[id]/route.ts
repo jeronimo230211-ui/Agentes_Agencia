@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       aprobador:usuarios!aprobada_por(id, nombre),
       lineas:proforma_lineas(
         *,
-        producto:productos(id, codigo, descripcion),
+        producto:productos(id, codigo, descripcion, precio_fob_usd, precio_mayorista, precio_detallista),
         variante:producto_variantes(id, variante),
         componente:producto_componentes(id, componente)
       ),

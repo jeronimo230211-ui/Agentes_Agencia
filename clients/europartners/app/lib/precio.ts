@@ -1,4 +1,4 @@
-import type { ParametrosPrecio, PrecioCalculado } from '@/types/europartners'
+import type { ParametrosPrecio, PrecioCalculado, TipoPrecio } from '@/types/europartners'
 
 export function calcPrecioCliente(
   fob: number,
@@ -24,6 +24,17 @@ export function calcPrecioCliente(
 export function calcMargen(precio_costo: number, precio_cliente: number): number {
   if (!precio_costo || precio_costo === 0) return 0
   return (precio_cliente / precio_costo) - 1
+}
+
+// Precio ya calculado por producto (productos.precio_mayorista / precio_detallista),
+// no un margen fijo — cada producto puede tener un margen distinto según cuándo se cargó.
+export function precioPorTipo(
+  precioMayorista: number | null | undefined,
+  precioDetallista: number | null | undefined,
+  tipo: TipoPrecio
+): number | undefined {
+  const valor = tipo === 'mayorista' ? precioMayorista : precioDetallista
+  return valor ?? undefined
 }
 
 export function formatUSD(amount: number): string {

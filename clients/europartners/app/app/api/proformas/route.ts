@@ -59,10 +59,10 @@ export async function POST(req: NextRequest) {
 
   if (!cliente_id) return NextResponse.json({ error: 'cliente_id requerido' }, { status: 400 })
 
-  // Obtener cliente para copiar incoterm y modo_pricing por defecto
+  // Obtener cliente para copiar incoterm, modo_pricing y tipo_precio por defecto
   const { data: cliente } = await supabase
     .from('clientes')
-    .select('incoterm, modo_pricing')
+    .select('incoterm, modo_pricing, tipo')
     .eq('id', cliente_id)
     .single()
 
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       creada_por: session.user.id,
       incoterm: cliente?.incoterm || 'FOB',
       modo_pricing: cliente?.modo_pricing || 'set',
+      tipo_precio: cliente?.tipo || 'mayorista',
       estado: 'borrador',
       fecha: new Date().toISOString().split('T')[0],
       fecha_vencimiento: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

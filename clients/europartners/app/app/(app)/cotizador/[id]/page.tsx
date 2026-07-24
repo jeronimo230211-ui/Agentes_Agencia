@@ -7,8 +7,8 @@ import {
   Search, X, Package,
 } from 'lucide-react'
 import Link from 'next/link'
-import { formatUSD, formatPct, calcMargen } from '@/lib/precio'
-import type { Proforma, ProformaLinea, HistorialPrecio } from '@/types/europartners'
+import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
+import type { Proforma, ProformaLinea, HistorialPrecio, TipoPrecio } from '@/types/europartners'
 
 interface Categoria { id: string; nombre: string; orden: number }
 
@@ -17,6 +17,8 @@ interface ProductoOpcion {
   codigo: string
   descripcion: string
   precio_fob_usd: number
+  precio_mayorista?: number
+  precio_detallista?: number
   categoria: { nombre: string }
 }
 
@@ -24,15 +26,19 @@ interface LineaEditable extends Partial<ProformaLinea> {
   _key: string
   _historial?: HistorialPrecio[]
   _cantidadStr: string
+  _precioMayorista?: number
+  _precioDetallista?: number
 }
+
+const labelTipo = (t: TipoPrecio) => (t === 'mayorista' ? 'Mayorista' : 'Detallista')
 
 // ─── Selector de Producto ─────────────────────────────────────────────────────
 function SelectorProductoModal({
-  clienteMargen,
+  tipoPrecio,
   onSelect,
   onClose,
 }: {
-  clienteMargen: number
+  tipoPrecio: TipoPrecio
   onSelect: (p: ProductoOpcion) => void
   onClose: () => void
 }) {
@@ -118,31 +124,161 @@ function SelectorProductoModal({
                   <th className="text-left p-3 font-medium text-gray-500">Descripción</th>
                   <th className="text-right p-3 font-medium text-gray-500">FOB China</th>
                   <th className="text-right p-3 font-medium text-gray-500">
-                    P. Cliente ({Math.round(clienteMargen * 100)}%)
+                    P. Cliente ({labelTipo(tipoPrecio)})
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {productos.map(p => (
-                  <tr
-                    key={p.id}
-                    onClick={() => onSelect(p)}
-                    className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
-                  >
-                    <td className="p-3 font-mono text-xs text-gray-600">
-                      {p.codigo || '—'}
-                    </td>
-                    <td className="p-3">{p.descripcion}</td>
-                    <td className="p-3 text-right text-gray-500">{formatUSD(p.precio_fob_usd || 0)}</td>
-                    <td className="p-3 text-right font-medium text-[#1E3A5F]">
-                      {formatUSD((p.precio_fob_usd || 0) * (1 + clienteMargen))}
-                    </td>
-                  </tr>
-                ))}
+                {productos.map(p => {
+                  const precioSugerido = precioPorTipo(p.precio_mayorista, p.precio_detallista, tipoPrecio)
+                  return (
+                    <tr
+                      key={p.id}
+                      onClick={() => onSelect(p)}
+                      className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
+                    >
+                      <td className="p-3 font-mono text-xs text-gray-600">
+                        {p.codigo || '—'}
+                      </td>
+                      <td className="p-3">{p.descripcion}</td>
+                      <td className="p-3 text-right text-gray-500">{formatUSD(p.precio_fob_usd || 0)}</td>
+                      <td className="p-3 text-right font-medium text-[#1E3A5F]">
+                        {precioSugerido !== undefined ? formatUSD(precioSugerido) : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Modal cambio de tipo de precio ────────────────────────────────────────────
+function ModalCambioTipoPrecio({
+  actual,
+  nuevo,
+  lineas,
+  onCancel,
+  onConfirmar,
+}: {
+  actual: TipoPrecio
+  nuevo: TipoPrecio
+  lineas: LineaEditable[]
+  onCancel: () => void
+  onConfirmar: (alcance: 'todas' | string[]) => void
+}) {
+  const [paso, setPaso] = useState<'alcance' | 'seleccion'>('alcance')
+  const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set())
+
+  const lineasConProducto = lineas.filter(l => l.producto_id)
+  const lineasSinProducto = lineas.length - lineasConProducto.length
+
+  function toggle(key: string) {
+    setSeleccionadas(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{ maxHeight: '80vh' }}>
+        <div className="p-4 border-b border-gray-100 flex-none">
+          <h3 className="font-bold text-[#1E3A5F]">Cambiar tipo de precio</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Estás a punto de cambiar de <strong>{labelTipo(actual)}</strong> a <strong>{labelTipo(nuevo)}</strong>.
+            {paso === 'alcance'
+              ? ' ¿Vas a cambiar toda la proforma o deseas cambiar productos específicos?'
+              : ' Marca los productos que quieres actualizar al nuevo precio.'}
+          </p>
+        </div>
+
+        {paso === 'alcance' ? (
+          <>
+            <div className="p-4 flex flex-col gap-2">
+              <button
+                onClick={() => onConfirmar('todas')}
+                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#1E3A5F] hover:bg-blue-50 transition-colors"
+              >
+                <p className="font-medium text-gray-800 text-sm">Cambiar toda la proforma</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Recalcula el precio de todas las líneas con producto vinculado
+                  {lineasSinProducto > 0 ? ` (${lineasSinProducto} sin producto no se tocan)` : ''}.
+                </p>
+              </button>
+              <button
+                onClick={() => setPaso('seleccion')}
+                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#1E3A5F] hover:bg-blue-50 transition-colors"
+              >
+                <p className="font-medium text-gray-800 text-sm">Seleccionar productos específicos</p>
+                <p className="text-xs text-gray-500 mt-0.5">Elige uno a uno cuáles líneas actualizar.</p>
+              </button>
+            </div>
+            <div className="p-4 border-t border-gray-100 flex justify-end flex-none">
+              <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+                Cancelar
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="overflow-y-auto flex-1 p-2">
+              {lineasConProducto.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center p-6">
+                  Ninguna línea tiene un producto del catálogo vinculado.
+                </p>
+              ) : (
+                lineasConProducto.map(l => (
+                  <label
+                    key={l._key}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={seleccionadas.has(l._key)}
+                      onChange={() => toggle(l._key)}
+                      className="flex-none"
+                    />
+                    <span className="font-mono text-xs text-gray-500 w-20 flex-none">{l.codigo_pdf || '—'}</span>
+                    <span className="text-sm text-gray-700 flex-1 truncate">{l.descripcion_pdf}</span>
+                    <span className="text-sm font-medium text-gray-600 flex-none">
+                      {formatUSD(l.precio_cliente_usd || 0)}
+                    </span>
+                  </label>
+                ))
+              )}
+              {lineasSinProducto > 0 && (
+                <p className="text-xs text-gray-400 px-3 pt-2">
+                  {lineasSinProducto} línea{lineasSinProducto > 1 ? 's' : ''} sin producto vinculado — edítalas a mano si aplica.
+                </p>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-100 flex justify-between flex-none">
+              <div className="flex gap-4">
+                <button onClick={() => setPaso('alcance')} className="text-sm text-gray-500 hover:text-gray-700">
+                  Atrás
+                </button>
+                <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+                  Cancelar
+                </button>
+              </div>
+              <button
+                onClick={() => onConfirmar(Array.from(seleccionadas))}
+                disabled={seleccionadas.size === 0}
+                className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-40"
+                style={{ background: '#1E3A5F' }}
+              >
+                Aplicar a seleccionados ({seleccionadas.size})
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -153,6 +289,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const router = useRouter()
   const [proforma, setProforma] = useState<Proforma | null>(null)
   const [lineas, setLineas] = useState<LineaEditable[]>([])
+  const [tipoPrecio, setTipoPrecio] = useState<TipoPrecio>('mayorista')
+  const [cambioTipoPendiente, setCambioTipoPendiente] = useState<TipoPrecio | null>(null)
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [guardadoOk, setGuardadoOk] = useState(false)
@@ -166,10 +304,13 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     const { data } = await res.json()
     if (data) {
       setProforma(data)
+      setTipoPrecio(data.tipo_precio || data.cliente?.tipo || 'mayorista')
       setLineas((data.lineas || []).map((l: ProformaLinea) => ({
         ...l,
         _key: l.id,
         _cantidadStr: String(l.cantidad ?? 1),
+        _precioMayorista: l.producto?.precio_mayorista,
+        _precioDetallista: l.producto?.precio_detallista,
       })))
     }
     setLoading(false)
@@ -179,7 +320,6 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
   function agregarLinea() {
     const key = `new-${Date.now()}`
-    const margenDefault = proforma?.cliente?.margenes_categoria?.default ?? 0.15
     setLineas(prev => [...prev, {
       _key: key,
       _cantidadStr: '1',
@@ -188,7 +328,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       cantidad: 1,
       precio_costo_usd: undefined,
       precio_cliente_usd: undefined,
-      margen_pct: margenDefault,
+      margen_pct: undefined,
     }])
   }
 
@@ -240,8 +380,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
   function seleccionarProducto(producto: ProductoOpcion) {
     if (!lineaParaSelector) return
-    const margenDefault = proforma?.cliente?.margenes_categoria?.default ?? 0.15
-    const precioCliente = (producto.precio_fob_usd || 0) * (1 + margenDefault)
+    const precioCosto = producto.precio_fob_usd || 0
+    const precioCliente = precioPorTipo(producto.precio_mayorista, producto.precio_detallista, tipoPrecio)
 
     setLineas(prev => prev.map(l => {
       if (l._key !== lineaParaSelector) return l
@@ -250,14 +390,42 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         producto_id: producto.id,
         codigo_pdf: producto.codigo || '',
         descripcion_pdf: producto.descripcion,
-        precio_costo_usd: producto.precio_fob_usd || 0,
+        precio_costo_usd: precioCosto,
         precio_cliente_usd: precioCliente,
-        margen_pct: margenDefault,
+        margen_pct: precioCliente !== undefined ? calcMargen(precioCosto, precioCliente) : undefined,
+        _precioMayorista: producto.precio_mayorista,
+        _precioDetallista: producto.precio_detallista,
       }
     }))
 
     setSelectorAbierto(false)
     setLineaParaSelector(null)
+  }
+
+  function solicitarCambioTipoPrecio(nuevo: TipoPrecio) {
+    if (!puedeEditar || nuevo === tipoPrecio) return
+    if (lineas.length === 0) {
+      setTipoPrecio(nuevo)
+      return
+    }
+    setCambioTipoPendiente(nuevo)
+  }
+
+  function aplicarCambioTipo(nuevo: TipoPrecio, alcance: 'todas' | string[]) {
+    const keys = alcance === 'todas' ? null : new Set(alcance)
+    setLineas(prev => prev.map(l => {
+      if (!l.producto_id) return l
+      if (keys && !keys.has(l._key)) return l
+      const precioNuevo = precioPorTipo(l._precioMayorista, l._precioDetallista, nuevo)
+      if (precioNuevo === undefined) return l
+      return {
+        ...l,
+        precio_cliente_usd: precioNuevo,
+        margen_pct: l.precio_costo_usd ? calcMargen(l.precio_costo_usd, precioNuevo) : l.margen_pct,
+      }
+    }))
+    setTipoPrecio(nuevo)
+    setCambioTipoPendiente(null)
   }
 
   async function guardar() {
@@ -284,7 +452,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     const res = await fetch(`/api/proformas/${proforma.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lineas: lineasData }),
+      body: JSON.stringify({ lineas: lineasData, tipo_precio: tipoPrecio }),
     })
 
     if (!res.ok) {
@@ -327,7 +495,6 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const puedeEditar = proforma?.estado === 'borrador' || proforma?.estado === 'rechazada'
   const puedeEnviarRevision = puedeEditar && lineas.length > 0
   const puedeEnviarCliente = proforma?.estado === 'aprobada'
-  const margenDefault = proforma?.cliente?.margenes_categoria?.default ?? 0.15
 
   if (loading) {
     return (
@@ -346,9 +513,20 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       {/* Modal Selector */}
       {selectorAbierto && (
         <SelectorProductoModal
-          clienteMargen={margenDefault}
+          tipoPrecio={tipoPrecio}
           onSelect={seleccionarProducto}
           onClose={() => setSelectorAbierto(false)}
+        />
+      )}
+
+      {/* Modal cambio de tipo de precio */}
+      {cambioTipoPendiente && (
+        <ModalCambioTipoPrecio
+          actual={tipoPrecio}
+          nuevo={cambioTipoPendiente}
+          lineas={lineas}
+          onCancel={() => setCambioTipoPendiente(null)}
+          onConfirmar={(alcance) => aplicarCambioTipo(cambioTipoPendiente, alcance)}
         />
       )}
 
@@ -426,6 +604,27 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               {enviando ? 'Enviando...' : 'Enviar al Cliente'}
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Tipo de precio */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-xs text-gray-400 font-medium">Tipo de precio:</span>
+        <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+          {(['mayorista', 'detallista'] as TipoPrecio[]).map(t => (
+            <button
+              key={t}
+              type="button"
+              disabled={!puedeEditar}
+              onClick={() => solicitarCambioTipoPrecio(t)}
+              className={`px-3 py-1.5 transition-colors ${
+                tipoPrecio === t ? 'text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+              } ${!puedeEditar ? 'opacity-60 cursor-not-allowed' : ''}`}
+              style={tipoPrecio === t ? { background: '#1E3A5F' } : undefined}
+            >
+              {labelTipo(t)}
+            </button>
+          ))}
         </div>
       </div>
 

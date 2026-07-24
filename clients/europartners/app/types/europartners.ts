@@ -1,6 +1,7 @@
 export type Rol = 'operaciones' | 'admin' | 'analista'
 export type Incoterm = 'FOB' | 'CFR' | 'CIF'
 export type ModoPricing = 'set' | 'componente'
+export type TipoPrecio = 'mayorista' | 'detallista'
 export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada'
 export type EstadoProducto = 'activo' | 'descontinuado' | 'pendiente'
 
@@ -26,7 +27,9 @@ export interface Cliente {
   modo_pricing: ModoPricing
   usa_numeracion_propia: boolean
   prefijo_numeracion?: string
-  margenes_categoria: Record<string, number>
+  tipo: TipoPrecio
+  margen_min: number
+  margen_max: number
   issuer_pdf: string
   notas?: string
   activo: boolean
@@ -47,6 +50,8 @@ export interface Producto {
   proveedor: string
   precio_fob_usd?: number
   precio_fob_fecha?: string
+  precio_mayorista?: number
+  precio_detallista?: number
   cbm_unitario?: number
   estado: EstadoProducto
   variantes?: ProductoVariante[]
@@ -115,6 +120,7 @@ export interface Proforma {
   fecha_vencimiento?: string
   incoterm: Incoterm
   modo_pricing: ModoPricing
+  tipo_precio: TipoPrecio
   total_fob_usd?: number
   total_flete_usd?: number
   total_cif_usd?: number
