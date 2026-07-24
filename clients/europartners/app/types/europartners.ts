@@ -1,4 +1,4 @@
-export type Rol = 'operaciones' | 'admin' | 'analista'
+export type Rol = 'operaciones' | 'admin' | 'analista' | 'diseñadora'
 export type Incoterm = 'FOB' | 'CFR' | 'CIF'
 export type ModoPricing = 'set' | 'componente'
 export type TipoPrecio = 'mayorista' | 'detallista'

@@ -11,15 +11,15 @@ import { supabase } from '@/lib/supabase'
 import type { Usuario } from '@/types/europartners'
 
 const navItems = [
-  { href: '/dashboard',  label: 'Dashboard',        icon: LayoutDashboard, roles: ['operaciones', 'admin', 'analista'] as string[] },
-  { href: '/solicitudes', label: 'Solicitudes',     icon: Inbox,           roles: ['operaciones', 'admin', 'analista'] as string[] },
-  { href: '/proformas',  label: 'Proformas',         icon: ClipboardList,   roles: ['operaciones', 'admin', 'analista'] as string[] },
-  { href: '/despachos',  label: 'Despachos',         icon: Ship,            roles: ['operaciones', 'admin', 'analista'] as string[] },
-  { href: '/catalogo',   label: 'Catálogo',          icon: BookOpen,        roles: ['operaciones', 'admin', 'analista'] as string[] },
-  { href: '/precios',    label: 'Motor de Precios',  icon: DollarSign,      roles: ['operaciones', 'admin', 'analista'] as string[] },
+  { href: '/dashboard',  label: 'Dashboard',        icon: LayoutDashboard, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
+  { href: '/solicitudes', label: 'Solicitudes',     icon: Inbox,           roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
+  { href: '/proformas',  label: 'Proformas',         icon: ClipboardList,   roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
+  { href: '/despachos',  label: 'Despachos',         icon: Ship,            roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
+  { href: '/catalogo',   label: 'Catálogo',          icon: BookOpen,        roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
+  { href: '/precios',    label: 'Motor de Precios',  icon: DollarSign,      roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
   { href: '/aprobacion', label: 'Aprobaciones',      icon: CheckSquare,     roles: ['admin'] as string[] },
-  { href: '/historial',  label: 'Historial Precios', icon: History,         roles: ['operaciones', 'admin', 'analista'] as string[] },
-  { href: '/reportes',   label: 'Reportes',          icon: BarChart3,       roles: ['admin', 'analista'] as string[] },
+  { href: '/historial',  label: 'Historial Precios', icon: History,         roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
+  { href: '/reportes',   label: 'Reportes',          icon: BarChart3,       roles: ['admin', 'analista', 'diseñadora'] as string[] },
   { href: '/facturador', label: 'Facturador',        icon: Receipt,         roles: ['admin'] as string[] },
 ]
 
