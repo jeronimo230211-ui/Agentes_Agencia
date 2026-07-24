@@ -34,6 +34,11 @@ export async function POST(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
+  const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado para crear despachos' }, { status: 403 })
+  }
+
   const { proforma_id } = await req.json()
   if (!proforma_id) return NextResponse.json({ error: 'proforma_id requerido' }, { status: 400 })
 

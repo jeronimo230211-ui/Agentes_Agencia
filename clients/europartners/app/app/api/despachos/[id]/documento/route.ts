@@ -16,6 +16,11 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
+  const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado para subir documentos de despacho' }, { status: 403 })
+  }
+
   const formData = await req.formData()
   const tipo = formData.get('tipo') as string | null
   const archivo = formData.get('archivo') as File | null
