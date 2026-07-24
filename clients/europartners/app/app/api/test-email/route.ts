@@ -6,7 +6,17 @@ import { cookies } from 'next/headers'
 const FROM = process.env.EMAIL_FROM || 'Europartners <onboarding@resend.dev>'
 
 // GET /api/test-email?to=deisy@... — si no se pasa `to`, envía al admin (Marta)
+// Requiere sesión admin: dispara correos reales desde la cuenta Resend de la agencia.
 export async function GET(req: NextRequest) {
+  const supabase = createRouteHandlerClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
+  if (usuario?.rol !== 'admin') {
+    return NextResponse.json({ error: 'Solo admin puede usar este endpoint' }, { status: 403 })
+  }
+
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'RESEND_API_KEY no configurada' }, { status: 500 })
 
@@ -14,7 +24,6 @@ export async function GET(req: NextRequest) {
   let to = searchParams.get('to')
 
   if (!to) {
-    const supabase = createRouteHandlerClient({ cookies })
     const { data: marta } = await supabase.from('usuarios').select('email').eq('rol', 'admin').eq('activo', true).limit(1).single()
     to = marta?.email || null
   }

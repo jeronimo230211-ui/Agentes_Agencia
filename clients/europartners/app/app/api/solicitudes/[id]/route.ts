@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 
 type Params = { params: { id: string } }
@@ -45,7 +46,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'La solicitud ya fue convertida en proforma' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  // RLS de `solicitudes` solo permite update a service_role.
+  const { data, error } = await createAdminClient()
     .from('solicitudes')
     .update({ estado, revisada_por: session.user.id, updated_at: new Date().toISOString() })
     .eq('id', params.id)

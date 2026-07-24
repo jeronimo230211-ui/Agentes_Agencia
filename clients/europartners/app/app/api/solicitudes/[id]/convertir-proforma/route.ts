@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { calcMargen } from '@/lib/precio'
 
@@ -84,7 +85,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
     await supabase.from('proforma_lineas').insert(lineasInsert)
   }
 
-  await supabase
+  // RLS de `solicitudes` solo permite update a service_role — el cliente de
+  // sesión normal falla en silencio aquí (0 filas afectadas, sin error).
+  const { data: solicitudActualizada, error: updateError } = await createAdminClient()
     .from('solicitudes')
     .update({
       estado: 'convertida',
@@ -93,6 +96,15 @@ export async function POST(_req: NextRequest, { params }: Params) {
       updated_at: new Date().toISOString(),
     })
     .eq('id', params.id)
+    .select()
+    .single()
+
+  if (updateError || !solicitudActualizada) {
+    return NextResponse.json(
+      { error: `Proforma creada (${proforma.id}) pero no se pudo marcar la solicitud como convertida: ${updateError?.message || 'sin filas afectadas'}` },
+      { status: 500 }
+    )
+  }
 
   return NextResponse.json({ data: proforma }, { status: 201 })
 }

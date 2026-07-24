@@ -38,6 +38,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
+  const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado para editar proformas' }, { status: 403 })
+  }
+
   const body = await req.json()
 
   // Solo se puede editar en estado borrador o rechazada
@@ -88,6 +93,11 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado para eliminar proformas' }, { status: 403 })
+  }
 
   const { data: current } = await supabase
     .from('proformas')
