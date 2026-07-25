@@ -4,6 +4,7 @@ import {
   Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
   Copy, CheckCircle2,
 } from 'lucide-react'
+import { useRol } from '@/lib/useRol'
 
 interface Cliente { id: string; nombre: string; token_solicitud: string }
 interface Producto { id: string; codigo: string; nombre: string; imagen_url: string | null }
@@ -36,6 +37,7 @@ function fechaCorta(iso: string) {
 }
 
 export default function SolicitudesPage() {
+  const { puedeEditar } = useRol()
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
   const [loading, setLoading] = useState(true)
@@ -222,7 +224,7 @@ export default function SolicitudesPage() {
               )}
             </div>
 
-            {seleccionada.estado !== 'convertida' && seleccionada.estado !== 'descartada' && (
+            {puedeEditar && seleccionada.estado !== 'convertida' && seleccionada.estado !== 'descartada' && (
               <div className="p-5 border-t border-gray-100 flex gap-3">
                 <button
                   onClick={() => convertir(seleccionada)}

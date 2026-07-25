@@ -14,6 +14,11 @@ export async function POST(_req: NextRequest, { params }: Params) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
+  const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado para convertir solicitudes' }, { status: 403 })
+  }
+
   const { data: solicitud } = await supabase
     .from('solicitudes')
     .select(`

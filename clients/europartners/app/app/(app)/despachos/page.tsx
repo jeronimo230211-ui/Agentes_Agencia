@@ -5,6 +5,7 @@ import {
   ChevronRight, AlertTriangle,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
+import { useRol } from '@/lib/useRol'
 
 interface ClienteMini { id: string; nombre: string; slug?: string }
 interface ProformaMini {
@@ -58,6 +59,7 @@ function otifBadge(d: Despacho) {
 }
 
 export default function DespachosPage() {
+  const { puedeEditar } = useRol()
   const [despachos, setDespachos] = useState<Despacho[]>([])
   const [proformas, setProformas] = useState<ProformaMini[]>([])
   const [loading, setLoading] = useState(true)
@@ -152,13 +154,15 @@ export default function DespachosPage() {
             <h1 className="text-2xl font-bold text-[#1E3A5F]">Despachos</h1>
             <p className="text-gray-400 text-sm mt-0.5">Logística y tránsito del contenedor</p>
           </div>
-          <button
-            onClick={() => { setShowNuevo(true); cargarProformasElegibles() }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm text-white"
-            style={{ background: '#D4A017', color: '#1E3A5F' }}
-          >
-            <Plus size={16} /> Nuevo despacho
-          </button>
+          {puedeEditar && (
+            <button
+              onClick={() => { setShowNuevo(true); cargarProformasElegibles() }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm text-white"
+              style={{ background: '#D4A017', color: '#1E3A5F' }}
+            >
+              <Plus size={16} /> Nuevo despacho
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -290,6 +294,7 @@ export default function DespachosPage() {
       {seleccionado && (
         <DetalleDespacho
           despacho={seleccionado}
+          puedeEditar={puedeEditar}
           onClose={() => setSeleccionado(null)}
           onCampo={actualizarCampo}
           onDocumento={subirDocumento}
@@ -300,9 +305,10 @@ export default function DespachosPage() {
 }
 
 function DetalleDespacho({
-  despacho, onClose, onCampo, onDocumento,
+  despacho, puedeEditar, onClose, onCampo, onDocumento,
 }: {
   despacho: Despacho
+  puedeEditar: boolean
   onClose: () => void
   onCampo: (id: string, campo: string, valor: string) => void
   onDocumento: (id: string, tipo: string, archivo: File) => void
@@ -328,8 +334,9 @@ function DetalleDespacho({
               {ESTADOS.map(e => (
                 <button
                   key={e}
+                  disabled={!puedeEditar}
                   onClick={() => onCampo(despacho.id, 'estado', e)}
-                  className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
+                  className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                     despacho.estado === e ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200'
                   }`}
                 >
@@ -340,23 +347,23 @@ function DetalleDespacho({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <CampoTexto label="Naviera" valor={despacho.naviera} onChange={v => onCampo(despacho.id, 'naviera', v)} />
-            <CampoTexto label="No. BL" valor={despacho.numero_bl} onChange={v => onCampo(despacho.id, 'numero_bl', v)} />
-            <CampoTexto label="Puerto origen" valor={despacho.puerto_origen} onChange={v => onCampo(despacho.id, 'puerto_origen', v)} />
-            <CampoTexto label="Puerto destino" valor={despacho.puerto_destino} onChange={v => onCampo(despacho.id, 'puerto_destino', v)} />
-            <CampoFecha label="Fecha despacho" valor={despacho.fecha_despacho} onChange={v => onCampo(despacho.id, 'fecha_despacho', v)} />
-            <CampoFecha label="Llegada estimada" valor={despacho.fecha_llegada_estimada} onChange={v => onCampo(despacho.id, 'fecha_llegada_estimada', v)} />
-            <CampoFecha label="Llegada real" valor={despacho.fecha_llegada_real} onChange={v => onCampo(despacho.id, 'fecha_llegada_real', v)} />
-            <CampoTexto label="Shipping fee USD" valor={despacho.shipping_fee_usd?.toString()} onChange={v => onCampo(despacho.id, 'shipping_fee_usd', v)} />
+            <CampoTexto label="Naviera" valor={despacho.naviera} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'naviera', v)} />
+            <CampoTexto label="No. BL" valor={despacho.numero_bl} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'numero_bl', v)} />
+            <CampoTexto label="Puerto origen" valor={despacho.puerto_origen} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'puerto_origen', v)} />
+            <CampoTexto label="Puerto destino" valor={despacho.puerto_destino} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'puerto_destino', v)} />
+            <CampoFecha label="Fecha despacho" valor={despacho.fecha_despacho} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'fecha_despacho', v)} />
+            <CampoFecha label="Llegada estimada" valor={despacho.fecha_llegada_estimada} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'fecha_llegada_estimada', v)} />
+            <CampoFecha label="Llegada real" valor={despacho.fecha_llegada_real} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'fecha_llegada_real', v)} />
+            <CampoTexto label="Shipping fee USD" valor={despacho.shipping_fee_usd?.toString()} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'shipping_fee_usd', v)} />
           </div>
 
           {/* Documentos */}
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase mb-1.5 block">Documentos</label>
             <div className="space-y-2">
-              <DocumentoRow label="Bill of Lading" url={despacho.archivo_bl_url} onUpload={f => onDocumento(despacho.id, 'bl', f)} />
-              <DocumentoRow label="Shipping Fee" url={despacho.archivo_shipping_fee_url} onUpload={f => onDocumento(despacho.id, 'shipping_fee', f)} />
-              <DocumentoRow label="Picking Info" url={despacho.archivo_picking_url} onUpload={f => onDocumento(despacho.id, 'picking', f)} />
+              <DocumentoRow label="Bill of Lading" url={despacho.archivo_bl_url} puedeEditar={puedeEditar} onUpload={f => onDocumento(despacho.id, 'bl', f)} />
+              <DocumentoRow label="Shipping Fee" url={despacho.archivo_shipping_fee_url} puedeEditar={puedeEditar} onUpload={f => onDocumento(despacho.id, 'shipping_fee', f)} />
+              <DocumentoRow label="Picking Info" url={despacho.archivo_picking_url} puedeEditar={puedeEditar} onUpload={f => onDocumento(despacho.id, 'picking', f)} />
             </div>
           </div>
         </div>
@@ -365,7 +372,7 @@ function DetalleDespacho({
   )
 }
 
-function CampoTexto({ label, valor, onChange }: { label: string; valor?: string | null; onChange: (v: string) => void }) {
+function CampoTexto({ label, valor, disabled, onChange }: { label: string; valor?: string | null; disabled?: boolean; onChange: (v: string) => void }) {
   const [v, setV] = useState(valor || '')
   useEffect(() => setV(valor || ''), [valor])
   return (
@@ -373,38 +380,42 @@ function CampoTexto({ label, valor, onChange }: { label: string; valor?: string 
       <label className="text-xs font-semibold text-gray-500 uppercase">{label}</label>
       <input
         value={v}
+        disabled={disabled}
         onChange={e => setV(e.target.value)}
         onBlur={() => v !== (valor || '') && onChange(v)}
-        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20 disabled:bg-gray-50 disabled:text-gray-400"
       />
     </div>
   )
 }
 
-function CampoFecha({ label, valor, onChange }: { label: string; valor?: string | null; onChange: (v: string) => void }) {
+function CampoFecha({ label, valor, disabled, onChange }: { label: string; valor?: string | null; disabled?: boolean; onChange: (v: string) => void }) {
   return (
     <div>
       <label className="text-xs font-semibold text-gray-500 uppercase">{label}</label>
       <input
         type="date"
         defaultValue={valor || ''}
+        disabled={disabled}
         onChange={e => onChange(e.target.value)}
-        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20 disabled:bg-gray-50 disabled:text-gray-400"
       />
     </div>
   )
 }
 
-function DocumentoRow({ label, url, onUpload }: { label: string; url?: string | null; onUpload: (f: File) => void }) {
+function DocumentoRow({ label, url, puedeEditar, onUpload }: { label: string; url?: string | null; puedeEditar: boolean; onUpload: (f: File) => void }) {
   return (
     <div className="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2">
       <span className="text-sm text-gray-600">{label}</span>
       <div className="flex items-center gap-2">
         {url && <a href={url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline">Ver</a>}
-        <label className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 cursor-pointer flex items-center gap-1">
-          <Upload size={12} /> Subir
-          <input type="file" className="hidden" onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
-        </label>
+        {puedeEditar && (
+          <label className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 cursor-pointer flex items-center gap-1">
+            <Upload size={12} /> Subir
+            <input type="file" className="hidden" onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
+          </label>
+        )}
       </div>
     </div>
   )

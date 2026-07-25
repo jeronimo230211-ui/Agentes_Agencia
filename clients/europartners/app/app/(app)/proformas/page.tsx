@@ -5,6 +5,7 @@ import {
   Receipt, ChevronRight, Plus, Download,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
+import { useRol } from '@/lib/useRol'
 
 interface Cliente { id: string; nombre: string; slug: string; incoterm: string }
 interface Proforma {
@@ -46,6 +47,7 @@ function totalProforma(p: Proforma) {
 }
 
 export default function ProformasPage() {
+  const { puedeEditar } = useRol()
   const [clientes, setClientes]     = useState<Cliente[]>([])
   const [proformas, setProformas]   = useState<Proforma[]>([])
   const [loading, setLoading]       = useState(true)
@@ -153,13 +155,15 @@ export default function ProformasPage() {
               <Download size={15} />
               {exportando ? 'Exportando...' : 'Exportar Excel'}
             </button>
-            <button
-              onClick={() => setShowNueva(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm text-white"
-              style={{ background: '#D4A017', color: '#1E3A5F' }}
-            >
-              <Plus size={16} /> Nueva Proforma
-            </button>
+            {puedeEditar && (
+              <button
+                onClick={() => setShowNueva(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm text-white"
+                style={{ background: '#D4A017', color: '#1E3A5F' }}
+              >
+                <Plus size={16} /> Nueva Proforma
+              </button>
+            )}
           </div>
         </div>
 

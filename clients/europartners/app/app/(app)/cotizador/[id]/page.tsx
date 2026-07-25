@@ -7,6 +7,7 @@ import {
   Search, X, Package,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
 import type { Proforma, ProformaLinea, HistorialPrecio, TipoPrecio } from '@/types/europartners'
 
@@ -298,6 +299,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [error, setError] = useState('')
   const [selectorAbierto, setSelectorAbierto] = useState(false)
   const [lineaParaSelector, setLineaParaSelector] = useState<string | null>(null)
+  const { puedeEditar: rolPuedeEditar } = useRol()
 
   const cargar = useCallback(async () => {
     const res = await fetch(`/api/proformas/${params.id}`)
@@ -492,9 +494,9 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   }
 
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
-  const puedeEditar = proforma?.estado === 'borrador' || proforma?.estado === 'rechazada'
+  const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada') && rolPuedeEditar
   const puedeEnviarRevision = puedeEditar && lineas.length > 0
-  const puedeEnviarCliente = proforma?.estado === 'aprobada'
+  const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
 
   if (loading) {
     return (
