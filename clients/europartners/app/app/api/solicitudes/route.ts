@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
     .select(`
       *,
       cliente:clientes(id, nombre, slug),
-      lineas:solicitud_lineas(*, producto:productos(id, codigo, nombre, imagen_url))
+      lineas:solicitud_lineas(*, producto:productos(id, codigo, nombre, imagen_url)),
+      eventos:solicitud_eventos(*)
     `)
     .order('created_at', { ascending: false })
 

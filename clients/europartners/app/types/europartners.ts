@@ -190,7 +190,7 @@ export interface PrecioCalculado {
 }
 
 // T1 — Solicitud de cliente (previo a la proforma)
-export type EstadoSolicitud = 'pendiente' | 'revisada' | 'convertida' | 'descartada'
+export type EstadoSolicitud = 'pendiente' | 'revisada' | 'convertida' | 'descartada' | 'devuelta'
 
 export interface SolicitudLinea {
   id: string
@@ -211,11 +211,24 @@ export interface Solicitud {
   notas_cliente?: string
   revisada_por?: string
   proforma_id?: string
+  motivo_devolucion?: string
+  token_edicion?: string
+  veces_devuelta: number
   created_at: string
   updated_at: string
   // Joined
   cliente?: Cliente
   lineas?: SolicitudLinea[]
+}
+
+export interface SolicitudEvento {
+  id: string
+  solicitud_id: string
+  usuario_id?: string
+  tipo: 'devuelta' | 'reenviada'
+  comentario?: string
+  created_at: string
+  usuario?: Usuario
 }
 
 // T5/T6 — Despacho y tránsito

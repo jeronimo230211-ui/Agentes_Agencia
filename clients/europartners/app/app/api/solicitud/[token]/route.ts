@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
+import { getCatalogoPublico } from '@/lib/catalogoPublico'
 
 type Params = { params: { token: string } }
 
@@ -18,22 +19,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Enlace inválido' }, { status: 404 })
   }
 
-  const { data: categorias } = await adminClient
-    .from('categorias_producto')
-    .select('id, nombre, orden')
-    .order('orden', { ascending: true })
-
-  const { data: productos } = await adminClient
-    .from('productos')
-    .select('id, categoria_id, codigo, nombre, descripcion, imagen_url')
-    .eq('estado', 'activo')
-    .order('categoria_id', { ascending: true })
-    .order('codigo', { ascending: true })
+  const { categorias, productos } = await getCatalogoPublico(adminClient)
 
   return NextResponse.json({
     cliente: { id: cliente.id, nombre: cliente.nombre },
-    categorias: categorias || [],
-    productos: productos || [],
+    categorias,
+    productos,
   })
 }
 

@@ -129,6 +129,45 @@ export async function enviarNotificacionResultado(
   await enviarEmail(destinatarioEmail, `[${etiqueta}] Proforma ${proforma.numero} · ${clienteNombre}`, html)
 }
 
+export async function enviarSolicitudDevuelta(
+  clienteEmail: string,
+  clienteNombre: string,
+  motivo: string,
+  tokenEdicion: string
+): Promise<void> {
+  const editarUrl = `${APP_URL}/solicitud-editar/${tokenEdicion}`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#1E3A5F;padding:20px;text-align:center">
+        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+      </div>
+      <div style="padding:24px;background:#f9fafb">
+        <h2 style="color:#1E3A5F;margin:0 0 8px">Necesitamos confirmar algo de tu pedido</h2>
+        <p style="color:#6b7280;margin:0 0 16px">Hola ${clienteNombre},</p>
+        <p style="color:#6b7280;margin:0 0 16px">
+          Antes de preparar tu proforma, revisamos tu pedido y necesitamos que confirmes o ajustes lo siguiente:
+        </p>
+        <div style="background:white;border-left:4px solid #D4A017;border-radius:4px;padding:14px 16px;margin-bottom:20px">
+          <p style="color:#1E3A5F;margin:0;font-size:14px">${motivo}</p>
+        </div>
+        <p style="color:#6b7280;margin:0 0 20px">
+          Puedes revisar y editar tu pedido directamente desde el siguiente enlace:
+        </p>
+        <div style="text-align:center;margin:24px 0">
+          <a href="${editarUrl}"
+             style="background:#D4A017;color:#1E3A5F;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+            Revisar mi pedido
+          </a>
+        </div>
+        <p style="color:#9ca3af;font-size:12px;text-align:center">Este enlace es de un solo uso.</p>
+      </div>
+    </div>
+  `
+
+  await enviarEmail(clienteEmail, `Europartners necesita confirmar tu pedido`, html)
+}
+
 export async function enviarProformaCliente(
   proforma: Proforma,
   pdfBuffer: Buffer,

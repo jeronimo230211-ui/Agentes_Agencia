@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
-  Copy, CheckCircle2,
+  Copy, CheckCircle2, Undo2, Clock,
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
 
@@ -15,13 +15,23 @@ interface SolicitudLinea {
   cantidad: number
   producto: Producto | null
 }
+interface SolicitudEvento {
+  id: string
+  tipo: 'devuelta' | 'reenviada'
+  comentario: string | null
+  created_at: string
+}
 interface Solicitud {
   id: string
-  estado: 'pendiente' | 'revisada' | 'convertida' | 'descartada'
+  estado: 'pendiente' | 'revisada' | 'convertida' | 'descartada' | 'devuelta'
   notas_cliente: string | null
+  motivo_devolucion: string | null
+  token_edicion: string | null
+  veces_devuelta: number
   created_at: string
   cliente: { id: string; nombre: string } | null
   lineas: SolicitudLinea[]
+  eventos: SolicitudEvento[]
 }
 
 const ESTADO_STYLE: Record<string, { bg: string; text: string; label: string }> = {
@@ -29,6 +39,7 @@ const ESTADO_STYLE: Record<string, { bg: string; text: string; label: string }> 
   revisada:   { bg: 'bg-blue-100',   text: 'text-blue-700',   label: 'Revisada' },
   convertida: { bg: 'bg-green-100',  text: 'text-green-700',  label: 'Convertida' },
   descartada: { bg: 'bg-gray-100',   text: 'text-gray-500',   label: 'Descartada' },
+  devuelta:   { bg: 'bg-amber-100',  text: 'text-amber-700',  label: 'Devuelta al cliente' },
 }
 
 function fechaCorta(iso: string) {
@@ -46,6 +57,9 @@ export default function SolicitudesPage() {
   const [convirtiendo, setConvirtiendo] = useState(false)
   const [copiadoId, setCopiadoId] = useState<string | null>(null)
   const [showLinks, setShowLinks] = useState(false)
+  const [showDevolver, setShowDevolver] = useState(false)
+  const [comentarioDevolver, setComentarioDevolver] = useState('')
+  const [devolviendo, setDevolviendo] = useState(false)
 
   const cargar = useCallback(() => {
     setLoading(true)
@@ -90,9 +104,25 @@ export default function SolicitudesPage() {
     cargar()
   }
 
+  async function devolver() {
+    if (!seleccionada || !comentarioDevolver.trim()) return
+    setDevolviendo(true)
+    await fetch(`/api/solicitudes/${seleccionada.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: 'devuelta', comentario: comentarioDevolver.trim() }),
+    })
+    setDevolviendo(false)
+    setShowDevolver(false)
+    setComentarioDevolver('')
+    setSeleccionada(null)
+    cargar()
+  }
+
   const estadosDisponibles = [
     { label: 'Pendientes', value: 'pendiente' },
     { label: 'Revisadas', value: 'revisada' },
+    { label: 'Devueltas', value: 'devuelta' },
     { label: 'Convertidas', value: 'convertida' },
     { label: 'Descartadas', value: 'descartada' },
     { label: 'Todas', value: '' },
@@ -217,14 +247,56 @@ export default function SolicitudesPage() {
               </div>
 
               {seleccionada.notas_cliente && (
-                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3">
+                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 mb-3">
                   <p className="text-xs font-semibold text-yellow-700 mb-1">Notas del cliente</p>
                   <p className="text-sm text-yellow-800">{seleccionada.notas_cliente}</p>
                 </div>
               )}
+
+              {seleccionada.motivo_devolucion && seleccionada.estado === 'devuelta' && (
+                <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 mb-3">
+                  <p className="text-xs font-semibold text-amber-700 mb-1">Observación enviada al cliente</p>
+                  <p className="text-sm text-amber-800 mb-2">{seleccionada.motivo_devolucion}</p>
+                  {seleccionada.token_edicion && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/solicitud-editar/${seleccionada.token_edicion}`)
+                        setCopiadoId(seleccionada.id)
+                        setTimeout(() => setCopiadoId(null), 2000)
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-amber-200 hover:bg-amber-100 text-amber-700"
+                    >
+                      {copiadoId === seleccionada.id ? (
+                        <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                      ) : (
+                        <><Copy size={13} /> Copiar link para el cliente</>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {seleccionada.eventos && seleccionada.eventos.length > 0 && (
+                <div className="border border-gray-100 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                    <Clock size={12} /> Historial
+                  </p>
+                  <div className="space-y-2">
+                    {[...seleccionada.eventos]
+                      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                      .map(ev => (
+                        <div key={ev.id} className="text-xs text-gray-600">
+                          <span className="font-semibold">{ev.tipo === 'devuelta' ? 'Devuelta al cliente' : 'Cliente reenvió'}</span>
+                          {' · '}{fechaCorta(ev.created_at)}
+                          {ev.comentario && <p className="text-gray-500 mt-0.5">{ev.comentario}</p>}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {puedeEditar && seleccionada.estado !== 'convertida' && seleccionada.estado !== 'descartada' && (
+            {puedeEditar && (seleccionada.estado === 'pendiente' || seleccionada.estado === 'revisada') && (
               <div className="p-5 border-t border-gray-100 flex gap-3">
                 <button
                   onClick={() => convertir(seleccionada)}
@@ -236,6 +308,12 @@ export default function SolicitudesPage() {
                   {convirtiendo ? 'Convirtiendo...' : 'Convertir a proforma'}
                 </button>
                 <button
+                  onClick={() => setShowDevolver(true)}
+                  className="px-4 py-2.5 rounded-xl border border-amber-200 text-sm text-amber-700 hover:bg-amber-50 flex items-center gap-1.5"
+                >
+                  <Undo2 size={15} /> Devolver
+                </button>
+                <button
                   onClick={() => descartar(seleccionada)}
                   className="px-4 py-2.5 rounded-xl border text-sm text-gray-500 hover:bg-gray-50"
                 >
@@ -243,6 +321,42 @@ export default function SolicitudesPage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal devolver con observación */}
+      {showDevolver && seleccionada && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800">Devolver pedido al cliente</h2>
+              <button onClick={() => setShowDevolver(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-gray-500 mb-3">
+                {seleccionada.cliente?.nombre} recibirá un link para revisar y editar su pedido con tu observación.
+              </p>
+              <textarea
+                autoFocus
+                value={comentarioDevolver}
+                onChange={e => setComentarioDevolver(e.target.value)}
+                placeholder="Ej: ¿confirmas el color blanco para el modelo TZ-0425HS?"
+                className="w-full border border-gray-200 rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-amber-200"
+              />
+            </div>
+            <div className="p-5 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={devolver}
+                disabled={devolviendo || !comentarioDevolver.trim()}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                style={{ background: '#D4A017', color: '#1E3A5F' }}
+              >
+                {devolviendo ? 'Enviando...' : 'Devolver con observación'}
+              </button>
+            </div>
           </div>
         </div>
       )}
