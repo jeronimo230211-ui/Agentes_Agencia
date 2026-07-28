@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { generarPDFProforma } from '@/lib/pdf/generator'
-import { enviarProformaCliente } from '@/lib/email'
+import { enviarProformaParaAprobacion } from '@/lib/email'
 import { cookies } from 'next/headers'
 
 type Params = { params: { id: string } }
@@ -36,19 +36,20 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
   const pdfBuffer = await generarPDFProforma(proforma)
 
-  // Excepción de proceso (ver memoria de la reunión con Marta): Hardware & Lumber
-  // no hace abono anticipado, así que no se genera link de pago para su proforma.
-  let pagoToken: string | undefined
-  if (proforma.cliente?.slug !== 'hl') {
-    const { data: tokenPago } = await adminClient
-      .from('tokens_pago')
-      .insert({ proforma_id: params.id })
-      .select('token')
-      .single()
-    pagoToken = tokenPago?.token
+  // El cliente debe aprobar la proforma antes de que se facture y se le pida el
+  // pago — ver migración 009. El link de pago ya no se manda aquí, se genera
+  // cuando el cliente aprueba (POST /api/aprobacion-cliente).
+  const { data: tokenAprobacion } = await adminClient
+    .from('tokens_aprobacion_cliente')
+    .insert({ proforma_id: params.id })
+    .select('token')
+    .single()
+
+  if (!tokenAprobacion) {
+    return NextResponse.json({ error: 'No se pudo generar el link de aprobación' }, { status: 500 })
   }
 
-  await enviarProformaCliente(proforma, pdfBuffer, pagoToken)
+  await enviarProformaParaAprobacion(proforma, pdfBuffer, tokenAprobacion.token)
 
   // El % de abono requerido lo define Deisy/Marta caso a caso (no hay una
   // regla fija documentada) — se registra desde /despachos antes de crear

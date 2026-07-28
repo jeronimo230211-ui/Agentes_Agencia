@@ -2,7 +2,7 @@ export type Rol = 'operaciones' | 'admin' | 'analista' | 'diseñadora'
 export type Incoterm = 'FOB' | 'CFR' | 'CIF'
 export type ModoPricing = 'set' | 'componente'
 export type TipoPrecio = 'mayorista' | 'detallista'
-export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada'
+export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada' | 'cambios_solicitados'
 export type EstadoProducto = 'activo' | 'descontinuado' | 'pendiente'
 
 export interface Usuario {
@@ -127,6 +127,7 @@ export interface Proforma {
   estado: EstadoProforma
   notas_internas?: string
   motivo_rechazo?: string
+  comentario_cliente?: string
   pdf_url?: string
   importado_de_excel: boolean
   created_at: string

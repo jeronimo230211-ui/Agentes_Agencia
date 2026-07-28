@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   FileText, Clock, CheckCircle, XCircle, Send,
-  Receipt, ChevronRight, Plus, Download,
+  Receipt, ChevronRight, Plus, Download, AlertCircle,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
@@ -29,6 +29,7 @@ const ESTADO_STYLE: Record<string, { bg: string; text: string; icon: React.React
   rechazada:   { bg: 'bg-red-100',    text: 'text-red-600',    icon: <XCircle size={12} /> },
   enviada:     { bg: 'bg-blue-100',   text: 'text-blue-700',   icon: <Send size={12} /> },
   facturada:   { bg: 'bg-purple-100', text: 'text-purple-700', icon: <Receipt size={12} /> },
+  cambios_solicitados: { bg: 'bg-amber-100', text: 'text-amber-700', icon: <AlertCircle size={12} /> },
 }
 
 const MESES = [
@@ -133,6 +134,7 @@ export default function ProformasPage() {
     { label: 'Aprobada', value: 'aprobada' },
     { label: 'Rechazada', value: 'rechazada' },
     { label: 'Enviada', value: 'enviada' },
+    { label: 'Cambios solicitados', value: 'cambios_solicitados' },
     { label: 'Facturada', value: 'facturada' },
   ]
 

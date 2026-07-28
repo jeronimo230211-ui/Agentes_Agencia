@@ -168,22 +168,22 @@ export async function enviarSolicitudDevuelta(
   await enviarEmail(clienteEmail, `Europartners necesita confirmar tu pedido`, html)
 }
 
-export async function enviarProformaCliente(
+export async function enviarProformaParaAprobacion(
   proforma: Proforma,
   pdfBuffer: Buffer,
-  pagoToken?: string
+  tokenAprobacion: string
 ): Promise<void> {
   const clienteEmail = proforma.cliente?.contacto_email
   if (!clienteEmail) throw new Error('Cliente sin email de contacto')
 
-  const clienteNombre = proforma.cliente?.nombre || 'Cliente'
+  const clienteNombre = proforma.cliente?.contacto_nombre || proforma.cliente?.nombre || 'Cliente'
   const total = proforma.total_cif_usd || proforma.total_fob_usd || 0
-  const pagoUrl = pagoToken ? `${APP_URL}/pago/${pagoToken}` : null
+  const aprobacionUrl = `${APP_URL}/aprobacion-cliente/${tokenAprobacion}`
 
   const { error } = await resend.emails.send({
     from: FROM,
     to: clienteEmail,
-    subject: `Proforma Invoice ${proforma.numero} — Europartners International`,
+    subject: `Proforma ${proforma.numero} — Please Review — Europartners International`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
         <div style="background:#1E3A5F;padding:20px">
@@ -193,7 +193,58 @@ export async function enviarProformaCliente(
           <p>Dear ${clienteNombre},</p>
           <p>Please find attached our proforma invoice <strong>${proforma.numero}</strong> for your review.</p>
           <p><strong>Total ${proforma.incoterm}: ${formatUSD(total)}</strong></p>
+          <p>Please review it and let us know if you approve it or need any changes before we issue the final invoice.</p>
+          <div style="text-align:center;margin:24px 0">
+            <a href="${aprobacionUrl}"
+               style="background:#D4A017;color:#1E3A5F;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+              Review &amp; Approve Proforma
+            </a>
+          </div>
           <p>This proforma is valid for 15 days from the date of issue.</p>
+          <p>Best regards,<br><strong>Deisy</strong><br>Europartners International<br>Panama City, Panama</p>
+        </div>
+      </div>
+    `,
+    attachments: [{
+      filename: `Proforma-${proforma.numero}.pdf`,
+      content: pdfBuffer.toString('base64'),
+    }],
+  })
+
+  if (error) throw new Error(error.message)
+}
+
+export async function enviarProformaCliente(
+  proforma: Proforma,
+  pdfBuffer: Buffer,
+  pagoToken?: string,
+  esInvoice?: boolean
+): Promise<void> {
+  const clienteEmail = proforma.cliente?.contacto_email
+  if (!clienteEmail) throw new Error('Cliente sin email de contacto')
+
+  const clienteNombre = proforma.cliente?.contacto_nombre || proforma.cliente?.nombre || 'Cliente'
+  const total = proforma.total_cif_usd || proforma.total_fob_usd || 0
+  const pagoUrl = pagoToken ? `${APP_URL}/pago/${pagoToken}` : null
+  const label = esInvoice ? 'Invoice' : 'Proforma Invoice'
+
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: clienteEmail,
+    subject: `${label} ${proforma.numero} — Europartners International`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+        <div style="background:#1E3A5F;padding:20px">
+          <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners International</h1>
+        </div>
+        <div style="padding:24px">
+          <p>Dear ${clienteNombre},</p>
+          ${esInvoice
+            ? `<p>Thank you for approving proforma <strong>${proforma.numero}</strong>. Please find attached your final invoice.</p>`
+            : `<p>Please find attached our proforma invoice <strong>${proforma.numero}</strong> for your review.</p>`
+          }
+          <p><strong>Total ${proforma.incoterm}: ${formatUSD(total)}</strong></p>
+          ${esInvoice ? '' : '<p>This proforma is valid for 15 days from the date of issue.</p>'}
           ${pagoUrl ? `
           <div style="text-align:center;margin:24px 0">
             <a href="${pagoUrl}"
@@ -206,7 +257,7 @@ export async function enviarProformaCliente(
       </div>
     `,
     attachments: [{
-      filename: `Proforma-${proforma.numero}.pdf`,
+      filename: `${label.replace(' ', '-')}-${proforma.numero}.pdf`,
       // Resend espera el adjunto en base64 (nodemailer aceptaba el Buffer crudo)
       content: pdfBuffer.toString('base64'),
     }],

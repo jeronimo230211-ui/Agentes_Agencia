@@ -494,9 +494,9 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   }
 
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
-  const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada') && rolPuedeEditar
-  const puedeEnviarRevision = puedeEditar && lineas.length > 0
-  const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
+  const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
+  const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada') && puedeEditar && lineas.length > 0
+  const puedeEnviarCliente = (proforma?.estado === 'aprobada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
 
   if (loading) {
     return (
@@ -650,6 +650,16 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4 flex gap-3">
           <CheckCircle size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
           <p className="text-green-800 text-sm">Proforma aprobada. Puedes enviarla al cliente.</p>
+        </div>
+      )}
+      {proforma.estado === 'cambios_solicitados' && proforma.comentario_cliente && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex gap-3">
+          <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-amber-800 text-sm">El cliente pidió cambios en esta proforma</p>
+            <p className="text-amber-700 text-sm mt-0.5">{proforma.comentario_cliente}</p>
+            <p className="text-amber-600 text-xs mt-1">Ajusta las líneas y vuelve a enviarla al cliente.</p>
+          </div>
         </div>
       )}
 

@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 
 const PROTECTED_PATHS = ['/dashboard', '/catalogo', '/precios', '/cotizador', '/aprobacion', '/historial', '/facturador', '/solicitudes', '/despachos', '/reportes']
 const AUTH_PATHS = ['/login']
-const PUBLIC_PATHS = ['/aprobacion-token', '/solicitud/', '/pago/'] // Marta aprueba, el cliente pide y paga, todo por link sin login
+const PUBLIC_PATHS = ['/aprobacion-token', '/aprobacion-cliente', '/solicitud/', '/solicitud-editar/', '/pago/'] // Marta aprueba, el cliente pide/aprueba/paga, todo por link sin login
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
