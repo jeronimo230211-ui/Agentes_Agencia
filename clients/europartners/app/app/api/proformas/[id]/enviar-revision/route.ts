@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { enviarNotificacionAprobacion } from '@/lib/email'
 
@@ -28,7 +29,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     .single()
 
   if (pfError || !proforma) return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
-  if (proforma.estado !== 'borrador' && proforma.estado !== 'rechazada') {
+  if (!['borrador', 'rechazada', 'cambios_solicitados'].includes(proforma.estado)) {
     return NextResponse.json({ error: `Estado inválido: ${proforma.estado}` }, { status: 400 })
   }
   if (!proforma.lineas?.length) {
@@ -55,8 +56,11 @@ export async function POST(_req: NextRequest, { params }: Params) {
     comentario: 'Enviada a revisión de Marta',
   })
 
-  // Crear token de aprobación
-  const { data: tokenData } = await supabase
+  // Crear token de aprobación — tokens_aprobacion solo tiene policy RLS para
+  // service_role, así que hay que usar el admin client (el cliente de sesión
+  // normal fallaría en silencio con 42501 y el email nunca se intentaría).
+  const adminClient = createAdminClient()
+  const { data: tokenData, error: tokenError } = await adminClient
     .from('tokens_aprobacion')
     .insert({ proforma_id: params.id })
     .select('token')
@@ -73,17 +77,20 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
   let email_enviado = false
   let email_error: string | undefined
-  if (tokenData?.token && marta?.email) {
+  if (tokenError || !tokenData?.token) {
+    email_error = tokenError ? `Error creando token de aprobación: ${tokenError.message}` : 'No se pudo generar el token de aprobación'
+    console.error(email_error)
+  } else if (!marta?.email) {
+    email_error = 'El usuario admin no tiene email configurado'
+  } else {
     try {
-      await enviarNotificacionAprobacion(proforma, tokenData.token, marta.email)
+      await enviarNotificacionAprobacion(proforma, tokenData.token, marta.email, proforma.comentario_cliente || undefined)
       email_enviado = true
     } catch (e) {
       email_error = e instanceof Error ? e.message : String(e)
       console.error('Error enviando email a Marta:', email_error)
       // No fallar el request si el email falla — se reporta en la respuesta
     }
-  } else if (!marta?.email) {
-    email_error = 'El usuario admin no tiene email configurado'
   }
 
   if (marta) {

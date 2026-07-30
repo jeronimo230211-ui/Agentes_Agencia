@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
 import { getCatalogoPublico } from '@/lib/catalogoPublico'
+import { enviarNotificacionSolicitudNueva } from '@/lib/email'
 
 type Params = { params: { token: string } }
 
@@ -76,10 +77,10 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   await adminClient.from('solicitud_lineas').insert(lineasInsert)
 
-  // Notificar a todo el equipo de operaciones (Deisy)
+  // Notificar a todo el equipo de operaciones (Deisy) — in-app + email
   const { data: operativos } = await adminClient
     .from('usuarios')
-    .select('id')
+    .select('id, email')
     .eq('rol', 'operaciones')
     .eq('activo', true)
 
@@ -91,6 +92,16 @@ export async function POST(req: NextRequest, { params }: Params) {
         mensaje: `Nueva solicitud de ${cliente.nombre} (${lineas.length} línea${lineas.length !== 1 ? 's' : ''})`,
       }))
     )
+
+    for (const u of operativos) {
+      if (!u.email) continue
+      try {
+        await enviarNotificacionSolicitudNueva(cliente.nombre, lineas.length, u.email)
+      } catch (e) {
+        console.error('Error enviando email de solicitud nueva:', e instanceof Error ? e.message : String(e))
+        // No fallar el request si el email falla — la notificación in-app ya se guardó
+      }
+    }
   }
 
   return NextResponse.json({ ok: true, solicitud_id: solicitud.id }, { status: 201 })

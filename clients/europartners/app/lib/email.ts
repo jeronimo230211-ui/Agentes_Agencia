@@ -20,7 +20,8 @@ async function enviarEmail(
 export async function enviarNotificacionAprobacion(
   proforma: Proforma,
   token: string,
-  destinatarioEmail: string
+  destinatarioEmail: string,
+  comentarioCliente?: string
 ): Promise<void> {
   const total = proforma.total_cif_usd || proforma.total_fob_usd || 0
   const clienteNombre = proforma.cliente?.nombre || 'Cliente'
@@ -49,6 +50,11 @@ export async function enviarNotificacionAprobacion(
           Deisy preparó la proforma <strong>${proforma.numero}</strong> para
           <strong>${clienteNombre}</strong>.
         </p>
+        ${comentarioCliente ? `
+        <div style="background:#fffbeb;border-left:4px solid #D4A017;border-radius:4px;padding:14px 16px;margin-bottom:20px">
+          <p style="color:#92400e;margin:0 0 4px;font-size:12px;font-weight:bold;text-transform:uppercase">El cliente pidió este cambio</p>
+          <p style="color:#1E3A5F;margin:0;font-size:14px">${comentarioCliente}</p>
+        </div>` : ''}
         <div style="background:white;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:20px">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead>
@@ -86,6 +92,38 @@ export async function enviarNotificacionAprobacion(
   `
 
   await enviarEmail(destinatarioEmail, `[REVISAR] Proforma ${proforma.numero} · ${clienteNombre} · ${formatUSD(total)}`, html)
+}
+
+export async function enviarNotificacionSolicitudNueva(
+  clienteNombre: string,
+  numLineas: number,
+  destinatarioEmail: string
+): Promise<void> {
+  const solicitudesUrl = `${APP_URL}/solicitudes`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#1E3A5F;padding:20px;text-align:center">
+        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+        <p style="color:white;margin:4px 0 0;font-size:13px">Sistema de Operaciones</p>
+      </div>
+      <div style="padding:24px;background:#f9fafb">
+        <h2 style="color:#1E3A5F;margin:0 0 8px">Nueva solicitud de pedido</h2>
+        <p style="color:#6b7280;margin:0 0 20px">
+          <strong>${clienteNombre}</strong> envió una solicitud nueva con
+          ${numLineas} línea${numLineas !== 1 ? 's' : ''}.
+        </p>
+        <div style="text-align:center;margin:24px 0">
+          <a href="${solicitudesUrl}"
+             style="background:#1E3A5F;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+            Ver solicitud
+          </a>
+        </div>
+      </div>
+    </div>
+  `
+
+  await enviarEmail(destinatarioEmail, `Nueva solicitud de ${clienteNombre}`, html)
 }
 
 interface ProformaResumen {

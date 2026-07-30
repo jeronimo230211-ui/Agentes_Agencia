@@ -495,8 +495,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
   const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
-  const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada') && puedeEditar && lineas.length > 0
-  const puedeEnviarCliente = (proforma?.estado === 'aprobada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
+  const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0
+  const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
 
   if (loading) {
     return (

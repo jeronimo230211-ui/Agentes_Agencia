@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { CheckCircle, Eye, Loader2, AlertCircle } from 'lucide-react'
-import { formatUSD, formatPct } from '@/lib/precio'
+import { formatUSD, formatPct, calcMargen } from '@/lib/precio'
 import type { Proforma } from '@/types/europartners'
 
 export default function AprobacionPage() {
@@ -11,6 +11,7 @@ export default function AprobacionPage() {
   const [motivo, setMotivo] = useState('')
   const [procesando, setProcesando] = useState(false)
   const [error, setError] = useState('')
+  const [preciosEditados, setPreciosEditados] = useState<Record<string, number>>({})
 
   async function cargar() {
     const res = await fetch('/api/proformas?estado=en_revision')
@@ -27,16 +28,23 @@ export default function AprobacionPage() {
     setSeleccionada(data)
     setMotivo('')
     setError('')
+    setPreciosEditados({})
   }
 
   async function aprobar() {
     if (!seleccionada) return
     setProcesando(true)
     setError('')
+    const lineas_ajustadas = (seleccionada.lineas || []).map(l => ({
+      id: l.id,
+      precio_cliente_usd: preciosEditados[l.id] ?? l.precio_cliente_usd,
+      margen_pct: calcMargen(l.precio_costo_usd || 0, preciosEditados[l.id] ?? l.precio_cliente_usd ?? 0),
+      cantidad: l.cantidad,
+    }))
     const res = await fetch(`/api/proformas/${seleccionada.id}/aprobar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ lineas_ajustadas }),
     })
     if (res.ok) {
       setSeleccionada(null)
@@ -141,6 +149,13 @@ export default function AprobacionPage() {
                 </div>
               )}
 
+              {/* Cambio pedido por el cliente (si esta proforma vuelve de cambios_solicitados) */}
+              {seleccionada.comentario_cliente && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-800">
+                  <strong>El cliente pidió este cambio:</strong> {seleccionada.comentario_cliente}
+                </div>
+              )}
+
               {/* Tabla de líneas */}
               <div className="overflow-x-auto mb-6">
                 <table className="w-full text-sm">
@@ -155,21 +170,34 @@ export default function AprobacionPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(seleccionada.lineas || []).map((l, i) => (
-                      <tr key={l.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="p-2">
-                          <div>{l.descripcion_pdf}</div>
-                          <div className="text-xs text-gray-400">{l.codigo_pdf}</div>
-                        </td>
-                        <td className="p-2 text-center">{l.cantidad}</td>
-                        <td className="p-2 text-right text-gray-500">{formatUSD(l.precio_costo_usd || 0)}</td>
-                        <td className="p-2 text-right font-medium">{formatUSD(l.precio_cliente_usd || 0)}</td>
-                        <td className={`p-2 text-right font-medium ${(l.margen_pct || 0) < 0.10 ? 'text-red-600' : 'text-green-600'}`}>
-                          {formatPct(l.margen_pct || 0)}
-                        </td>
-                        <td className="p-2 text-right">{formatUSD(l.subtotal_cliente_usd || 0)}</td>
-                      </tr>
-                    ))}
+                    {(seleccionada.lineas || []).map((l, i) => {
+                      const precioActual = preciosEditados[l.id] ?? l.precio_cliente_usd ?? 0
+                      const margenActual = calcMargen(l.precio_costo_usd || 0, precioActual)
+                      const subtotalActual = precioActual * (l.cantidad || 0)
+                      return (
+                        <tr key={l.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="p-2">
+                            <div>{l.descripcion_pdf}</div>
+                            <div className="text-xs text-gray-400">{l.codigo_pdf}</div>
+                          </td>
+                          <td className="p-2 text-center">{l.cantidad}</td>
+                          <td className="p-2 text-right text-gray-500">{formatUSD(l.precio_costo_usd || 0)}</td>
+                          <td className="p-2 text-right">
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={precioActual}
+                              onChange={e => setPreciosEditados(prev => ({ ...prev, [l.id]: Number(e.target.value) }))}
+                              className="w-24 text-right border border-gray-200 rounded px-1.5 py-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                            />
+                          </td>
+                          <td className={`p-2 text-right font-medium ${margenActual < 0.10 ? 'text-red-600' : 'text-green-600'}`}>
+                            {formatPct(margenActual)}
+                          </td>
+                          <td className="p-2 text-right">{formatUSD(subtotalActual)}</td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-[#1E3A5F]">
@@ -177,7 +205,12 @@ export default function AprobacionPage() {
                         TOTAL {seleccionada.incoterm}
                       </td>
                       <td className="p-2 text-right font-bold text-[#1E3A5F] text-lg">
-                        {formatUSD(seleccionada.total_cif_usd || seleccionada.total_fob_usd || 0)}
+                        {formatUSD(
+                          (seleccionada.lineas || []).reduce((sum, l) => {
+                            const precio = preciosEditados[l.id] ?? l.precio_cliente_usd ?? 0
+                            return sum + precio * (l.cantidad || 0)
+                          }, 0)
+                        )}
                       </td>
                     </tr>
                   </tfoot>
