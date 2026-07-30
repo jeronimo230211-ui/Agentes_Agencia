@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
 import { formatUSD } from '@/lib/precio'
+import { enviarNotificacionComprobante } from '@/lib/email'
 
 type Params = { params: { token: string } }
 
@@ -81,11 +82,23 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single()
 
   if (proforma?.creada_por) {
+    const clienteNombre = (proforma.cliente as { nombre?: string } | null)?.nombre || 'Cliente'
+
     await adminClient.from('notificaciones').insert({
       usuario_id: proforma.creada_por,
       tipo: 'comprobante_subido',
-      mensaje: `${(proforma.cliente as { nombre?: string } | null)?.nombre || 'Cliente'} subió el comprobante de pago de la proforma ${proforma.numero} — pendiente de validar`,
+      mensaje: `${clienteNombre} subió el comprobante de pago de la proforma ${proforma.numero} — pendiente de validar`,
     })
+
+    const { data: creador } = await adminClient.from('usuarios').select('email').eq('id', proforma.creada_por).single()
+    if (creador?.email) {
+      try {
+        await enviarNotificacionComprobante(proforma.numero, clienteNombre, monto ? Number(monto) : null, resuelto.proformaId, creador.email)
+      } catch (e) {
+        console.error('Error enviando email de comprobante subido:', e instanceof Error ? e.message : String(e))
+        // No fallar el request si el email falla — la notificación in-app ya se guardó
+      }
+    }
   }
 
   return NextResponse.json({ ok: true })

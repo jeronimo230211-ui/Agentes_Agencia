@@ -94,6 +94,43 @@ export async function enviarNotificacionAprobacion(
   await enviarEmail(destinatarioEmail, `[REVISAR] Proforma ${proforma.numero} · ${clienteNombre} · ${formatUSD(total)}`, html)
 }
 
+export async function enviarNotificacionComprobante(
+  numeroProforma: string,
+  clienteNombre: string,
+  monto: number | null,
+  proformaId: string,
+  destinatarioEmail: string
+): Promise<void> {
+  const verUrl = `${APP_URL}/cotizador/${proformaId}`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#1E3A5F;padding:20px;text-align:center">
+        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+        <p style="color:white;margin:4px 0 0;font-size:13px">Sistema de Operaciones</p>
+      </div>
+      <div style="padding:24px;background:#f9fafb">
+        <h2 style="color:#1E3A5F;margin:0 0 8px">Comprobante de pago recibido</h2>
+        <p style="color:#6b7280;margin:0 0 12px">
+          <strong>${clienteNombre}</strong> subió el comprobante de pago de la proforma
+          <strong>${numeroProforma}</strong>.
+        </p>
+        <p style="color:#6b7280;margin:0 0 20px">
+          Monto declarado: <strong style="color:#1E3A5F">${monto != null ? formatUSD(monto) : 'No especificado por el cliente'}</strong>
+        </p>
+        <div style="text-align:center;margin:24px 0">
+          <a href="${verUrl}"
+             style="background:#1E3A5F;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+            Revisar y confirmar pago
+          </a>
+        </div>
+      </div>
+    </div>
+  `
+
+  await enviarEmail(destinatarioEmail, `Comprobante de pago — Proforma ${numeroProforma}`, html)
+}
+
 export async function enviarNotificacionSolicitudNueva(
   clienteNombre: string,
   numLineas: number,

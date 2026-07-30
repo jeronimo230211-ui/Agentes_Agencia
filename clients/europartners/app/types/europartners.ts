@@ -128,6 +128,11 @@ export interface Proforma {
   notas_internas?: string
   motivo_rechazo?: string
   comentario_cliente?: string
+  estado_pago?: EstadoPago
+  monto_abono_requerido?: number
+  monto_abono_recibido?: number
+  fecha_abono?: string
+  comprobante_url?: string
   pdf_url?: string
   importado_de_excel: boolean
   created_at: string

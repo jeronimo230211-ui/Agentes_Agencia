@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import {
   Plus, Trash2, Send, Eye, Loader2,
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
-  Search, X, Package,
+  Search, X, Package, FileText,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
@@ -299,6 +299,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [error, setError] = useState('')
   const [selectorAbierto, setSelectorAbierto] = useState(false)
   const [lineaParaSelector, setLineaParaSelector] = useState<string | null>(null)
+  const [confirmandoPago, setConfirmandoPago] = useState(false)
   const { puedeEditar: rolPuedeEditar } = useRol()
 
   const cargar = useCallback(async () => {
@@ -493,6 +494,20 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     setEnviando(false)
   }
 
+  async function confirmarPago() {
+    if (!proforma) return
+    setConfirmandoPago(true)
+    const res = await fetch(`/api/proformas/${proforma.id}/confirmar-pago`, { method: 'POST' })
+    if (res.ok) {
+      const { data } = await res.json()
+      setProforma(prev => prev ? { ...prev, estado_pago: data.estado_pago } : prev)
+    } else {
+      const j = await res.json()
+      setError(j.error || 'Error al confirmar el pago')
+    }
+    setConfirmandoPago(false)
+  }
+
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
   const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
   const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0
@@ -660,6 +675,62 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             <p className="text-amber-700 text-sm mt-0.5">{proforma.comentario_cliente}</p>
             <p className="text-amber-600 text-xs mt-1">Ajusta las líneas y vuelve a enviarla al cliente.</p>
           </div>
+        </div>
+      )}
+
+      {/* Comprobante de pago subido por el cliente */}
+      {proforma.comprobante_url && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-medium text-gray-800 text-sm">Comprobante de pago</p>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  proforma.estado_pago === 'pagado' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {proforma.estado_pago === 'pagado' ? 'Pagado' : 'Abonado — pendiente de confirmar'}
+                </span>
+              </div>
+              <p className="text-gray-500 text-sm">
+                Monto abonado:{' '}
+                <span className="font-semibold text-gray-800">
+                  {proforma.monto_abono_recibido != null ? formatUSD(proforma.monto_abono_recibido) : 'No especificado por el cliente'}
+                </span>
+              </p>
+              {proforma.fecha_abono && (
+                <p className="text-gray-400 text-xs mt-0.5">Subido el {proforma.fecha_abono}</p>
+              )}
+            </div>
+            <a
+              href={proforma.comprobante_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 flex flex-col items-center gap-1 group"
+            >
+              {proforma.comprobante_url.toLowerCase().endsWith('.pdf') ? (
+                <div className="w-20 h-20 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center group-hover:bg-gray-100">
+                  <FileText size={26} className="text-gray-400" />
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={proforma.comprobante_url}
+                  alt="Comprobante de pago"
+                  className="w-20 h-20 object-cover rounded-lg border border-gray-200 group-hover:opacity-80"
+                />
+              )}
+              <span className="text-xs text-blue-600 underline">Ver comprobante</span>
+            </a>
+          </div>
+          {proforma.estado_pago === 'parcial' && rolPuedeEditar && (
+            <button
+              onClick={confirmarPago}
+              disabled={confirmandoPago}
+              className="mt-3 px-4 py-2 rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+            >
+              {confirmandoPago ? 'Confirmando...' : 'Confirmar pago recibido'}
+            </button>
+          )}
         </div>
       )}
 

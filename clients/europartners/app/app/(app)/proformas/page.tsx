@@ -16,10 +16,16 @@ interface Proforma {
   fecha_vencimiento: string | null
   incoterm: string
   estado: string
+  estado_pago?: string
   total_fob_usd: number | null
   total_cif_usd: number | null
   cliente: Cliente | null
   lineas: { count: number }[]
+}
+
+const ESTADO_PAGO_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  parcial: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Abonado' },
+  pagado:  { bg: 'bg-green-100', text: 'text-green-700', label: 'Pagado' },
 }
 
 const ESTADO_STYLE: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
@@ -370,10 +376,17 @@ export default function ProformasPage() {
                         {total != null ? formatUSD(total) : <span className="text-gray-300 font-normal">—</span>}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
-                          {st.icon}
-                          {p.estado.replace('_', ' ')}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
+                            {st.icon}
+                            {p.estado.replace('_', ' ')}
+                          </span>
+                          {p.estado_pago && ESTADO_PAGO_STYLE[p.estado_pago] && (
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${ESTADO_PAGO_STYLE[p.estado_pago].bg} ${ESTADO_PAGO_STYLE[p.estado_pago].text}`}>
+                              {ESTADO_PAGO_STYLE[p.estado_pago].label}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-gray-300">
                         <ChevronRight size={15} />
