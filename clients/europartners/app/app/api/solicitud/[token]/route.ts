@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { data: cliente } = await adminClient
     .from('clientes')
-    .select('id, nombre, activo')
+    .select('id, nombre, activo, tipo')
     .eq('token_solicitud', params.token)
     .single()
 
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Enlace inválido' }, { status: 404 })
   }
 
-  const { categorias, productos } = await getCatalogoPublico(adminClient)
+  const { categorias, productos } = await getCatalogoPublico(adminClient, cliente.tipo)
 
   return NextResponse.json({
     cliente: { id: cliente.id, nombre: cliente.nombre },

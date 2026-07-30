@@ -14,21 +14,21 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .from('solicitudes')
     .select(`
       id, motivo_devolucion,
-      cliente:clientes(id, nombre, activo),
+      cliente:clientes(id, nombre, activo, tipo),
       lineas:solicitud_lineas(producto_id, descripcion_libre, cantidad)
     `)
     .eq('token_edicion', params.token)
     .eq('estado', 'devuelta')
     .single()
 
-  const clienteJoin = solicitud?.cliente as { id?: string; nombre?: string; activo?: boolean } | { id?: string; nombre?: string; activo?: boolean }[] | null
+  const clienteJoin = solicitud?.cliente as { id?: string; nombre?: string; activo?: boolean; tipo?: 'mayorista' | 'detallista' } | { id?: string; nombre?: string; activo?: boolean; tipo?: 'mayorista' | 'detallista' }[] | null
   const cliente = Array.isArray(clienteJoin) ? clienteJoin[0] : clienteJoin
 
   if (!solicitud || !cliente?.activo) {
     return NextResponse.json({ error: 'Este enlace ya no es válido' }, { status: 404 })
   }
 
-  const { categorias, productos } = await getCatalogoPublico(adminClient)
+  const { categorias, productos } = await getCatalogoPublico(adminClient, cliente.tipo || 'mayorista')
 
   return NextResponse.json({
     cliente: { id: cliente.id, nombre: cliente.nombre },

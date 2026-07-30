@@ -1,9 +1,12 @@
 'use client'
 import { useState, useMemo } from 'react'
 import {
-  Search, Package, Plus, Minus, Trash2, Loader2, AlertCircle,
-  CheckCircle, ShoppingCart, X,
+  Search, Package, Plus, Trash2, Loader2, AlertCircle,
+  CheckCircle, ShoppingCart, X, Eye,
 } from 'lucide-react'
+import QuantityStepper from './QuantityStepper'
+import ProductoDetalleModal from './ProductoDetalleModal'
+import { formatUSD } from '@/lib/precio'
 
 interface Categoria { id: string; nombre: string }
 interface Producto {
@@ -13,6 +16,10 @@ interface Producto {
   nombre: string
   descripcion: string | null
   imagen_url: string | null
+  dimensiones?: string | null
+  color_variante?: string | null
+  moq?: string | null
+  precio_cliente?: number | null
 }
 
 export interface LineaCarrito {
@@ -56,6 +63,7 @@ export default function SolicitudForm({
   const [notasCliente, setNotasCliente] = useState(notasInicial)
   const [showCarrito, setShowCarrito] = useState(false)
   const [descLibre, setDescLibre] = useState('')
+  const [productoDetalle, setProductoDetalle] = useState<Producto | null>(null)
 
   const productosFiltrados = useMemo(() => {
     let list = productos
@@ -71,14 +79,24 @@ export default function SolicitudForm({
     return list
   }, [productos, categoriaId, busqueda])
 
-  function agregarProducto(p: Producto) {
+  // Fija la cantidad absoluta de un producto en el carrito (no la suma) —
+  // cantidad <= 0 lo quita, si no existe lo crea, si ya existe la actualiza.
+  function setCantidadProducto(p: Producto, cantidad: number) {
     setCarrito(prev => {
       const existente = prev.find(l => l.producto_id === p.id)
-      if (existente) {
-        return prev.map(l => l.producto_id === p.id ? { ...l, cantidad: l.cantidad + 1 } : l)
+      if (cantidad <= 0) {
+        return prev.filter(l => l.producto_id !== p.id)
       }
-      return [...prev, { key: p.id, producto_id: p.id, codigo: p.codigo, nombre: p.nombre, cantidad: 1 }]
+      if (existente) {
+        return prev.map(l => l.producto_id === p.id ? { ...l, cantidad } : l)
+      }
+      return [...prev, { key: p.id, producto_id: p.id, codigo: p.codigo, nombre: p.nombre, cantidad }]
     })
+  }
+
+  function agregarProducto(p: Producto) {
+    const existente = carrito.find(l => l.producto_id === p.id)
+    setCantidadProducto(p, (existente?.cantidad || 0) + 1)
   }
 
   function agregarLibre() {
@@ -92,9 +110,9 @@ export default function SolicitudForm({
     setDescLibre('')
   }
 
-  function cambiarCantidad(key: string, delta: number) {
+  function fijarCantidadCarrito(key: string, cantidad: number) {
     setCarrito(prev => prev
-      .map(l => l.key === key ? { ...l, cantidad: l.cantidad + delta } : l)
+      .map(l => l.key === key ? { ...l, cantidad } : l)
       .filter(l => l.cantidad > 0)
     )
   }
@@ -239,28 +257,43 @@ export default function SolicitudForm({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
             {productosFiltrados.map(p => {
               const enCarrito = carrito.find(l => l.producto_id === p.id)
+              const cantidad = enCarrito?.cantidad || 0
               return (
-                <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <div
+                  key={p.id}
+                  onClick={() => setProductoDetalle(p)}
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
+                >
                   <div className="relative bg-gray-50 h-32 flex items-center justify-center overflow-hidden">
                     {p.imagen_url ? (
                       <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-2" />
                     ) : (
                       <Package size={28} className="text-gray-300" />
                     )}
+                    <div className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-1.5 shadow-sm opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <Eye size={13} className="text-[#1E3A5F]" />
+                    </div>
                   </div>
                   <div className="p-3 flex flex-col gap-1 flex-1">
                     <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
                     <p className="text-sm text-gray-800 font-medium leading-tight line-clamp-2 flex-1">{p.nombre}</p>
-                    <button
-                      onClick={() => agregarProducto(p)}
-                      className={`mt-2 text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
-                        enCarrito ? 'bg-green-50 text-green-700' : 'text-white'
-                      }`}
-                      style={!enCarrito ? { background: '#1E3A5F' } : {}}
-                    >
-                      <Plus size={13} />
-                      {enCarrito ? `En pedido (${enCarrito.cantidad})` : 'Agregar'}
-                    </button>
+                    {p.precio_cliente != null && (
+                      <p className="text-sm font-bold" style={{ color: '#D4A017' }}>{formatUSD(p.precio_cliente)}</p>
+                    )}
+                    {cantidad > 0 ? (
+                      <div className="mt-2 flex justify-center">
+                        <QuantityStepper value={cantidad} onChange={v => setCantidadProducto(p, v)} />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); agregarProducto(p) }}
+                        className="mt-2 text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-white"
+                        style={{ background: '#1E3A5F' }}
+                      >
+                        <Plus size={13} />
+                        Agregar
+                      </button>
+                    )}
                   </div>
                 </div>
               )
@@ -333,13 +366,7 @@ export default function SolicitudForm({
                         <p className="text-sm text-gray-800 font-medium truncate">{l.nombre}</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <button onClick={() => cambiarCantidad(l.key, -1)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-                          <Minus size={13} />
-                        </button>
-                        <span className="w-6 text-center text-sm font-semibold">{l.cantidad}</span>
-                        <button onClick={() => cambiarCantidad(l.key, 1)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-                          <Plus size={13} />
-                        </button>
+                        <QuantityStepper value={l.cantidad} onChange={v => fijarCantidadCarrito(l.key, v)} />
                         <button onClick={() => quitar(l.key)} className="text-red-400 hover:text-red-600 ml-1">
                           <Trash2 size={15} />
                         </button>
@@ -371,6 +398,19 @@ export default function SolicitudForm({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de detalle de producto */}
+      {productoDetalle && (
+        <ProductoDetalleModal
+          producto={productoDetalle}
+          cantidadActual={carrito.find(l => l.producto_id === productoDetalle.id)?.cantidad || 0}
+          onConfirmar={cantidad => {
+            setCantidadProducto(productoDetalle, cantidad)
+            setProductoDetalle(null)
+          }}
+          onClose={() => setProductoDetalle(null)}
+        />
       )}
     </div>
   )
