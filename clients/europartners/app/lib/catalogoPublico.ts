@@ -15,7 +15,7 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
 
   const { data: productosRaw } = await adminClient
     .from('productos')
-    .select('id, categoria_id, codigo, nombre, descripcion, imagen_url, dimensiones, color_variante, moq, precio_mayorista, precio_detallista')
+    .select('id, categoria_id, codigo, nombre, descripcion, imagen_url, imagenes_urls, dimensiones, color_variante, moq, precio_mayorista, precio_detallista')
     .eq('estado', 'activo')
     .order('categoria_id', { ascending: true })
     .order('codigo', { ascending: true })

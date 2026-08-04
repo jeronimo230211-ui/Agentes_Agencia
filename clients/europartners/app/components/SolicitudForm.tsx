@@ -16,6 +16,7 @@ interface Producto {
   nombre: string
   descripcion: string | null
   imagen_url: string | null
+  imagenes_urls?: string[] | null
   dimensiones?: string | null
   color_variante?: string | null
   moq?: string | null

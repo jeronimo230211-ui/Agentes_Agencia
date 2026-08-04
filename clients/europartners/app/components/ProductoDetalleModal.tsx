@@ -10,6 +10,7 @@ export interface ProductoDetalle {
   nombre: string
   descripcion: string | null
   imagen_url: string | null
+  imagenes_urls?: string[] | null
   dimensiones?: string | null
   color_variante?: string | null
   moq?: string | null
@@ -25,6 +26,9 @@ interface Props {
 
 export default function ProductoDetalleModal({ producto, cantidadActual, onConfirmar, onClose }: Props) {
   const [cantidad, setCantidad] = useState(cantidadActual > 0 ? cantidadActual : 1)
+
+  const galeria = [producto.imagen_url, ...(producto.imagenes_urls || [])].filter((u): u is string => !!u)
+  const [imagenActiva, setImagenActiva] = useState(galeria[0] || null)
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -67,12 +71,27 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
         {/* Body */}
         <div className="flex-1 overflow-y-auto">
           <div className="bg-gray-50 h-64 flex items-center justify-center overflow-hidden">
-            {producto.imagen_url ? (
-              <img src={producto.imagen_url} alt={producto.nombre} className="w-full h-full object-contain p-4" />
+            {imagenActiva ? (
+              <img src={imagenActiva} alt={producto.nombre} className="w-full h-full object-contain p-4" />
             ) : (
               <Package size={48} className="text-gray-300" />
             )}
           </div>
+
+          {galeria.length > 1 && (
+            <div className="flex gap-2 px-5 pt-3 overflow-x-auto">
+              {galeria.map((url, i) => (
+                <button
+                  key={url + i}
+                  onClick={() => setImagenActiva(url)}
+                  className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 bg-gray-50"
+                  style={{ borderColor: imagenActiva === url ? '#1E3A5F' : 'transparent' }}
+                >
+                  <img src={url} alt="" className="w-full h-full object-contain p-1" />
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="p-5 space-y-5">
             {producto.precio_cliente != null && (
