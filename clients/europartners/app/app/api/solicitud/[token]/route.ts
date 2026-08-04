@@ -12,15 +12,19 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { data: cliente } = await adminClient
     .from('clientes')
-    .select('id, nombre, activo, tipo')
-    .eq('token_solicitud', params.token)
+    .select('id, nombre, activo, token_mayorista, token_detallista')
+    .or(`token_mayorista.eq.${params.token},token_detallista.eq.${params.token}`)
     .single()
 
   if (!cliente || !cliente.activo) {
     return NextResponse.json({ error: 'Enlace inválido' }, { status: 404 })
   }
 
-  const { categorias, productos } = await getCatalogoPublico(adminClient, cliente.tipo)
+  // El tipo de precio a mostrar lo decide CUÁL de los 2 links usó el cliente,
+  // no clientes.tipo — así Marta puede compartir el link mayorista o el
+  // detallista del mismo cliente según a quién se lo esté mandando.
+  const tipoPrecio = params.token === cliente.token_mayorista ? 'mayorista' : 'detallista'
+  const { categorias, productos } = await getCatalogoPublico(adminClient, tipoPrecio)
 
   return NextResponse.json({
     cliente: { id: cliente.id, nombre: cliente.nombre },
@@ -35,7 +39,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: cliente } = await adminClient
     .from('clientes')
     .select('id, nombre, activo')
-    .eq('token_solicitud', params.token)
+    .or(`token_mayorista.eq.${params.token},token_detallista.eq.${params.token}`)
     .single()
 
   if (!cliente || !cliente.activo) {

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
 
-interface Cliente { id: string; nombre: string; token_solicitud: string }
+interface Cliente { id: string; nombre: string; token_mayorista: string; token_detallista: string }
 interface Producto { id: string; codigo: string; nombre: string; imagen_url: string | null }
 interface SolicitudLinea {
   id: string
@@ -56,6 +56,7 @@ export default function SolicitudesPage() {
   const [seleccionada, setSeleccionada] = useState<Solicitud | null>(null)
   const [convirtiendo, setConvirtiendo] = useState(false)
   const [copiadoId, setCopiadoId] = useState<string | null>(null)
+  const [copiadoTipo, setCopiadoTipo] = useState<'mayorista' | 'detallista' | null>(null)
   const [showLinks, setShowLinks] = useState(false)
   const [showDevolver, setShowDevolver] = useState(false)
   const [comentarioDevolver, setComentarioDevolver] = useState('')
@@ -76,11 +77,13 @@ export default function SolicitudesPage() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  function copiarLink(cliente: Cliente) {
-    const url = `${window.location.origin}/solicitud/${cliente.token_solicitud}`
+  function copiarLink(cliente: Cliente, tipo: 'mayorista' | 'detallista') {
+    const token = tipo === 'mayorista' ? cliente.token_mayorista : cliente.token_detallista
+    const url = `${window.location.origin}/solicitud/${token}`
     navigator.clipboard.writeText(url)
     setCopiadoId(cliente.id)
-    setTimeout(() => setCopiadoId(null), 2000)
+    setCopiadoTipo(tipo)
+    setTimeout(() => { setCopiadoId(null); setCopiadoTipo(null) }, 2000)
   }
 
   async function convertir(solicitud: Solicitud) {
@@ -373,21 +376,35 @@ export default function SolicitudesPage() {
             </div>
             <div className="p-5 space-y-2">
               <p className="text-xs text-gray-400 mb-3">
-                Cada cliente tiene un link fijo — compártelo una sola vez, siempre llevará a su formulario de pedido.
+                Cada cliente tiene 2 links fijos — uno con precio mayorista y otro con precio
+                detallista, según cuál le quieras compartir. Cada uno siempre lleva a su
+                formulario de pedido con esos precios.
               </p>
               {clientes.map(c => (
-                <div key={c.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2.5">
+                <div key={c.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2.5 gap-2">
                   <span className="text-sm font-medium text-gray-700">{c.nombre}</span>
-                  <button
-                    onClick={() => copiarLink(c)}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
-                  >
-                    {copiadoId === c.id ? (
-                      <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
-                    ) : (
-                      <><Copy size={13} /> Copiar link</>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => copiarLink(c, 'mayorista')}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
+                    >
+                      {copiadoId === c.id && copiadoTipo === 'mayorista' ? (
+                        <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                      ) : (
+                        <><Copy size={13} /> Mayorista</>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => copiarLink(c, 'detallista')}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
+                    >
+                      {copiadoId === c.id && copiadoTipo === 'detallista' ? (
+                        <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                      ) : (
+                        <><Copy size={13} /> Detallista</>
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
