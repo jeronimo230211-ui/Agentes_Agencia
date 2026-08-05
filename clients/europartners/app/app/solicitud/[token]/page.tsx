@@ -51,9 +51,9 @@ export default function SolicitudPage({ params }: { params: { token: string } })
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Enlace inválido</h1>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Invalid link</h1>
           <p className="text-gray-500 text-sm">
-            Este enlace de pedido no es válido. Contacta a Europartners para obtener tu link correcto.
+            This order link is not valid. Please contact Europartners to get your correct link.
           </p>
         </div>
       </div>

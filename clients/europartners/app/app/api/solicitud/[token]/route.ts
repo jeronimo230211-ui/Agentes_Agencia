@@ -17,7 +17,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .single()
 
   if (!cliente || !cliente.activo) {
-    return NextResponse.json({ error: 'Enlace inválido' }, { status: 404 })
+    return NextResponse.json({ error: 'Invalid link' }, { status: 404 })
   }
 
   // El tipo de precio a mostrar lo decide CUÁL de los 2 links usó el cliente,
@@ -48,13 +48,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .single()
 
   if (!cliente || !cliente.activo) {
-    return NextResponse.json({ error: 'Enlace inválido' }, { status: 404 })
+    return NextResponse.json({ error: 'Invalid link' }, { status: 404 })
   }
 
   const body = await req.json()
   const contacto_email = typeof body.contacto_email === 'string' ? body.contacto_email.trim() : ''
   if (!contacto_email) {
-    return NextResponse.json({ error: 'El correo es obligatorio' }, { status: 400 })
+    return NextResponse.json({ error: 'Email is required' }, { status: 400 })
   }
 
   const update = {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single()
 
   if (!cliente || !cliente.activo) {
-    return NextResponse.json({ error: 'Enlace inválido' }, { status: 404 })
+    return NextResponse.json({ error: 'Invalid link' }, { status: 404 })
   }
 
   const body = await req.json()
@@ -88,15 +88,15 @@ export async function POST(req: NextRequest, { params }: Params) {
   const notasCliente = typeof body.notas_cliente === 'string' ? body.notas_cliente : null
 
   if (lineas.length === 0) {
-    return NextResponse.json({ error: 'Agrega al menos un producto' }, { status: 400 })
+    return NextResponse.json({ error: 'Add at least one product' }, { status: 400 })
   }
 
   for (const l of lineas) {
     if (!l.producto_id && !l.descripcion_libre?.trim()) {
-      return NextResponse.json({ error: 'Cada línea necesita un producto o una descripción' }, { status: 400 })
+      return NextResponse.json({ error: 'Each line needs a product or a description' }, { status: 400 })
     }
     if (!l.cantidad || Number(l.cantidad) <= 0) {
-      return NextResponse.json({ error: 'Cantidad inválida en una de las líneas' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid quantity in one of the lines' }, { status: 400 })
     }
   }
 

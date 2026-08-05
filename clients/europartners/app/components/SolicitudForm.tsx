@@ -45,7 +45,7 @@ interface Props {
   textoBoton?: string
   onEnviar: (payload: { lineas: { producto_id?: string; descripcion_libre?: string; cantidad: number }[]; notas_cliente: string | null }) => Promise<{ ok: boolean; error?: string }>
   // Si se pasa y contactoCompleto es false, tras enviar el pedido se le pide
-  // al cliente correo/nombre/teléfono/dirección (opcional, con "Ahora no").
+  // al cliente correo/nombre/teléfono/dirección (opcional, con "Not now").
   contactoCompleto?: boolean
   onGuardarContacto?: (datos: { contacto_nombre: string; contacto_email: string; contacto_telefono: string; direccion: string }) => Promise<{ ok: boolean; error?: string }>
 }
@@ -54,11 +54,12 @@ interface Props {
 // (/solicitud/[token]) y por el link de edición tras una devolución
 // (/solicitud-editar/[token]). El estado loading/invalid de la carga inicial
 // lo maneja cada página wrapper; este componente solo controla el armado y
-// envío del carrito.
+// envío del carrito. Todo el texto visible es en inglés (clientes son
+// mayormente angloparlantes) — decisión explícita de Jero, 2026-08-05.
 export default function SolicitudForm({
   clienteNombre, categorias, productos, carritoInicial = [], notasInicial = '',
-  banner, subtitulo = 'Nuevo pedido', tituloExito = '¡Solicitud enviada!',
-  mensajeExito, textoBoton = 'Enviar solicitud a Europartners', onEnviar,
+  banner, subtitulo = 'New order', tituloExito = 'Order submitted!',
+  mensajeExito, textoBoton = 'Send order to Europartners', onEnviar,
   contactoCompleto = true, onGuardarContacto,
 }: Props) {
   const [estado, setEstado] = useState<'form' | 'sending' | 'done' | 'error'>('form')
@@ -149,7 +150,7 @@ export default function SolicitudForm({
       setEstado('done')
       if (onGuardarContacto && !contactoCompleto) setPedirContacto(true)
     } else {
-      setError(err || 'Error al enviar la solicitud')
+      setError(err || 'Error sending the order')
       setEstado('error')
     }
   }
@@ -166,7 +167,7 @@ export default function SolicitudForm({
     })
     setGuardandoContacto(false)
     if (ok) setPedirContacto(false)
-    else setErrorContacto(err || 'No se pudo guardar, intenta de nuevo')
+    else setErrorContacto(err || 'Could not save, please try again')
   }
 
   const totalItems = carrito.reduce((s, l) => s + l.cantidad, 0)
@@ -180,40 +181,40 @@ export default function SolicitudForm({
           <p className="text-gray-500">
             {mensajeExito
               ? mensajeExito(totalItems)
-              : `Recibimos tu pedido con ${totalItems} artículo${totalItems !== 1 ? 's' : ''}. Europartners lo revisará y te enviará la proforma comercial pronto.`}
+              : `We received your order with ${totalItems} item${totalItems !== 1 ? 's' : ''}. Europartners will review it and send you the commercial proforma soon.`}
           </p>
 
           {pedirContacto && (
             <div className="mt-6 pt-6 border-t border-gray-100 text-left">
-              <p className="text-sm font-semibold text-gray-700 mb-1">¿A qué correo te enviamos la proforma?</p>
+              <p className="text-sm font-semibold text-gray-700 mb-1">What email should we send your proforma to?</p>
               <p className="text-xs text-gray-400 mb-3">
-                Nos ayuda a mandarte toda la información de tu pedido al correo correcto. Puedes omitir esto y dárnoslo después.
+                This helps us send all your order information to the right email. You can skip this and give it to us later.
               </p>
               <div className="space-y-2">
                 <input
                   type="text"
-                  placeholder="Nombre de contacto"
+                  placeholder="Contact name"
                   value={contactoNombre}
                   onChange={e => setContactoNombre(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
                 />
                 <input
                   type="email"
-                  placeholder="Correo *"
+                  placeholder="Email *"
                   value={contactoEmail}
                   onChange={e => setContactoEmail(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
                 />
                 <input
                   type="text"
-                  placeholder="Teléfono"
+                  placeholder="Phone"
                   value={contactoTelefono}
                   onChange={e => setContactoTelefono(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
                 />
                 <input
                   type="text"
-                  placeholder="Dirección de envío/entrega"
+                  placeholder="Shipping/delivery address"
                   value={contactoDireccion}
                   onChange={e => setContactoDireccion(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
@@ -225,7 +226,7 @@ export default function SolicitudForm({
                   onClick={() => setPedirContacto(false)}
                   className="flex-1 text-sm font-semibold py-2.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
                 >
-                  Ahora no
+                  Not now
                 </button>
                 <button
                   onClick={guardarContacto}
@@ -234,7 +235,7 @@ export default function SolicitudForm({
                   style={{ background: '#1E3A5F' }}
                 >
                   {guardandoContacto && <Loader2 size={14} className="animate-spin" />}
-                  Guardar
+                  Save
                 </button>
               </div>
             </div>
@@ -256,7 +257,7 @@ export default function SolicitudForm({
             className="px-5 py-2 rounded-lg font-medium text-white"
             style={{ background: '#1E3A5F' }}
           >
-            Volver al pedido
+            Back to order
           </button>
         </div>
       </div>
@@ -277,7 +278,7 @@ export default function SolicitudForm({
             className="relative flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-semibold"
           >
             <ShoppingCart size={18} />
-            Mi pedido
+            My order
             {totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-[#D4A017] text-[#1E3A5F] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
@@ -292,7 +293,7 @@ export default function SolicitudForm({
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex gap-3">
             <AlertCircle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-amber-800 mb-1">Europartners necesita confirmar algo de tu pedido</p>
+              <p className="text-sm font-semibold text-amber-800 mb-1">Europartners needs to confirm something about your order</p>
               <p className="text-sm text-amber-700">{banner}</p>
             </div>
           </div>
@@ -304,7 +305,7 @@ export default function SolicitudForm({
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar producto..."
+              placeholder="Search product..."
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
@@ -317,7 +318,7 @@ export default function SolicitudForm({
                 !categoriaId ? 'bg-[#1E3A5F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Todas
+              All
             </button>
             {categorias.map(cat => (
               <button
@@ -337,7 +338,7 @@ export default function SolicitudForm({
         {productosFiltrados.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <Package size={40} className="mx-auto mb-3 opacity-30" />
-            <p>No se encontraron productos</p>
+            <p>No products found</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
@@ -377,7 +378,7 @@ export default function SolicitudForm({
                         style={{ background: '#1E3A5F' }}
                       >
                         <Plus size={13} />
-                        Agregar
+                        Add
                       </button>
                     )}
                   </div>
@@ -389,11 +390,11 @@ export default function SolicitudForm({
 
         {/* No lo encuentro */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-8">
-          <p className="text-sm font-semibold text-gray-700 mb-2">¿No encuentras lo que buscas?</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Can&apos;t find what you&apos;re looking for?</p>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Describe el producto..."
+              placeholder="Describe the product..."
               className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
               value={descLibre}
               onChange={e => setDescLibre(e.target.value)}
@@ -405,7 +406,7 @@ export default function SolicitudForm({
               className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40"
               style={{ background: '#1E3A5F' }}
             >
-              Agregar
+              Add
             </button>
           </div>
         </div>
@@ -416,14 +417,14 @@ export default function SolicitudForm({
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4 z-20">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              <strong>{totalItems}</strong> artículo{totalItems !== 1 ? 's' : ''} en tu pedido
+              <strong>{totalItems}</strong> item{totalItems !== 1 ? 's' : ''} in your order
             </p>
             <button
               onClick={() => setShowCarrito(true)}
               className="px-5 py-2.5 rounded-lg font-bold text-sm"
               style={{ background: '#D4A017', color: '#1E3A5F' }}
             >
-              Revisar y enviar →
+              Review and send →
             </button>
           </div>
         </div>
@@ -434,7 +435,7 @@ export default function SolicitudForm({
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800">Tu pedido</h2>
+              <h2 className="text-lg font-bold text-gray-800">Your order</h2>
               <button onClick={() => setShowCarrito(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
@@ -442,7 +443,7 @@ export default function SolicitudForm({
 
             <div className="flex-1 overflow-y-auto p-5">
               {carrito.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Aún no has agregado productos</p>
+                <p className="text-sm text-gray-400 text-center py-8">You haven&apos;t added any products yet</p>
               ) : (
                 <div className="space-y-3 mb-5">
                   {carrito.map(l => (
@@ -462,11 +463,11 @@ export default function SolicitudForm({
                 </div>
               )}
 
-              <label className="text-xs font-semibold text-gray-500 uppercase">Notas para Europartners (opcional)</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase">Notes for Europartners (optional)</label>
               <textarea
                 value={notasCliente}
                 onChange={e => setNotasCliente(e.target.value)}
-                placeholder="Ej: necesito el pedido antes del 30 de agosto..."
+                placeholder="E.g.: I need the order before August 30..."
                 className="w-full mt-1.5 border border-gray-200 rounded-lg p-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
               />
             </div>

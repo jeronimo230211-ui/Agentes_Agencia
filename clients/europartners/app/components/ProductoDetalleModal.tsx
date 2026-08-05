@@ -39,8 +39,8 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
   }, [onClose])
 
   const specs = [
-    producto.dimensiones ? { icon: Ruler, label: 'Dimensiones', valor: producto.dimensiones } : null,
-    producto.color_variante ? { icon: Palette, label: 'Color / Variante', valor: producto.color_variante } : null,
+    producto.dimensiones ? { icon: Ruler, label: 'Dimensions', valor: producto.dimensiones } : null,
+    producto.color_variante ? { icon: Palette, label: 'Color / Variant', valor: producto.color_variante } : null,
     producto.moq ? { icon: Boxes, label: 'MOQ', valor: producto.moq } : null,
   ].filter((s): s is { icon: typeof Ruler; label: string; valor: string } => s !== null)
 
@@ -62,7 +62,7 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 flex-shrink-0"
-            aria-label="Cerrar"
+            aria-label="Close"
           >
             <X size={20} />
           </button>
@@ -96,14 +96,14 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
           <div className="p-5 space-y-5">
             {producto.precio_cliente != null && (
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Precio</p>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Price</p>
                 <p className="text-2xl font-bold" style={{ color: '#1E3A5F' }}>{formatUSD(producto.precio_cliente)}</p>
               </div>
             )}
 
             {producto.descripcion && (
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Descripción</p>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
               </div>
             )}
@@ -132,7 +132,7 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
             className="flex-1 py-3 rounded-lg font-bold text-white text-sm"
             style={{ background: '#1E3A5F' }}
           >
-            {cantidadActual > 0 ? 'Actualizar cantidad' : 'Agregar al pedido'}
+            {cantidadActual > 0 ? 'Update quantity' : 'Add to order'}
           </button>
         </div>
       </div>

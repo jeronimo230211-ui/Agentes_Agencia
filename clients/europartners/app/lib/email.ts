@@ -218,29 +218,29 @@ export async function enviarSolicitudDevuelta(
         <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
       </div>
       <div style="padding:24px;background:#f9fafb">
-        <h2 style="color:#1E3A5F;margin:0 0 8px">Necesitamos confirmar algo de tu pedido</h2>
-        <p style="color:#6b7280;margin:0 0 16px">Hola ${clienteNombre},</p>
+        <h2 style="color:#1E3A5F;margin:0 0 8px">We need to confirm something about your order</h2>
+        <p style="color:#6b7280;margin:0 0 16px">Hello ${clienteNombre},</p>
         <p style="color:#6b7280;margin:0 0 16px">
-          Antes de preparar tu proforma, revisamos tu pedido y necesitamos que confirmes o ajustes lo siguiente:
+          Before preparing your proforma, we reviewed your order and need you to confirm or adjust the following:
         </p>
         <div style="background:white;border-left:4px solid #D4A017;border-radius:4px;padding:14px 16px;margin-bottom:20px">
           <p style="color:#1E3A5F;margin:0;font-size:14px">${motivo}</p>
         </div>
         <p style="color:#6b7280;margin:0 0 20px">
-          Puedes revisar y editar tu pedido directamente desde el siguiente enlace:
+          You can review and edit your order directly from the link below:
         </p>
         <div style="text-align:center;margin:24px 0">
           <a href="${editarUrl}"
              style="background:#D4A017;color:#1E3A5F;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
-            Revisar mi pedido
+            Review my order
           </a>
         </div>
-        <p style="color:#9ca3af;font-size:12px;text-align:center">Este enlace es de un solo uso.</p>
+        <p style="color:#9ca3af;font-size:12px;text-align:center">This link can only be used once.</p>
       </div>
     </div>
   `
 
-  await enviarEmail(clienteEmail, `Europartners necesita confirmar tu pedido`, html)
+  await enviarEmail(clienteEmail, `Europartners needs to confirm your order`, html)
 }
 
 export async function enviarProformaParaAprobacion(
@@ -251,7 +251,7 @@ export async function enviarProformaParaAprobacion(
   const clienteEmail = proforma.cliente?.contacto_email
   if (!clienteEmail) throw new Error('Cliente sin email de contacto')
 
-  const clienteNombre = proforma.cliente?.contacto_nombre || proforma.cliente?.nombre || 'Cliente'
+  const clienteNombre = proforma.cliente?.contacto_nombre || proforma.cliente?.nombre || 'Customer'
   const total = proforma.total_cif_usd || proforma.total_fob_usd || 0
   const aprobacionUrl = `${APP_URL}/aprobacion-cliente/${tokenAprobacion}`
 
@@ -298,7 +298,7 @@ export async function enviarProformaCliente(
   const clienteEmail = proforma.cliente?.contacto_email
   if (!clienteEmail) throw new Error('Cliente sin email de contacto')
 
-  const clienteNombre = proforma.cliente?.contacto_nombre || proforma.cliente?.nombre || 'Cliente'
+  const clienteNombre = proforma.cliente?.contacto_nombre || proforma.cliente?.nombre || 'Customer'
   const total = proforma.total_cif_usd || proforma.total_fob_usd || 0
   const pagoUrl = pagoToken ? `${APP_URL}/pago/${pagoToken}` : null
   const label = esInvoice ? 'Invoice' : 'Proforma Invoice'

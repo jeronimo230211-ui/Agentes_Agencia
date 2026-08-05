@@ -12,8 +12,8 @@ async function resolverToken(adminClient: ReturnType<typeof createAdminClient>, 
     .eq('token', token)
     .single()
 
-  if (!tokenData) return { error: 'Enlace no encontrado', status: 404 } as const
-  if (new Date(tokenData.expira_at) < new Date()) return { error: 'Enlace expirado', status: 410 } as const
+  if (!tokenData) return { error: 'Link not found', status: 404 } as const
+  if (new Date(tokenData.expira_at) < new Date()) return { error: 'Link expired', status: 410 } as const
 
   return { proformaId: tokenData.proforma_id } as const
 }
@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .eq('id', resuelto.proformaId)
     .single()
 
-  if (!proforma) return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
+  if (!proforma) return NextResponse.json({ error: 'Proforma not found' }, { status: 404 })
 
   const total = proforma.total_cif_usd || proforma.total_fob_usd || 0
 
@@ -53,8 +53,8 @@ export async function POST(req: NextRequest, { params }: Params) {
   const archivo = formData.get('comprobante') as File | null
   const monto = formData.get('monto') as string | null
 
-  if (!archivo) return NextResponse.json({ error: 'Sube el comprobante de pago' }, { status: 400 })
-  if (archivo.size > 10 * 1024 * 1024) return NextResponse.json({ error: 'El archivo no debe superar 10MB' }, { status: 400 })
+  if (!archivo) return NextResponse.json({ error: 'Upload the payment proof' }, { status: 400 })
+  if (archivo.size > 10 * 1024 * 1024) return NextResponse.json({ error: 'The file must not exceed 10MB' }, { status: 400 })
 
   const ext = archivo.name.split('.').pop() || 'bin'
   const fileName = `comprobantes/${resuelto.proformaId}-${Date.now()}.${ext}`

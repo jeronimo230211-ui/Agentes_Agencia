@@ -42,7 +42,7 @@ export default function PagoPage({ params }: { params: { token: string } }) {
       setEstado('done')
     } else {
       const j = await res.json()
-      setError(j.error || 'Error al subir el comprobante')
+      setError(j.error || 'Error uploading the payment proof')
       setEstado('error')
     }
   }
@@ -60,8 +60,8 @@ export default function PagoPage({ params }: { params: { token: string } }) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Enlace inválido o expirado</h1>
-          <p className="text-gray-500 text-sm">Contacta a Europartners para obtener un nuevo enlace.</p>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Invalid or expired link</h1>
+          <p className="text-gray-500 text-sm">Please contact Europartners to get a new link.</p>
         </div>
       </div>
     )
@@ -74,14 +74,14 @@ export default function PagoPage({ params }: { params: { token: string } }) {
           {proforma?.estado_pago === 'pagado' ? (
             <>
               <CheckCircle size={56} className="text-green-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Pago confirmado</h1>
-              <p className="text-gray-500">Europartners ya validó tu pago para la proforma <strong>{proforma?.numero}</strong>. Pronto iniciamos el despacho.</p>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment confirmed</h1>
+              <p className="text-gray-500">Europartners has confirmed your payment for proforma <strong>{proforma?.numero}</strong>. We&apos;ll start the shipment soon.</p>
             </>
           ) : (
             <>
               <FileCheck size={56} className="text-blue-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Comprobante recibido</h1>
-              <p className="text-gray-500">Estamos validando tu comprobante para la proforma <strong>{proforma?.numero}</strong>. Te avisaremos cuando el despacho inicie.</p>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment proof received</h1>
+              <p className="text-gray-500">We&apos;re verifying your payment proof for proforma <strong>{proforma?.numero}</strong>. We&apos;ll let you know once the shipment starts.</p>
             </>
           )}
         </div>
@@ -97,7 +97,7 @@ export default function PagoPage({ params }: { params: { token: string } }) {
           <h1 className="text-xl font-bold text-gray-800 mb-2">Error</h1>
           <p className="text-gray-500 mb-4">{error}</p>
           <button onClick={() => setEstado('form')} className="px-5 py-2 rounded-lg font-medium text-white" style={{ background: '#1E3A5F' }}>
-            Intentar de nuevo
+            Try again
           </button>
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function PagoPage({ params }: { params: { token: string } }) {
       <div className="max-w-md mx-auto pt-8">
         <div className="bg-[#1E3A5F] text-white rounded-t-xl p-5">
           <h1 className="text-xl font-bold text-[#D4A017]">Europartners</h1>
-          <p className="text-sm opacity-75">Comprobante de pago</p>
+          <p className="text-sm opacity-75">Payment proof</p>
         </div>
         <div className="bg-white rounded-b-xl shadow-lg p-6">
           <p className="text-sm text-gray-500 mb-1">Proforma</p>
@@ -117,7 +117,7 @@ export default function PagoPage({ params }: { params: { token: string } }) {
           <p className="text-sm text-gray-500 mb-1">Total</p>
           <p className="text-2xl font-bold text-gray-800 mb-5">{proforma?.total_formateado}</p>
 
-          <label className="text-xs font-semibold text-gray-500 uppercase">Monto abonado (opcional)</label>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Amount paid (optional)</label>
           <input
             type="number"
             step="0.01"
@@ -127,13 +127,13 @@ export default function PagoPage({ params }: { params: { token: string } }) {
             className="w-full mt-1.5 mb-4 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
           />
 
-          <label className="text-xs font-semibold text-gray-500 uppercase">Comprobante bancario</label>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Bank payment proof</label>
           <div
             onClick={() => fileRef.current?.click()}
             className="mt-1.5 mb-5 border-2 border-dashed border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-gray-300"
           >
             <Upload size={24} className="mx-auto mb-2 text-gray-400" />
-            <p className="text-sm text-gray-500">{archivo ? archivo.name : 'Toca para subir imagen o PDF'}</p>
+            <p className="text-sm text-gray-500">{archivo ? archivo.name : 'Tap to upload an image or PDF'}</p>
           </div>
           <input
             ref={fileRef}
@@ -150,7 +150,7 @@ export default function PagoPage({ params }: { params: { token: string } }) {
             style={{ background: '#1E3A5F' }}
           >
             {estado === 'sending' && <Loader2 className="animate-spin" size={18} />}
-            Enviar comprobante
+            Send payment proof
           </button>
         </div>
       </div>

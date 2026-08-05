@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     .single()
 
   if (!proforma || proforma.estado !== 'enviada') {
-    return NextResponse.json({ error: 'Proforma no disponible para revisión' }, { status: 400 })
+    return NextResponse.json({ error: 'Proforma not available for review' }, { status: 400 })
   }
 
   return NextResponse.json({ proforma })
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { token, accion, comentario } = await req.json()
-  if (!token || !accion) return NextResponse.json({ error: 'Token y acción requeridos' }, { status: 400 })
+  if (!token || !accion) return NextResponse.json({ error: 'Token and action required' }, { status: 400 })
 
   const adminClient = createAdminClient()
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (!tokenData || tokenData.usado || new Date(tokenData.expira_at) < new Date()) {
-    return NextResponse.json({ error: 'Token inválido o expirado' }, { status: 401 })
+    return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
   }
 
   const proformaId = tokenData.proforma_id
@@ -141,6 +141,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, estado: 'cambios_solicitados' })
 
   } else {
-    return NextResponse.json({ error: 'Acción inválida' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   }
 }

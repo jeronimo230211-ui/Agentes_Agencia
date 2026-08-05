@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const cliente = Array.isArray(clienteJoin) ? clienteJoin[0] : clienteJoin
 
   if (!solicitud || !cliente?.activo) {
-    return NextResponse.json({ error: 'Este enlace ya no es válido' }, { status: 404 })
+    return NextResponse.json({ error: 'This link is no longer valid' }, { status: 404 })
   }
 
   const { categorias, productos } = await getCatalogoPublico(adminClient, cliente.tipo || 'mayorista')
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single()
 
   if (!solicitud) {
-    return NextResponse.json({ error: 'Este enlace ya no es válido' }, { status: 404 })
+    return NextResponse.json({ error: 'This link is no longer valid' }, { status: 404 })
   }
 
   const body = await req.json()
@@ -58,15 +58,15 @@ export async function POST(req: NextRequest, { params }: Params) {
   const notasCliente = typeof body.notas_cliente === 'string' ? body.notas_cliente : null
 
   if (lineas.length === 0) {
-    return NextResponse.json({ error: 'Agrega al menos un producto' }, { status: 400 })
+    return NextResponse.json({ error: 'Add at least one product' }, { status: 400 })
   }
 
   for (const l of lineas) {
     if (!l.producto_id && !l.descripcion_libre?.trim()) {
-      return NextResponse.json({ error: 'Cada línea necesita un producto o una descripción' }, { status: 400 })
+      return NextResponse.json({ error: 'Each line needs a product or a description' }, { status: 400 })
     }
     if (!l.cantidad || Number(l.cantidad) <= 0) {
-      return NextResponse.json({ error: 'Cantidad inválida en una de las líneas' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid quantity in one of the lines' }, { status: 400 })
     }
   }
 

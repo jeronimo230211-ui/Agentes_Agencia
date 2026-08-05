@@ -46,7 +46,7 @@ export default function SolicitudEditarPage({ params }: { params: { token: strin
         const carrito: LineaCarrito[] = (json.lineas || []).map((l: SolicitudLineaExistente, i: number) => {
           if (l.producto_id) {
             const p = productosPorId.get(l.producto_id)
-            return { key: l.producto_id, producto_id: l.producto_id, codigo: p?.codigo, nombre: p?.nombre || 'Producto', cantidad: l.cantidad }
+            return { key: l.producto_id, producto_id: l.producto_id, codigo: p?.codigo, nombre: p?.nombre || 'Product', cantidad: l.cantidad }
           }
           return { key: `libre-${i}`, descripcion_libre: l.descripcion_libre || '', nombre: l.descripcion_libre || '', cantidad: l.cantidad }
         })
@@ -69,9 +69,9 @@ export default function SolicitudEditarPage({ params }: { params: { token: strin
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Enlace no disponible</h1>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Link unavailable</h1>
           <p className="text-gray-500 text-sm">
-            Este enlace ya fue utilizado o no es válido. Si necesitas ayuda, contacta a Europartners.
+            This link has already been used or is not valid. If you need help, please contact Europartners.
           </p>
         </div>
       </div>
@@ -85,10 +85,10 @@ export default function SolicitudEditarPage({ params }: { params: { token: strin
       productos={productos}
       carritoInicial={carritoInicial}
       banner={motivo}
-      subtitulo="Revisar pedido"
-      tituloExito="¡Gracias!"
-      mensajeExito={() => 'Recibimos tu pedido actualizado. Europartners lo revisará y te enviará la proforma comercial pronto.'}
-      textoBoton="Reenviar pedido a Europartners"
+      subtitulo="Review order"
+      tituloExito="Thank you!"
+      mensajeExito={() => 'We received your updated order. Europartners will review it and send you the commercial proforma soon.'}
+      textoBoton="Resend order to Europartners"
       onEnviar={async ({ lineas, notas_cliente }) => {
         const res = await fetch(`/api/solicitud-editar/${params.token}`, {
           method: 'POST',
