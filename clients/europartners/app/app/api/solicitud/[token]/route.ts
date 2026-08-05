@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { data: cliente } = await adminClient
     .from('clientes')
-    .select('id, nombre, activo, token_mayorista, token_detallista')
+    .select('id, nombre, activo, token_mayorista, token_detallista, contacto_email')
     .or(`token_mayorista.eq.${params.token},token_detallista.eq.${params.token}`)
     .single()
 
@@ -27,10 +27,47 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { categorias, productos } = await getCatalogoPublico(adminClient, tipoPrecio)
 
   return NextResponse.json({
-    cliente: { id: cliente.id, nombre: cliente.nombre },
+    cliente: { id: cliente.id, nombre: cliente.nombre, contactoCompleto: !!cliente.contacto_email },
     categorias,
     productos,
   })
+}
+
+// El cliente completa (opcional) sus datos de contacto tras enviar un
+// pedido — este correo es el que se usa después para mandarle la proforma,
+// el invoice, etc. (enviarProformaCliente / enviarProformaParaAprobacion ya
+// leen clientes.contacto_email). Solo puede tocar el cliente dueño del
+// token, no cualquier cliente.
+export async function PATCH(req: NextRequest, { params }: Params) {
+  const adminClient = createAdminClient()
+
+  const { data: cliente } = await adminClient
+    .from('clientes')
+    .select('id, activo')
+    .or(`token_mayorista.eq.${params.token},token_detallista.eq.${params.token}`)
+    .single()
+
+  if (!cliente || !cliente.activo) {
+    return NextResponse.json({ error: 'Enlace inválido' }, { status: 404 })
+  }
+
+  const body = await req.json()
+  const contacto_email = typeof body.contacto_email === 'string' ? body.contacto_email.trim() : ''
+  if (!contacto_email) {
+    return NextResponse.json({ error: 'El correo es obligatorio' }, { status: 400 })
+  }
+
+  const update = {
+    contacto_email,
+    contacto_nombre: typeof body.contacto_nombre === 'string' ? body.contacto_nombre.trim() || null : null,
+    contacto_telefono: typeof body.contacto_telefono === 'string' ? body.contacto_telefono.trim() || null : null,
+    direccion: typeof body.direccion === 'string' ? body.direccion.trim() || null : null,
+  }
+
+  const { error } = await adminClient.from('clientes').update(update).eq('id', cliente.id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
 }
 
 export async function POST(req: NextRequest, { params }: Params) {

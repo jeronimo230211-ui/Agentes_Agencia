@@ -44,6 +44,10 @@ interface Props {
   mensajeExito?: (totalItems: number) => string
   textoBoton?: string
   onEnviar: (payload: { lineas: { producto_id?: string; descripcion_libre?: string; cantidad: number }[]; notas_cliente: string | null }) => Promise<{ ok: boolean; error?: string }>
+  // Si se pasa y contactoCompleto es false, tras enviar el pedido se le pide
+  // al cliente correo/nombre/teléfono/dirección (opcional, con "Ahora no").
+  contactoCompleto?: boolean
+  onGuardarContacto?: (datos: { contacto_nombre: string; contacto_email: string; contacto_telefono: string; direccion: string }) => Promise<{ ok: boolean; error?: string }>
 }
 
 // Formulario compartido de pedido — usado por el link fijo de pedido
@@ -55,8 +59,16 @@ export default function SolicitudForm({
   clienteNombre, categorias, productos, carritoInicial = [], notasInicial = '',
   banner, subtitulo = 'Nuevo pedido', tituloExito = '¡Solicitud enviada!',
   mensajeExito, textoBoton = 'Enviar solicitud a Europartners', onEnviar,
+  contactoCompleto = true, onGuardarContacto,
 }: Props) {
   const [estado, setEstado] = useState<'form' | 'sending' | 'done' | 'error'>('form')
+  const [pedirContacto, setPedirContacto] = useState(false)
+  const [contactoNombre, setContactoNombre] = useState('')
+  const [contactoEmail, setContactoEmail] = useState('')
+  const [contactoTelefono, setContactoTelefono] = useState('')
+  const [contactoDireccion, setContactoDireccion] = useState('')
+  const [guardandoContacto, setGuardandoContacto] = useState(false)
+  const [errorContacto, setErrorContacto] = useState('')
   const [error, setError] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
@@ -135,10 +147,26 @@ export default function SolicitudForm({
     })
     if (ok) {
       setEstado('done')
+      if (onGuardarContacto && !contactoCompleto) setPedirContacto(true)
     } else {
       setError(err || 'Error al enviar la solicitud')
       setEstado('error')
     }
+  }
+
+  async function guardarContacto() {
+    if (!contactoEmail.trim() || !onGuardarContacto) return
+    setGuardandoContacto(true)
+    setErrorContacto('')
+    const { ok, error: err } = await onGuardarContacto({
+      contacto_nombre: contactoNombre.trim(),
+      contacto_email: contactoEmail.trim(),
+      contacto_telefono: contactoTelefono.trim(),
+      direccion: contactoDireccion.trim(),
+    })
+    setGuardandoContacto(false)
+    if (ok) setPedirContacto(false)
+    else setErrorContacto(err || 'No se pudo guardar, intenta de nuevo')
   }
 
   const totalItems = carrito.reduce((s, l) => s + l.cantidad, 0)
@@ -154,6 +182,63 @@ export default function SolicitudForm({
               ? mensajeExito(totalItems)
               : `Recibimos tu pedido con ${totalItems} artículo${totalItems !== 1 ? 's' : ''}. Europartners lo revisará y te enviará la proforma comercial pronto.`}
           </p>
+
+          {pedirContacto && (
+            <div className="mt-6 pt-6 border-t border-gray-100 text-left">
+              <p className="text-sm font-semibold text-gray-700 mb-1">¿A qué correo te enviamos la proforma?</p>
+              <p className="text-xs text-gray-400 mb-3">
+                Nos ayuda a mandarte toda la información de tu pedido al correo correcto. Puedes omitir esto y dárnoslo después.
+              </p>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Nombre de contacto"
+                  value={contactoNombre}
+                  onChange={e => setContactoNombre(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                />
+                <input
+                  type="email"
+                  placeholder="Correo *"
+                  value={contactoEmail}
+                  onChange={e => setContactoEmail(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                />
+                <input
+                  type="text"
+                  placeholder="Teléfono"
+                  value={contactoTelefono}
+                  onChange={e => setContactoTelefono(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                />
+                <input
+                  type="text"
+                  placeholder="Dirección de envío/entrega"
+                  value={contactoDireccion}
+                  onChange={e => setContactoDireccion(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                />
+              </div>
+              {errorContacto && <p className="text-xs text-red-500 mt-2">{errorContacto}</p>}
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => setPedirContacto(false)}
+                  className="flex-1 text-sm font-semibold py-2.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                >
+                  Ahora no
+                </button>
+                <button
+                  onClick={guardarContacto}
+                  disabled={!contactoEmail.trim() || guardandoContacto}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold py-2.5 rounded-lg text-white disabled:opacity-40"
+                  style={{ background: '#1E3A5F' }}
+                >
+                  {guardandoContacto && <Loader2 size={14} className="animate-spin" />}
+                  Guardar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )

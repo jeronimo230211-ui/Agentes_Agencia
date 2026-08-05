@@ -17,6 +17,7 @@ interface Producto {
 export default function SolicitudPage({ params }: { params: { token: string } }) {
   const [estado, setEstado] = useState<'loading' | 'invalid' | 'ready'>('loading')
   const [clienteNombre, setClienteNombre] = useState('')
+  const [contactoCompleto, setContactoCompleto] = useState(true)
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
 
@@ -28,6 +29,7 @@ export default function SolicitudPage({ params }: { params: { token: string } })
           setEstado('invalid')
         } else {
           setClienteNombre(json.cliente.nombre)
+          setContactoCompleto(!!json.cliente.contactoCompleto)
           setCategorias(json.categorias || [])
           setProductos(json.productos || [])
           setEstado('ready')
@@ -63,11 +65,22 @@ export default function SolicitudPage({ params }: { params: { token: string } })
       clienteNombre={clienteNombre}
       categorias={categorias}
       productos={productos}
+      contactoCompleto={contactoCompleto}
       onEnviar={async ({ lineas, notas_cliente }) => {
         const res = await fetch(`/api/solicitud/${params.token}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notas_cliente, lineas }),
+        })
+        if (res.ok) return { ok: true }
+        const j = await res.json()
+        return { ok: false, error: j.error }
+      }}
+      onGuardarContacto={async datos => {
+        const res = await fetch(`/api/solicitud/${params.token}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datos),
         })
         if (res.ok) return { ok: true }
         const j = await res.json()

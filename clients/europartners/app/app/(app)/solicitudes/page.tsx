@@ -2,11 +2,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
-  Copy, CheckCircle2, Undo2, Clock, Plus, Loader2,
+  Copy, CheckCircle2, Undo2, Clock, Plus, Loader2, Mail, Pencil,
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
 
-interface Cliente { id: string; nombre: string; token_mayorista: string; token_detallista: string }
+interface Cliente {
+  id: string
+  nombre: string
+  token_mayorista: string
+  token_detallista: string
+  contacto_nombre: string | null
+  contacto_email: string | null
+  contacto_telefono: string | null
+  direccion: string | null
+}
 interface Producto { id: string; codigo: string; nombre: string; imagen_url: string | null }
 interface SolicitudLinea {
   id: string
@@ -63,6 +72,10 @@ export default function SolicitudesPage() {
   const [tipoNuevo, setTipoNuevo] = useState<'mayorista' | 'detallista'>('mayorista')
   const [creandoCliente, setCreandoCliente] = useState(false)
   const [errorNuevoCliente, setErrorNuevoCliente] = useState('')
+  const [editandoContactoId, setEditandoContactoId] = useState<string | null>(null)
+  const [contactoForm, setContactoForm] = useState({ contacto_nombre: '', contacto_email: '', contacto_telefono: '', direccion: '' })
+  const [guardandoContactoId, setGuardandoContactoId] = useState<string | null>(null)
+  const [errorContacto, setErrorContacto] = useState('')
   const [showLinks, setShowLinks] = useState(false)
   const [showDevolver, setShowDevolver] = useState(false)
   const [comentarioDevolver, setComentarioDevolver] = useState('')
@@ -103,6 +116,32 @@ export default function SolicitudesPage() {
     setPaisNuevo('')
     setTipoNuevo('mayorista')
     setShowNuevoCliente(false)
+  }
+
+  function abrirEditarContacto(cliente: Cliente) {
+    setEditandoContactoId(cliente.id)
+    setContactoForm({
+      contacto_nombre: cliente.contacto_nombre || '',
+      contacto_email: cliente.contacto_email || '',
+      contacto_telefono: cliente.contacto_telefono || '',
+      direccion: cliente.direccion || '',
+    })
+    setErrorContacto('')
+  }
+
+  async function guardarContactoCliente(clienteId: string) {
+    setGuardandoContactoId(clienteId)
+    setErrorContacto('')
+    const res = await fetch(`/api/clientes/${clienteId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contactoForm),
+    })
+    const json = await res.json()
+    setGuardandoContactoId(null)
+    if (!res.ok) { setErrorContacto(json.error || 'Error al guardar'); return }
+    setClientes(prev => prev.map(c => c.id === clienteId ? { ...c, ...json.data } : c))
+    setEditandoContactoId(null)
   }
 
   function copiarLink(cliente: Cliente, tipo: 'mayorista' | 'detallista') {
@@ -465,30 +504,105 @@ export default function SolicitudesPage() {
               )}
 
               {clientes.map(c => (
-                <div key={c.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2.5 gap-2">
-                  <span className="text-sm font-medium text-gray-700">{c.nombre}</span>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={() => copiarLink(c, 'mayorista')}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
-                    >
-                      {copiadoId === c.id && copiadoTipo === 'mayorista' ? (
-                        <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
-                      ) : (
-                        <><Copy size={13} /> Mayorista</>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => copiarLink(c, 'detallista')}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
-                    >
-                      {copiadoId === c.id && copiadoTipo === 'detallista' ? (
-                        <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
-                      ) : (
-                        <><Copy size={13} /> Detallista</>
-                      )}
-                    </button>
+                <div key={c.id} className="border border-gray-100 rounded-lg px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-gray-700">{c.nombre}</span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {c.contacto_email ? (
+                          <span className="flex items-center gap-1 text-[11px] text-green-600 truncate">
+                            <Mail size={10} /> {c.contacto_email}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-amber-500">Sin correo de contacto</span>
+                        )}
+                        {puedeEditar && (
+                          <button
+                            onClick={() => editandoContactoId === c.id ? setEditandoContactoId(null) : abrirEditarContacto(c)}
+                            className="text-gray-300 hover:text-[#1E3A5F] flex-shrink-0"
+                            title="Ver/editar contacto"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <button
+                        onClick={() => copiarLink(c, 'mayorista')}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
+                      >
+                        {copiadoId === c.id && copiadoTipo === 'mayorista' ? (
+                          <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                        ) : (
+                          <><Copy size={13} /> Mayorista</>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => copiarLink(c, 'detallista')}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
+                      >
+                        {copiadoId === c.id && copiadoTipo === 'detallista' ? (
+                          <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                        ) : (
+                          <><Copy size={13} /> Detallista</>
+                        )}
+                      </button>
+                    </div>
                   </div>
+
+                  {editandoContactoId === c.id && (
+                    <div className="mt-2.5 pt-2.5 border-t border-gray-100 space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Nombre de contacto"
+                        value={contactoForm.contacto_nombre}
+                        onChange={e => setContactoForm(f => ({ ...f, contacto_nombre: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Correo"
+                        value={contactoForm.contacto_email}
+                        onChange={e => setContactoForm(f => ({ ...f, contacto_email: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Teléfono"
+                          value={contactoForm.contacto_telefono}
+                          onChange={e => setContactoForm(f => ({ ...f, contacto_telefono: e.target.value }))}
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Dirección"
+                          value={contactoForm.direccion}
+                          onChange={e => setContactoForm(f => ({ ...f, direccion: e.target.value }))}
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        />
+                      </div>
+                      {errorContacto && <p className="text-[11px] text-red-500">{errorContacto}</p>}
+                      <div className="flex gap-2 pt-0.5">
+                        <button
+                          onClick={() => setEditandoContactoId(null)}
+                          className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => guardarContactoCliente(c.id)}
+                          disabled={guardandoContactoId === c.id}
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg text-white disabled:opacity-40"
+                          style={{ background: '#1E3A5F' }}
+                        >
+                          {guardandoContactoId === c.id && <Loader2 size={12} className="animate-spin" />}
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
