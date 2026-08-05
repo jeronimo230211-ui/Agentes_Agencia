@@ -54,7 +54,10 @@ function LoginForm() {
 
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-gray-800 text-lg font-bold mb-6">Iniciar sesión</h2>
+          <h2 className="text-gray-800 text-lg font-bold mb-1">Bienvenido de nuevo</h2>
+          <p className="text-gray-400 text-sm mb-6">
+            Inicia sesión para gestionar cotizaciones, catálogo y despachos.
+          </p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -106,7 +109,7 @@ function LoginForm() {
               style={{ background: '#1E3A5F', color: 'white' }}
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : null}
-              {loading ? 'Entrando...' : 'Entrar al sistema'}
+              {loading ? 'Entrando...' : 'Iniciar sesión'}
             </button>
           </form>
         </div>
