@@ -17,6 +17,7 @@ interface ProductoOpcion {
   id: string
   codigo: string
   descripcion: string
+  imagen_url?: string | null
   precio_fob_usd: number
   precio_mayorista?: number
   precio_detallista?: number
@@ -121,6 +122,7 @@ function SelectorProductoModal({
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-gray-50">
                 <tr>
+                  <th className="p-3 w-12"></th>
                   <th className="text-left p-3 font-medium text-gray-500">Código</th>
                   <th className="text-left p-3 font-medium text-gray-500">Descripción</th>
                   <th className="text-right p-3 font-medium text-gray-500">FOB China</th>
@@ -138,6 +140,15 @@ function SelectorProductoModal({
                       onClick={() => onSelect(p)}
                       className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
                     >
+                      <td className="p-2 pl-3">
+                        <div className="w-9 h-9 rounded-md bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {p.imagen_url ? (
+                            <img src={p.imagen_url} alt="" loading="lazy" className="w-full h-full object-contain" />
+                          ) : (
+                            <Package size={14} className="text-gray-300" />
+                          )}
+                        </div>
+                      </td>
                       <td className="p-3 font-mono text-xs text-gray-600">
                         {p.codigo || '—'}
                       </td>
