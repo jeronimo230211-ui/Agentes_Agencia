@@ -415,10 +415,12 @@ export default function ProformasPage() {
       {/* ── Modal nueva proforma ── */}
       {showNueva && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Nueva Proforma</h2>
-            <p className="text-sm text-gray-400 mb-4">Selecciona el cliente para comenzar</p>
-            <div className="grid grid-cols-1 gap-2 mb-5">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col">
+            <div className="p-6 pb-1 flex-none">
+              <h2 className="text-lg font-bold text-gray-800 mb-1">Nueva Proforma</h2>
+              <p className="text-sm text-gray-400 mb-4">Selecciona el cliente para comenzar</p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 px-6 overflow-y-auto flex-1">
               {clientes.map(c => (
                 <button
                   key={c.id}
@@ -434,7 +436,7 @@ export default function ProformasPage() {
                 </button>
               ))}
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 p-6 pt-5 flex-none border-t border-gray-100">
               <button
                 onClick={crearProforma}
                 disabled={!nuevoCliente || creando}
