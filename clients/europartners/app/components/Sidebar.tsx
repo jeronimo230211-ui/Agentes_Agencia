@@ -54,9 +54,9 @@ export default function Sidebar() {
   )
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col" style={{ background: '#1E3A5F', minHeight: '100vh' }}>
+    <aside className="w-60 flex-shrink-0 flex flex-col sticky top-0" style={{ background: '#1E3A5F', height: '100vh' }}>
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/10">
+      <div className="px-6 py-6 border-b border-white/10 flex-none">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style={{ background: '#D4A017', color: '#1E3A5F' }}>
             EP
@@ -67,7 +67,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
         {navVisibles.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href)
           return (
@@ -87,7 +87,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Usuario y logout */}
-      <div className="px-4 py-4 border-t border-white/10">
+      <div className="px-4 py-4 border-t border-white/10 flex-none">
         {usuario && (
           <div className="mb-3">
             <p className="text-white text-sm font-medium">{usuario.nombre}</p>
