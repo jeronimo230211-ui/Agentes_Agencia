@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
-  Copy, CheckCircle2, Undo2, Clock,
+  Copy, CheckCircle2, Undo2, Clock, Plus, Loader2,
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
 
@@ -57,6 +57,12 @@ export default function SolicitudesPage() {
   const [convirtiendo, setConvirtiendo] = useState(false)
   const [copiadoId, setCopiadoId] = useState<string | null>(null)
   const [copiadoTipo, setCopiadoTipo] = useState<'mayorista' | 'detallista' | null>(null)
+  const [showNuevoCliente, setShowNuevoCliente] = useState(false)
+  const [nombreNuevo, setNombreNuevo] = useState('')
+  const [paisNuevo, setPaisNuevo] = useState('')
+  const [tipoNuevo, setTipoNuevo] = useState<'mayorista' | 'detallista'>('mayorista')
+  const [creandoCliente, setCreandoCliente] = useState(false)
+  const [errorNuevoCliente, setErrorNuevoCliente] = useState('')
   const [showLinks, setShowLinks] = useState(false)
   const [showDevolver, setShowDevolver] = useState(false)
   const [comentarioDevolver, setComentarioDevolver] = useState('')
@@ -76,6 +82,28 @@ export default function SolicitudesPage() {
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
+
+  async function crearCliente() {
+    if (!nombreNuevo.trim()) return
+    setCreandoCliente(true)
+    setErrorNuevoCliente('')
+    const res = await fetch('/api/clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: nombreNuevo.trim(), pais: paisNuevo.trim() || undefined, tipo: tipoNuevo }),
+    })
+    const json = await res.json()
+    setCreandoCliente(false)
+    if (!res.ok) {
+      setErrorNuevoCliente(json.error || 'Error al crear el cliente')
+      return
+    }
+    setClientes(prev => [...prev, json.data].sort((a, b) => a.nombre.localeCompare(b.nombre)))
+    setNombreNuevo('')
+    setPaisNuevo('')
+    setTipoNuevo('mayorista')
+    setShowNuevoCliente(false)
+  }
 
   function copiarLink(cliente: Cliente, tipo: 'mayorista' | 'detallista') {
     const token = tipo === 'mayorista' ? cliente.token_mayorista : cliente.token_detallista
@@ -374,12 +402,68 @@ export default function SolicitudesPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="p-5 space-y-2">
+            <div className="p-5 space-y-2 max-h-[70vh] overflow-y-auto">
               <p className="text-xs text-gray-400 mb-3">
                 Cada cliente tiene 2 links fijos — uno con precio mayorista y otro con precio
                 detallista, según cuál le quieras compartir. Cada uno siempre lleva a su
                 formulario de pedido con esos precios.
               </p>
+
+              {!puedeEditar ? null : !showNuevoCliente ? (
+                <button
+                  onClick={() => setShowNuevoCliente(true)}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-lg border border-dashed border-gray-200 text-gray-500 hover:border-[#1E3A5F] hover:text-[#1E3A5F] mb-3"
+                >
+                  <Plus size={14} /> Nuevo cliente
+                </button>
+              ) : (
+                <div className="border border-gray-200 rounded-lg p-3 mb-3 space-y-2 bg-gray-50">
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Nombre del cliente"
+                    value={nombreNuevo}
+                    onChange={e => setNombreNuevo(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="País (opcional)"
+                      value={paisNuevo}
+                      onChange={e => setPaisNuevo(e.target.value)}
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    />
+                    <select
+                      value={tipoNuevo}
+                      onChange={e => setTipoNuevo(e.target.value as 'mayorista' | 'detallista')}
+                      className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    >
+                      <option value="mayorista">Mayorista</option>
+                      <option value="detallista">Detallista</option>
+                    </select>
+                  </div>
+                  {errorNuevoCliente && <p className="text-xs text-red-500">{errorNuevoCliente}</p>}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => { setShowNuevoCliente(false); setErrorNuevoCliente('') }}
+                      className="flex-1 text-xs font-semibold py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={crearCliente}
+                      disabled={!nombreNuevo.trim() || creandoCliente}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg text-white disabled:opacity-40"
+                      style={{ background: '#1E3A5F' }}
+                    >
+                      {creandoCliente && <Loader2 size={13} className="animate-spin" />}
+                      Crear cliente
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {clientes.map(c => (
                 <div key={c.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2.5 gap-2">
                   <span className="text-sm font-medium text-gray-700">{c.nombre}</span>
