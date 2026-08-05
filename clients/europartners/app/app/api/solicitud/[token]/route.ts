@@ -118,11 +118,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   await adminClient.from('solicitud_lineas').insert(lineasInsert)
 
-  // Notificar a todo el equipo de operaciones (Deisy) — in-app + email
+  // Notificar a operaciones (Deisy) y admin (Marta) — in-app + email
   const { data: operativos } = await adminClient
     .from('usuarios')
     .select('id, email')
-    .eq('rol', 'operaciones')
+    .in('rol', ['operaciones', 'admin'])
     .eq('activo', true)
 
   if (operativos && operativos.length > 0) {

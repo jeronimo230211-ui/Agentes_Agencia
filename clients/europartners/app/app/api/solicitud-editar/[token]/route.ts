@@ -109,7 +109,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: operativos } = await adminClient
     .from('usuarios')
     .select('id')
-    .eq('rol', 'operaciones')
+    .in('rol', ['operaciones', 'admin'])
     .eq('activo', true)
 
   if (operativos && operativos.length > 0) {
