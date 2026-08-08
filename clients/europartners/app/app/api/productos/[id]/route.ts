@@ -3,64 +3,24 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase-server'
 
-export async function GET(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+type Params = { params: { id: string } }
 
-  const { searchParams } = new URL(req.url)
-  const q = searchParams.get('q') || ''
-  const categoria_id = searchParams.get('categoria_id')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 500)
-  const offset = parseInt(searchParams.get('offset') || '0')
-
-  let query = supabase
-    .from('productos')
-    .select(`
-      id, codigo, nombre, descripcion, imagen_url, dimensiones,
-      precio_fob_usd, precio_fob_fecha, estado, notas,
-      precio_mayorista, precio_detallista, cbm_unitario, moq, color_variante,
-      tiene_historial, veces_vendido, fecha_ultima_venta, precio_cliente_historico_ultimo,
-      categoria:categorias_producto(id, nombre),
-      variantes:producto_variantes(*),
-      componentes:producto_componentes(*)
-    `)
-    .eq('estado', 'activo')
-    .order('categoria_id', { ascending: true })
-    .order('codigo', { ascending: true })
-    .range(offset, offset + limit - 1)
-
-  if (q) {
-    query = query.or(`codigo.ilike.%${q}%,nombre.ilike.%${q}%,descripcion.ilike.%${q}%`)
-  }
-
-  if (categoria_id) {
-    query = query.eq('categoria_id', categoria_id)
-  }
-
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ data })
-}
-
-function num(v: FormDataEntryValue | null): number | undefined {
-  if (v === null || v === '') return undefined
+function num(v: FormDataEntryValue | null): number | null {
+  if (v === null || v === '') return null
   const n = Number(v)
-  return Number.isFinite(n) ? n : undefined
+  return Number.isFinite(n) ? n : null
 }
 
-// Alta manual de un producto de catálogo — antes la única vía era Supabase
-// Table Editor directo (ver pendiente #26). Usa multipart/form-data para que
-// la imagen viaje en el mismo request que los datos.
-export async function POST(req: NextRequest) {
+// Edición de un producto ya cargado — antes solo existía alta (POST /api/productos),
+// no había forma de corregir nombre/descripción/precio desde la app (pendiente #26).
+export async function PATCH(req: NextRequest, { params }: Params) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
   const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
   if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
-    return NextResponse.json({ error: 'No autorizado para crear productos' }, { status: 403 })
+    return NextResponse.json({ error: 'No autorizado para editar productos' }, { status: 403 })
   }
 
   const formData = await req.formData()
@@ -82,17 +42,23 @@ export async function POST(req: NextRequest) {
   if (!codigo) return NextResponse.json({ error: 'El código es obligatorio' }, { status: 400 })
   if (!nombre) return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 })
 
-  const dimensiones = (largo_mm !== undefined || ancho_mm !== undefined || alto_mm !== undefined)
+  const dimensiones = (largo_mm !== null || ancho_mm !== null || alto_mm !== null)
     ? { largo_mm, ancho_mm, alto_mm }
     : null
 
-  // La tabla RLS de productos no admite insert desde el cliente de sesión
-  // normal (solo service_role, mismo patrón que clientes/despachos) — se usa
-  // admin client aquí, ya con el chequeo de rol de arriba como barrera real.
+  // Mismo patrón que el resto de rutas de escritura: la RLS de productos solo
+  // admite service_role, el chequeo de rol de arriba es la barrera real.
   const adminClient = createAdminClient()
 
-  let imagen_url: string | null = null
-  let tiene_foto = false
+  const update: Record<string, unknown> = {
+    codigo, nombre, descripcion, categoria_id, notas,
+    precio_fob_usd, precio_mayorista, precio_detallista,
+    cbm_unitario, moq, dimensiones,
+    updated_at: new Date().toISOString(),
+  }
+
+  // Es un formulario completo (no un PATCH parcial): los campos vacíos se
+  // guardan como null a propósito, para poder borrar un precio/nota existente.
   if (imagen && imagen.size > 0) {
     const ext = imagen.name.split('.').pop() || 'jpg'
     const fileName = `${codigo}.${ext}`
@@ -102,21 +68,17 @@ export async function POST(req: NextRequest) {
       .upload(fileName, buffer, { contentType: imagen.type, upsert: true })
     if (uploadError) return NextResponse.json({ error: `Error subiendo imagen: ${uploadError.message}` }, { status: 500 })
     const { data: urlData } = adminClient.storage.from('productos').getPublicUrl(fileName)
-    imagen_url = urlData.publicUrl
-    tiene_foto = true
+    update.imagen_url = urlData.publicUrl
+    update.tiene_foto = true
   }
 
   const { data, error } = await adminClient
     .from('productos')
-    .insert({
-      codigo, nombre, descripcion, categoria_id, notas,
-      precio_fob_usd, precio_mayorista, precio_detallista,
-      cbm_unitario, moq, dimensiones, imagen_url, tiene_foto,
-      estado: 'activo',
-    })
+    .update(update)
+    .eq('id', params.id)
     .select(`
       id, codigo, nombre, descripcion, imagen_url, dimensiones,
-      precio_fob_usd, precio_mayorista, precio_detallista, cbm_unitario, moq,
+      precio_fob_usd, precio_mayorista, precio_detallista, cbm_unitario, moq, notas,
       categoria:categorias_producto(id, nombre)
     `)
     .single()
@@ -128,5 +90,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data }, { status: 201 })
+  return NextResponse.json({ data })
 }

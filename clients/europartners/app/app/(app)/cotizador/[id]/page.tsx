@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
 import type { Proforma, ProformaLinea, HistorialPrecio, TipoPrecio } from '@/types/europartners'
+import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 
 interface Categoria { id: string; nombre: string; orden: number }
 
@@ -39,10 +40,12 @@ function SelectorProductoModal({
   tipoPrecio,
   onSelect,
   onClose,
+  onNuevoProducto,
 }: {
   tipoPrecio: TipoPrecio
   onSelect: (p: ProductoOpcion) => void
   onClose: () => void
+  onNuevoProducto: () => void
 }) {
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [categoriaId, setCategoriaId] = useState('')
@@ -70,9 +73,17 @@ function SelectorProductoModal({
         {/* Header */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
           <h3 className="font-bold text-[#1E3A5F]">Seleccionar Producto</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
-            <X size={18} className="text-gray-500" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onNuevoProducto}
+              className="flex items-center gap-1 text-sm font-medium text-[#1E3A5F] hover:underline"
+            >
+              <Plus size={14} /> Nuevo producto
+            </button>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+              <X size={18} className="text-gray-500" />
+            </button>
+          </div>
         </div>
 
         {/* Filtros */}
@@ -107,15 +118,12 @@ function SelectorProductoModal({
           ) : productos.length === 0 ? (
             <div className="p-10 text-center">
               <Package size={36} className="mx-auto text-gray-200 mb-3" />
-              <p className="text-gray-500 text-sm font-medium">Sin productos cargados aún</p>
-              <p className="text-gray-400 text-xs mt-1">
-                Agrega productos en Supabase → Table Editor → tabla &quot;productos&quot;
-              </p>
+              <p className="text-gray-500 text-sm font-medium">Sin productos que coincidan</p>
               <button
-                onClick={onClose}
-                className="mt-4 text-sm text-[#1E3A5F] underline"
+                onClick={onNuevoProducto}
+                className="mt-4 inline-flex items-center gap-1 text-sm text-[#1E3A5F] underline"
               >
-                Ingresar datos manualmente
+                <Plus size={14} /> Crear un producto nuevo
               </button>
             </div>
           ) : (
@@ -309,6 +317,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [selectorAbierto, setSelectorAbierto] = useState(false)
+  const [mostrarNuevoProducto, setMostrarNuevoProducto] = useState(false)
   const [lineaParaSelector, setLineaParaSelector] = useState<string | null>(null)
   const [confirmandoPago, setConfirmandoPago] = useState(false)
   const { puedeEditar: rolPuedeEditar } = useRol()
@@ -414,6 +423,20 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
     setSelectorAbierto(false)
     setLineaParaSelector(null)
+  }
+
+  function productoCreado(producto: ProductoCreado) {
+    setMostrarNuevoProducto(false)
+    seleccionarProducto({
+      id: producto.id,
+      codigo: producto.codigo,
+      descripcion: producto.descripcion || producto.nombre,
+      imagen_url: producto.imagen_url,
+      precio_fob_usd: producto.precio_fob_usd || 0,
+      precio_mayorista: producto.precio_mayorista ?? undefined,
+      precio_detallista: producto.precio_detallista ?? undefined,
+      categoria: { nombre: producto.categoria?.nombre || '' },
+    })
   }
 
   function solicitarCambioTipoPrecio(nuevo: TipoPrecio) {
@@ -544,6 +567,14 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           tipoPrecio={tipoPrecio}
           onSelect={seleccionarProducto}
           onClose={() => setSelectorAbierto(false)}
+          onNuevoProducto={() => setMostrarNuevoProducto(true)}
+        />
+      )}
+
+      {mostrarNuevoProducto && (
+        <NuevoProductoModal
+          onClose={() => setMostrarNuevoProducto(false)}
+          onSaved={productoCreado}
         />
       )}
 
