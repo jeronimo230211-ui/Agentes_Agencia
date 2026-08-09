@@ -16,6 +16,7 @@ interface Fila {
   precio_costo_usd: number | null
   precio_cliente_usd: number | null
   margen_pct: number | null
+  codigo_pdf: string
   clientes?: { id: string; nombre: string }
 }
 
@@ -57,14 +58,17 @@ export default function HistorialPage() {
   }, [])
 
   useEffect(() => {
-    if (!seleccionado) return
+    if (!seleccionado && !clienteId) { setFilas([]); return }
     setCargandoDetalle(true)
-    const params = new URLSearchParams({ modo: 'detalle', codigo: seleccionado.codigo_pdf })
+    const params = new URLSearchParams({ modo: 'detalle' })
+    if (seleccionado) params.set('codigo', seleccionado.codigo_pdf)
     if (clienteId) params.set('cliente_id', clienteId)
     fetch(`/api/historial?${params}`)
       .then(r => r.json())
       .then(({ data }) => { setFilas(data || []); setCargandoDetalle(false) })
   }, [seleccionado, clienteId])
+
+  const clienteSeleccionado = clientes.find(c => c.id === clienteId) || null
 
   // Categorías únicas presentes en los datos
   const categorias = Array.from(
@@ -125,6 +129,19 @@ export default function HistorialPage() {
           </div>
         </div>
 
+        {/* Selector de cliente — siempre visible, no depende de tener un producto elegido */}
+        <div className="px-3 py-2.5 border-b border-gray-100">
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Cliente</p>
+          <select
+            value={clienteId}
+            onChange={e => setClienteId(e.target.value)}
+            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+          >
+            <option value="">Todos los clientes</option>
+            {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+        </div>
+
         {/* Selector de categorías */}
         {!cargandoRefs && categorias.length > 0 && (
           <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/60">
@@ -164,13 +181,21 @@ export default function HistorialPage() {
         )}
 
         {/* Contador */}
-        <div className="px-3 py-1.5 border-b border-gray-50">
+        <div className="px-3 py-1.5 border-b border-gray-50 flex items-center justify-between">
           <p className="text-[11px] text-gray-400">
             {cargandoRefs
               ? 'Cargando...'
               : `${refsFiltradas.length} referencia${refsFiltradas.length !== 1 ? 's' : ''}${categoriaFiltro ? '' : ''}`
             }
           </p>
+          {seleccionado && (
+            <button
+              onClick={() => setSeleccionado(null)}
+              className="text-[11px] font-medium text-[#1E3A5F] hover:underline"
+            >
+              Todos
+            </button>
+          )}
         </div>
 
         {/* Lista de referencias */}
@@ -183,7 +208,7 @@ export default function HistorialPage() {
             refsFiltradas.map(r => (
               <button
                 key={r.codigo_pdf}
-                onClick={() => { setSeleccionado(r); setClienteId('') }}
+                onClick={() => setSeleccionado(r)}
                 className={`w-full text-left px-3 py-2.5 border-b border-gray-50 transition-colors ${
                   seleccionado?.codigo_pdf === r.codigo_pdf
                     ? 'bg-[#1E3A5F]'
@@ -215,13 +240,13 @@ export default function HistorialPage() {
 
       {/* ── PANEL DERECHO ── */}
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        {!seleccionado ? (
+        {!seleccionado && !clienteId ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-300 gap-3">
             <Search size={44} strokeWidth={1} />
             <p className="text-sm text-gray-400">
               {categoriaFiltro
                 ? 'Selecciona una referencia de la categoría'
-                : 'Selecciona una referencia en el panel izquierdo'}
+                : 'Selecciona una referencia o un cliente en el panel izquierdo'}
             </p>
           </div>
         ) : (
@@ -229,34 +254,41 @@ export default function HistorialPage() {
             {/* Encabezado */}
             <div className="flex items-start justify-between mb-5">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-xl font-bold text-[#1E3A5F] font-mono">{seleccionado.codigo_pdf}</h2>
-                  {seleccionado.categoria_nombre && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${catColor}`}>
-                      {seleccionado.categoria_nombre}
-                    </span>
-                  )}
-                </div>
-                <p className="text-gray-500 text-sm">{seleccionado.descripcion_pdf}</p>
+                {seleccionado ? (
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-xl font-bold text-[#1E3A5F] font-mono">{seleccionado.codigo_pdf}</h2>
+                    {seleccionado.categoria_nombre && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${catColor}`}>
+                        {seleccionado.categoria_nombre}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <h2 className="text-xl font-bold text-[#1E3A5F]">{clienteSeleccionado?.nombre}</h2>
+                )}
+                <p className="text-gray-500 text-sm">
+                  {seleccionado
+                    ? seleccionado.descripcion_pdf
+                    : `Historial de todas las referencias compradas por este cliente`}
+                </p>
               </div>
-              <select
-                value={clienteId}
-                onChange={e => setClienteId(e.target.value)}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
-              >
-                <option value="">Todos los clientes</option>
-                {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-              </select>
+              {seleccionado && clienteSeleccionado && (
+                <span className="text-xs px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600">
+                  Filtrado por <span className="font-semibold text-[#1E3A5F]">{clienteSeleccionado.nombre}</span>
+                </span>
+              )}
             </div>
 
             {cargandoDetalle ? (
               <div className="text-center p-10 text-gray-400 text-sm">Cargando historial...</div>
             ) : filas.length === 0 ? (
-              <div className="text-center p-10 text-gray-400 text-sm">Sin registros para esta referencia</div>
+              <div className="text-center p-10 text-gray-400 text-sm">
+                {seleccionado ? 'Sin registros para esta referencia' : 'Sin registros para este cliente'}
+              </div>
             ) : (
               <>
-                {/* Stats */}
-                {stats && (
+                {/* Stats — solo tienen sentido mirando una referencia puntual */}
+                {seleccionado && stats && (
                   <div className="grid grid-cols-4 gap-3 mb-5">
                     <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
                       <p className="text-xs text-gray-400 mb-1">Último precio</p>
@@ -303,7 +335,11 @@ export default function HistorialPage() {
                       <tr className="bg-gray-50 border-b border-gray-100">
                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Fecha</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Proforma</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Cliente</th>
+                        {seleccionado ? (
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Cliente</th>
+                        ) : (
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Código</th>
+                        )}
                         <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Costo China</th>
                         <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Precio cliente</th>
                         <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Margen</th>
@@ -327,9 +363,15 @@ export default function HistorialPage() {
                           <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1E3A5F]">
                             {f.proforma_numero}
                           </td>
-                          <td className="px-4 py-3 text-xs text-gray-600">
-                            {f.clientes?.nombre || '—'}
-                          </td>
+                          {seleccionado ? (
+                            <td className="px-4 py-3 text-xs text-gray-600">
+                              {f.clientes?.nombre || '—'}
+                            </td>
+                          ) : (
+                            <td className="px-4 py-3 font-mono text-xs text-gray-600">
+                              {f.codigo_pdf}
+                            </td>
+                          )}
                           <td className="px-4 py-3 text-right text-xs text-gray-500">
                             {f.precio_costo_usd != null ? formatUSD(f.precio_costo_usd) : '—'}
                           </td>

@@ -3,8 +3,10 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
   Copy, CheckCircle2, Undo2, Clock, Plus, Loader2, Mail, Pencil,
+  TrendingUp, TrendingDown, Minus, History,
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
+import { formatUSD, formatPct } from '@/lib/precio'
 
 interface Cliente {
   id: string
@@ -41,6 +43,19 @@ interface Solicitud {
   cliente: { id: string; nombre: string } | null
   lineas: SolicitudLinea[]
   eventos: SolicitudEvento[]
+}
+interface LineaComparacion {
+  linea_id: string
+  codigo: string | null
+  tiene_historial: boolean
+  ultimo_precio_cliente: number | null
+  ultima_fecha: string | null
+  ultimo_proforma_numero: string | null
+  veces_comprado: number
+  precio_catalogo_actual: number | null
+  diferencia_usd: number | null
+  diferencia_pct: number | null
+  tendencia: 'subio' | 'bajo' | 'igual' | 'sin_datos'
 }
 
 const ESTADO_STYLE: Record<string, { bg: string; text: string; label: string }> = {
@@ -80,6 +95,8 @@ export default function SolicitudesPage() {
   const [showDevolver, setShowDevolver] = useState(false)
   const [comentarioDevolver, setComentarioDevolver] = useState('')
   const [devolviendo, setDevolviendo] = useState(false)
+  const [comparacion, setComparacion] = useState<Record<string, LineaComparacion> | null>(null)
+  const [cargandoComparacion, setCargandoComparacion] = useState(false)
 
   const cargar = useCallback(() => {
     setLoading(true)
@@ -95,6 +112,21 @@ export default function SolicitudesPage() {
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
+
+  useEffect(() => {
+    if (!seleccionada) { setComparacion(null); return }
+    setComparacion(null)
+    setCargandoComparacion(true)
+    fetch(`/api/solicitudes/${seleccionada.id}/comparacion-historica`)
+      .then(r => r.json())
+      .then(({ data }) => {
+        const porLinea: Record<string, LineaComparacion> = {}
+        for (const l of (data?.lineas || []) as LineaComparacion[]) porLinea[l.linea_id] = l
+        setComparacion(porLinea)
+      })
+      .catch(() => setComparacion({}))
+      .finally(() => setCargandoComparacion(false))
+  }, [seleccionada?.id])
 
   async function crearCliente() {
     if (!nombreNuevo.trim()) return
@@ -298,22 +330,52 @@ export default function SolicitudesPage() {
 
             <div className="flex-1 overflow-y-auto p-5">
               <div className="space-y-3 mb-4">
-                {seleccionada.lineas.map(l => (
-                  <div key={l.id} className="flex items-center gap-3 border-b border-gray-50 pb-3">
-                    <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
-                      {l.producto?.imagen_url ? (
-                        <img src={l.producto.imagen_url} alt="" className="w-full h-full object-contain rounded-lg" />
-                      ) : (
-                        <Package size={16} className="text-gray-300" />
-                      )}
+                {seleccionada.lineas.map(l => {
+                  const comp = comparacion?.[l.id]
+                  return (
+                    <div key={l.id} className="flex items-center gap-3 border-b border-gray-50 pb-3">
+                      <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                        {l.producto?.imagen_url ? (
+                          <img src={l.producto.imagen_url} alt="" className="w-full h-full object-contain rounded-lg" />
+                        ) : (
+                          <Package size={16} className="text-gray-300" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {l.producto?.codigo && <p className="font-mono text-xs text-gray-400">{l.producto.codigo}</p>}
+                        <p className="text-sm text-gray-800 truncate">{l.producto?.nombre || l.descripcion_libre}</p>
+
+                        {l.producto_id && (
+                          cargandoComparacion ? (
+                            <p className="text-[11px] text-gray-300 mt-0.5 animate-pulse">Consultando historial...</p>
+                          ) : comp?.tiene_historial ? (
+                            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5 text-[11px]">
+                              <span className="flex items-center gap-1 text-gray-400">
+                                <History size={10} />
+                                Antes {formatUSD(comp.ultimo_precio_cliente!)}
+                                {comp.ultima_fecha && ` · ${fechaCorta(comp.ultima_fecha)}`}
+                                {comp.ultimo_proforma_numero && ` · #${comp.ultimo_proforma_numero}`}
+                              </span>
+                              {comp.precio_catalogo_actual != null && comp.diferencia_pct != null && (
+                                <span className={`flex items-center gap-0.5 font-semibold ${
+                                  comp.tendencia === 'subio' ? 'text-green-600' : comp.tendencia === 'bajo' ? 'text-red-500' : 'text-gray-400'
+                                }`}>
+                                  {comp.tendencia === 'subio' && <TrendingUp size={10} />}
+                                  {comp.tendencia === 'bajo' && <TrendingDown size={10} />}
+                                  {comp.tendencia === 'igual' && <Minus size={10} />}
+                                  Hoy {formatUSD(comp.precio_catalogo_actual)} ({comp.diferencia_pct >= 0 ? '+' : ''}{formatPct(comp.diferencia_pct)})
+                                </span>
+                              )}
+                            </div>
+                          ) : comp && !comp.tiene_historial ? (
+                            <p className="text-[11px] text-gray-300 mt-0.5">Sin historial de precio con este cliente</p>
+                          ) : null
+                        )}
+                      </div>
+                      <span className="text-sm font-semibold text-gray-600 flex-shrink-0">×{l.cantidad}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      {l.producto?.codigo && <p className="font-mono text-xs text-gray-400">{l.producto.codigo}</p>}
-                      <p className="text-sm text-gray-800 truncate">{l.producto?.nombre || l.descripcion_libre}</p>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-600 flex-shrink-0">×{l.cantidad}</span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               {seleccionada.notas_cliente && (

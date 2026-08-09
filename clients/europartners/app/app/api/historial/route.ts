@@ -61,8 +61,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data: refs, total: refs.length })
   }
 
-  // ── Modo detalle: historial completo de un código específico ──
-  if (modo === 'detalle' && codigo) {
+  // ── Modo detalle: historial de un código, de un cliente, o la combinación de ambos ──
+  if (modo === 'detalle' && (codigo || cliente_id)) {
     let query = supabase
       .from('historial_precios')
       .select(`
@@ -71,10 +71,13 @@ export async function GET(req: NextRequest) {
         codigo_pdf, descripcion_pdf,
         clientes ( id, nombre )
       `)
-      .eq('codigo_pdf', codigo)
       .order('fecha_proforma', { ascending: false })
 
+    if (codigo) query = query.eq('codigo_pdf', codigo)
     if (cliente_id) query = query.eq('cliente_id', cliente_id)
+    // Sin código (navegando solo por cliente, todas sus referencias) el resultado puede
+    // ser grande — se acota para que la pantalla siga siendo usable.
+    if (!codigo) query = query.limit(300)
 
     const { data, error } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
