@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 
 export async function GET(req: NextRequest) {
@@ -104,6 +105,55 @@ export async function GET(req: NextRequest) {
   if (cliente_id) query = query.eq('cliente_id', cliente_id)
 
   const { data, error } = await query
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ data })
+}
+
+// Precio de referencia cargado a mano por Deisy/Marta cuando no existe historial en el sistema
+// (por ejemplo, encontrado en una proforma vieja fuera de la app) — mismo destino que el
+// historial que se genera al aprobar una proforma, para que alimente la comparación de precios.
+export async function POST(req: NextRequest) {
+  const supabase = createRouteHandlerClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const { data: usuario } = await supabase.from('usuarios').select('rol').eq('id', session.user.id).single()
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  }
+
+  const body = await req.json().catch(() => ({}))
+  const cliente_id = body.cliente_id as string | undefined
+  const codigo_pdf = (body.codigo_pdf as string | undefined)?.trim()
+  const precio_cliente_usd = Number(body.precio_cliente_usd)
+  const fecha_proforma = body.fecha_proforma as string | undefined
+  const proforma_numero = (body.proforma_numero as string | undefined)?.trim() || null
+
+  if (!cliente_id || !codigo_pdf || !fecha_proforma || !precio_cliente_usd || precio_cliente_usd <= 0) {
+    return NextResponse.json({ error: 'Faltan datos: cliente, código, precio y fecha son obligatorios' }, { status: 400 })
+  }
+
+  const { data: producto } = await supabase
+    .from('productos')
+    .select('id, descripcion')
+    .eq('codigo', codigo_pdf)
+    .maybeSingle()
+
+  const adminClient = createAdminClient()
+  const { data, error } = await adminClient
+    .from('historial_precios')
+    .insert({
+      cliente_id,
+      producto_id: producto?.id ?? null,
+      codigo_pdf,
+      descripcion_pdf: producto?.descripcion ?? null,
+      precio_cliente_usd,
+      fecha_proforma,
+      proforma_numero,
+    })
+    .select()
+    .single()
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ data })
 }

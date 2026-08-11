@@ -3,10 +3,11 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
   Copy, CheckCircle2, Undo2, Clock, Plus, Loader2, Mail, Pencil,
-  TrendingUp, TrendingDown, Minus, History,
+  TrendingUp, TrendingDown, Minus, History, Users,
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct } from '@/lib/precio'
+import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 
 interface Cliente {
   id: string
@@ -44,6 +45,13 @@ interface Solicitud {
   lineas: SolicitudLinea[]
   eventos: SolicitudEvento[]
 }
+interface OtroClienteReferencia {
+  cliente_nombre: string
+  tipo: 'mayorista' | 'detallista'
+  precio_cliente_usd: number
+  fecha_proforma: string | null
+  proforma_numero: string | null
+}
 interface LineaComparacion {
   linea_id: string
   codigo: string | null
@@ -56,6 +64,7 @@ interface LineaComparacion {
   diferencia_usd: number | null
   diferencia_pct: number | null
   tendencia: 'subio' | 'bajo' | 'igual' | 'sin_datos'
+  otros_clientes: OtroClienteReferencia[]
 }
 
 const ESTADO_STYLE: Record<string, { bg: string; text: string; label: string }> = {
@@ -97,6 +106,7 @@ export default function SolicitudesPage() {
   const [devolviendo, setDevolviendo] = useState(false)
   const [comparacion, setComparacion] = useState<Record<string, LineaComparacion> | null>(null)
   const [cargandoComparacion, setCargandoComparacion] = useState(false)
+  const [agregandoPrecioCodigo, setAgregandoPrecioCodigo] = useState<string | null>(null)
 
   const cargar = useCallback(() => {
     setLoading(true)
@@ -113,9 +123,8 @@ export default function SolicitudesPage() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  useEffect(() => {
+  const cargarComparacion = useCallback(() => {
     if (!seleccionada) { setComparacion(null); return }
-    setComparacion(null)
     setCargandoComparacion(true)
     fetch(`/api/solicitudes/${seleccionada.id}/comparacion-historica`)
       .then(r => r.json())
@@ -126,6 +135,11 @@ export default function SolicitudesPage() {
       })
       .catch(() => setComparacion({}))
       .finally(() => setCargandoComparacion(false))
+  }, [seleccionada])
+
+  useEffect(() => {
+    setComparacion(null)
+    cargarComparacion()
   }, [seleccionada?.id])
 
   async function crearCliente() {
@@ -368,7 +382,31 @@ export default function SolicitudesPage() {
                               )}
                             </div>
                           ) : comp && !comp.tiene_historial ? (
-                            <p className="text-[11px] text-gray-300 mt-0.5">Sin historial de precio con este cliente</p>
+                            <div className="mt-0.5 space-y-0.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-[11px] text-gray-300">Sin historial de precio con este cliente</p>
+                                {l.producto?.codigo && (
+                                  <button
+                                    onClick={() => setAgregandoPrecioCodigo(l.producto!.codigo)}
+                                    className="text-[11px] text-[#1E3A5F] hover:underline font-medium"
+                                  >
+                                    + Agregar precio de referencia
+                                  </button>
+                                )}
+                              </div>
+                              {comp.otros_clientes.length > 0 && (
+                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-gray-400">
+                                  <Users size={10} className="flex-shrink-0" />
+                                  {comp.otros_clientes.map((oc, i) => (
+                                    <span key={i}>
+                                      {oc.cliente_nombre}: <strong className="text-gray-500">{formatUSD(oc.precio_cliente_usd)}</strong>
+                                      {oc.fecha_proforma && ` (${fechaCorta(oc.fecha_proforma)})`}
+                                      {i < comp.otros_clientes.length - 1 && ' ·'}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           ) : null
                         )}
                       </div>
@@ -455,6 +493,16 @@ export default function SolicitudesPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal agregar precio de referencia */}
+      {agregandoPrecioCodigo && seleccionada?.cliente?.id && (
+        <AgregarPrecioReferenciaModal
+          clienteId={seleccionada.cliente.id}
+          codigo={agregandoPrecioCodigo}
+          onClose={() => setAgregandoPrecioCodigo(null)}
+          onGuardado={() => { setAgregandoPrecioCodigo(null); cargarComparacion() }}
+        />
       )}
 
       {/* Modal devolver con observación */}

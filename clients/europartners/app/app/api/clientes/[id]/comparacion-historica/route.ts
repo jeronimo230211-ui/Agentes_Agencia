@@ -6,6 +6,14 @@ import type { TipoPrecio } from '@/types/europartners'
 
 type Params = { params: { id: string } }
 
+export interface OtroClienteReferencia {
+  cliente_nombre: string
+  tipo: TipoPrecio
+  precio_cliente_usd: number
+  fecha_proforma: string | null
+  proforma_numero: string | null
+}
+
 export interface ComparacionPrecio {
   codigo: string
   tiene_historial: boolean
@@ -17,6 +25,7 @@ export interface ComparacionPrecio {
   diferencia_usd: number | null
   diferencia_pct: number | null
   tendencia: 'subio' | 'bajo' | 'igual' | 'sin_datos'
+  otros_clientes: OtroClienteReferencia[]
 }
 
 // Misma comparación que /api/solicitudes/[id]/comparacion-historica, pero por cliente+códigos
@@ -64,6 +73,59 @@ export async function GET(req: NextRequest, { params }: Params) {
     historialPorCodigo.set(h.codigo_pdf, arr)
   }
 
+  // Para los códigos sin historial propio, buscar qué precio se le dio a otros clientes —
+  // hasta 2 referencias por código, priorizando clientes del mismo tipo (mayorista/detallista).
+  const codigosSinHistorial = codigos.filter(c => !historialPorCodigo.has(c))
+  const recomendacionesPorCodigo = new Map<string, OtroClienteReferencia[]>()
+
+  if (codigosSinHistorial.length > 0) {
+    const { data: otrosClientes } = await supabase
+      .from('historial_precios')
+      .select('codigo_pdf, precio_cliente_usd, fecha_proforma, proforma_numero, cliente_id, cliente:clientes(nombre, tipo)')
+      .in('codigo_pdf', codigosSinHistorial)
+      .neq('cliente_id', params.id)
+      .not('precio_cliente_usd', 'is', null)
+      .order('fecha_proforma', { ascending: false })
+
+    type RegistroOtroCliente = {
+      codigo_pdf: string | null
+      precio_cliente_usd: number
+      fecha_proforma: string | null
+      proforma_numero: string | null
+      cliente_id: string
+      cliente: { nombre?: string; tipo?: TipoPrecio } | { nombre?: string; tipo?: TipoPrecio }[] | null
+    }
+
+    const porCodigo = new Map<string, RegistroOtroCliente[]>()
+    for (const h of (otrosClientes || []) as RegistroOtroCliente[]) {
+      if (!h.codigo_pdf) continue
+      const arr = porCodigo.get(h.codigo_pdf) || []
+      arr.push(h)
+      porCodigo.set(h.codigo_pdf, arr)
+    }
+
+    for (const [codigo, registros] of Array.from(porCodigo.entries())) {
+      const mismoTipo = registros.filter(r => (Array.isArray(r.cliente) ? r.cliente[0] : r.cliente)?.tipo === tipoPrecio)
+      const otroTipo = registros.filter(r => !mismoTipo.includes(r))
+      const vistos = new Set<string>()
+      const recs: OtroClienteReferencia[] = []
+      for (const r of [...mismoTipo, ...otroTipo]) {
+        if (vistos.has(r.cliente_id)) continue
+        vistos.add(r.cliente_id)
+        const cli = Array.isArray(r.cliente) ? r.cliente[0] : r.cliente
+        recs.push({
+          cliente_nombre: cli?.nombre || 'Cliente',
+          tipo: cli?.tipo || 'mayorista',
+          precio_cliente_usd: r.precio_cliente_usd,
+          fecha_proforma: r.fecha_proforma,
+          proforma_numero: r.proforma_numero,
+        })
+        if (recs.length >= 2) break
+      }
+      recomendacionesPorCodigo.set(codigo, recs)
+    }
+  }
+
   const comparaciones: ComparacionPrecio[] = codigos.map(codigo => {
     const producto = precioPorCodigo.get(codigo)
     const registros = historialPorCodigo.get(codigo)
@@ -91,6 +153,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       diferencia_usd: diferenciaUsd,
       diferencia_pct: diferenciaPct,
       tendencia,
+      otros_clientes: !ultimo ? (recomendacionesPorCodigo.get(codigo) || []) : [],
     }
   })
 

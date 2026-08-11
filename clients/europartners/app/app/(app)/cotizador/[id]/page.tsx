@@ -5,14 +5,22 @@ import {
   Plus, Trash2, Send, Eye, Loader2,
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
   Search, X, Package, FileText,
-  TrendingUp, TrendingDown, Minus, History,
+  TrendingUp, TrendingDown, Minus, History, Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
 import type { Proforma, ProformaLinea, TipoPrecio } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
+import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 
+interface OtroClienteReferencia {
+  cliente_nombre: string
+  tipo: TipoPrecio
+  precio_cliente_usd: number
+  fecha_proforma: string | null
+  proforma_numero: string | null
+}
 interface ComparacionPrecio {
   codigo: string
   tiene_historial: boolean
@@ -22,6 +30,7 @@ interface ComparacionPrecio {
   precio_catalogo_actual: number | null
   diferencia_pct: number | null
   tendencia: 'subio' | 'bajo' | 'igual' | 'sin_datos'
+  otros_clientes: OtroClienteReferencia[]
 }
 
 function fechaCorta(iso: string) {
@@ -337,6 +346,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [lineaParaSelector, setLineaParaSelector] = useState<string | null>(null)
   const [confirmandoPago, setConfirmandoPago] = useState(false)
   const [comparacion, setComparacion] = useState<Record<string, ComparacionPrecio>>({})
+  const [agregandoPrecioCodigo, setAgregandoPrecioCodigo] = useState<string | null>(null)
   const { puedeEditar: rolPuedeEditar } = useRol()
 
   const cargar = useCallback(async () => {
@@ -360,7 +370,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
   const codigosLineas = lineas.map(l => l.codigo_pdf).filter(Boolean).join(',')
 
-  useEffect(() => {
+  const cargarComparacion = useCallback(() => {
     const clienteId = proforma?.cliente_id
     if (!clienteId || !codigosLineas) { setComparacion({}); return }
     fetch(`/api/clientes/${clienteId}/comparacion-historica?codigos=${encodeURIComponent(codigosLineas)}`)
@@ -372,6 +382,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       })
       .catch(() => setComparacion({}))
   }, [proforma?.cliente_id, codigosLineas])
+
+  useEffect(() => { cargarComparacion() }, [cargarComparacion])
 
   function agregarLinea() {
     const key = `new-${Date.now()}`
@@ -607,6 +619,16 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         <NuevoProductoModal
           onClose={() => setMostrarNuevoProducto(false)}
           onSaved={productoCreado}
+        />
+      )}
+
+      {/* Modal agregar precio de referencia */}
+      {agregandoPrecioCodigo && proforma?.cliente_id && (
+        <AgregarPrecioReferenciaModal
+          clienteId={proforma.cliente_id}
+          codigo={agregandoPrecioCodigo}
+          onClose={() => setAgregandoPrecioCodigo(null)}
+          onGuardado={() => { setAgregandoPrecioCodigo(null); cargarComparacion() }}
         />
       )}
 
@@ -901,26 +923,54 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     ) : (
                       <span>{linea.descripcion_pdf}</span>
                     )}
-                    {linea.codigo_pdf && comparacion[linea.codigo_pdf]?.tiene_historial && (
-                      <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-[11px]">
-                        <span className="flex items-center gap-1 text-gray-400">
-                          <History size={10} />
-                          Antes {formatUSD(comparacion[linea.codigo_pdf].ultimo_precio_cliente!)}
-                          {comparacion[linea.codigo_pdf].ultima_fecha && ` · ${fechaCorta(comparacion[linea.codigo_pdf].ultima_fecha!)}`}
-                          {comparacion[linea.codigo_pdf].ultimo_proforma_numero && ` · #${comparacion[linea.codigo_pdf].ultimo_proforma_numero}`}
-                        </span>
-                        {comparacion[linea.codigo_pdf].precio_catalogo_actual != null && comparacion[linea.codigo_pdf].diferencia_pct != null && (
-                          <span className={`flex items-center gap-0.5 font-semibold ${
-                            comparacion[linea.codigo_pdf].tendencia === 'subio' ? 'text-green-600' : comparacion[linea.codigo_pdf].tendencia === 'bajo' ? 'text-red-500' : 'text-gray-400'
-                          }`}>
-                            {comparacion[linea.codigo_pdf].tendencia === 'subio' && <TrendingUp size={10} />}
-                            {comparacion[linea.codigo_pdf].tendencia === 'bajo' && <TrendingDown size={10} />}
-                            {comparacion[linea.codigo_pdf].tendencia === 'igual' && <Minus size={10} />}
-                            Hoy {formatUSD(comparacion[linea.codigo_pdf].precio_catalogo_actual!)} ({comparacion[linea.codigo_pdf].diferencia_pct! >= 0 ? '+' : ''}{formatPct(comparacion[linea.codigo_pdf].diferencia_pct!)})
+                    {linea.codigo_pdf && comparacion[linea.codigo_pdf] && (() => {
+                      const comp = comparacion[linea.codigo_pdf!]
+                      return comp.tiene_historial ? (
+                        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-[11px]">
+                          <span className="flex items-center gap-1 text-gray-400">
+                            <History size={10} />
+                            Antes {formatUSD(comp.ultimo_precio_cliente!)}
+                            {comp.ultima_fecha && ` · ${fechaCorta(comp.ultima_fecha)}`}
+                            {comp.ultimo_proforma_numero && ` · #${comp.ultimo_proforma_numero}`}
                           </span>
-                        )}
-                      </div>
-                    )}
+                          {comp.precio_catalogo_actual != null && comp.diferencia_pct != null && (
+                            <span className={`flex items-center gap-0.5 font-semibold ${
+                              comp.tendencia === 'subio' ? 'text-green-600' : comp.tendencia === 'bajo' ? 'text-red-500' : 'text-gray-400'
+                            }`}>
+                              {comp.tendencia === 'subio' && <TrendingUp size={10} />}
+                              {comp.tendencia === 'bajo' && <TrendingDown size={10} />}
+                              {comp.tendencia === 'igual' && <Minus size={10} />}
+                              Hoy {formatUSD(comp.precio_catalogo_actual)} ({comp.diferencia_pct >= 0 ? '+' : ''}{formatPct(comp.diferencia_pct)})
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mt-1 space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-[11px] text-gray-300">Sin historial de precio con este cliente</p>
+                            <button
+                              type="button"
+                              onClick={() => setAgregandoPrecioCodigo(linea.codigo_pdf!)}
+                              className="text-[11px] text-[#1E3A5F] hover:underline font-medium"
+                            >
+                              + Agregar precio de referencia
+                            </button>
+                          </div>
+                          {comp.otros_clientes.length > 0 && (
+                            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-gray-400">
+                              <Users size={10} className="flex-shrink-0" />
+                              {comp.otros_clientes.map((oc, i) => (
+                                <span key={i}>
+                                  {oc.cliente_nombre}: <strong className="text-gray-500">{formatUSD(oc.precio_cliente_usd)}</strong>
+                                  {oc.fecha_proforma && ` (${fechaCorta(oc.fecha_proforma)})`}
+                                  {i < comp.otros_clientes.length - 1 && ' ·'}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </td>
 
                   {/* Cantidad */}
