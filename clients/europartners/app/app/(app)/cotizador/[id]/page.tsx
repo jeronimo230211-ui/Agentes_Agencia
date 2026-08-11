@@ -5,12 +5,29 @@ import {
   Plus, Trash2, Send, Eye, Loader2,
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
   Search, X, Package, FileText,
+  TrendingUp, TrendingDown, Minus, History,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
-import type { Proforma, ProformaLinea, HistorialPrecio, TipoPrecio } from '@/types/europartners'
+import type { Proforma, ProformaLinea, TipoPrecio } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
+
+interface ComparacionPrecio {
+  codigo: string
+  tiene_historial: boolean
+  ultimo_precio_cliente: number | null
+  ultima_fecha: string | null
+  ultimo_proforma_numero: string | null
+  precio_catalogo_actual: number | null
+  diferencia_pct: number | null
+  tendencia: 'subio' | 'bajo' | 'igual' | 'sin_datos'
+}
+
+function fechaCorta(iso: string) {
+  const d = new Date(iso)
+  return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
 interface Categoria { id: string; nombre: string; orden: number }
 
@@ -27,7 +44,6 @@ interface ProductoOpcion {
 
 interface LineaEditable extends Partial<ProformaLinea> {
   _key: string
-  _historial?: HistorialPrecio[]
   _cantidadStr: string
   _precioMayorista?: number
   _precioDetallista?: number
@@ -320,6 +336,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [mostrarNuevoProducto, setMostrarNuevoProducto] = useState(false)
   const [lineaParaSelector, setLineaParaSelector] = useState<string | null>(null)
   const [confirmandoPago, setConfirmandoPago] = useState(false)
+  const [comparacion, setComparacion] = useState<Record<string, ComparacionPrecio>>({})
   const { puedeEditar: rolPuedeEditar } = useRol()
 
   const cargar = useCallback(async () => {
@@ -340,6 +357,21 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   }, [params.id])
 
   useEffect(() => { cargar() }, [cargar])
+
+  const codigosLineas = lineas.map(l => l.codigo_pdf).filter(Boolean).join(',')
+
+  useEffect(() => {
+    const clienteId = proforma?.cliente_id
+    if (!clienteId || !codigosLineas) { setComparacion({}); return }
+    fetch(`/api/clientes/${clienteId}/comparacion-historica?codigos=${encodeURIComponent(codigosLineas)}`)
+      .then(r => r.json())
+      .then(({ data }) => {
+        const porCodigo: Record<string, ComparacionPrecio> = {}
+        for (const c of (data?.comparaciones || []) as ComparacionPrecio[]) porCodigo[c.codigo] = c
+        setComparacion(porCodigo)
+      })
+      .catch(() => setComparacion({}))
+  }, [proforma?.cliente_id, codigosLineas])
 
   function agregarLinea() {
     const key = `new-${Date.now()}`
@@ -869,10 +901,24 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     ) : (
                       <span>{linea.descripcion_pdf}</span>
                     )}
-                    {linea._historial && linea._historial.length > 0 && (
-                      <div className="mt-1 text-xs text-green-700 bg-green-50 rounded px-2 py-1">
-                        Último precio: <strong>{formatUSD(linea._historial[0].precio_cliente_usd || 0)}</strong>
-                        {' '}({linea._historial[0].proforma_numero})
+                    {linea.codigo_pdf && comparacion[linea.codigo_pdf]?.tiene_historial && (
+                      <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-[11px]">
+                        <span className="flex items-center gap-1 text-gray-400">
+                          <History size={10} />
+                          Antes {formatUSD(comparacion[linea.codigo_pdf].ultimo_precio_cliente!)}
+                          {comparacion[linea.codigo_pdf].ultima_fecha && ` · ${fechaCorta(comparacion[linea.codigo_pdf].ultima_fecha!)}`}
+                          {comparacion[linea.codigo_pdf].ultimo_proforma_numero && ` · #${comparacion[linea.codigo_pdf].ultimo_proforma_numero}`}
+                        </span>
+                        {comparacion[linea.codigo_pdf].precio_catalogo_actual != null && comparacion[linea.codigo_pdf].diferencia_pct != null && (
+                          <span className={`flex items-center gap-0.5 font-semibold ${
+                            comparacion[linea.codigo_pdf].tendencia === 'subio' ? 'text-green-600' : comparacion[linea.codigo_pdf].tendencia === 'bajo' ? 'text-red-500' : 'text-gray-400'
+                          }`}>
+                            {comparacion[linea.codigo_pdf].tendencia === 'subio' && <TrendingUp size={10} />}
+                            {comparacion[linea.codigo_pdf].tendencia === 'bajo' && <TrendingDown size={10} />}
+                            {comparacion[linea.codigo_pdf].tendencia === 'igual' && <Minus size={10} />}
+                            Hoy {formatUSD(comparacion[linea.codigo_pdf].precio_catalogo_actual!)} ({comparacion[linea.codigo_pdf].diferencia_pct! >= 0 ? '+' : ''}{formatPct(comparacion[linea.codigo_pdf].diferencia_pct!)})
+                          </span>
+                        )}
                       </div>
                     )}
                   </td>
