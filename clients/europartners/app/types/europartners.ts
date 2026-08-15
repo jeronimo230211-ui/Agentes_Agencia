@@ -46,7 +46,8 @@ export interface Producto {
   categoria_id?: string
   categoria?: CategoriaProducto
   codigo?: string
-  descripcion: string
+  nombre: string
+  descripcion: string | null
   proveedor: string
   precio_fob_usd?: number
   precio_fob_fecha?: string

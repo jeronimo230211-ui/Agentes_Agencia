@@ -43,12 +43,17 @@ interface Categoria { id: string; nombre: string; orden: number }
 interface ProductoOpcion {
   id: string
   codigo: string
+  nombre: string
   descripcion: string
   imagen_url?: string | null
   precio_fob_usd: number
   precio_mayorista?: number
   precio_detallista?: number
   categoria: { nombre: string }
+}
+
+function textoProducto(nombre: string, descripcion?: string | null) {
+  return descripcion ? `${nombre} — ${descripcion}` : nombre
 }
 
 interface LineaEditable extends Partial<ProformaLinea> {
@@ -185,7 +190,7 @@ function SelectorProductoModal({
                       <td className="p-3 font-mono text-xs text-gray-600">
                         {p.codigo || '—'}
                       </td>
-                      <td className="p-3">{p.descripcion}</td>
+                      <td className="p-3">{textoProducto(p.nombre, p.descripcion)}</td>
                       <td className="p-3 text-right text-gray-500">{formatUSD(p.precio_fob_usd || 0)}</td>
                       <td className="p-3 text-right font-medium text-[#1E3A5F]">
                         {precioSugerido !== undefined ? formatUSD(precioSugerido) : '—'}
@@ -456,7 +461,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         ...l,
         producto_id: producto.id,
         codigo_pdf: producto.codigo || '',
-        descripcion_pdf: producto.descripcion,
+        descripcion_pdf: textoProducto(producto.nombre, producto.descripcion),
         precio_costo_usd: precioCosto,
         precio_cliente_usd: precioCliente,
         margen_pct: precioCliente !== undefined ? calcMargen(precioCosto, precioCliente) : undefined,
@@ -474,7 +479,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     seleccionarProducto({
       id: producto.id,
       codigo: producto.codigo,
-      descripcion: producto.descripcion || producto.nombre,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion || '',
       imagen_url: producto.imagen_url,
       precio_fob_usd: producto.precio_fob_usd || 0,
       precio_mayorista: producto.precio_mayorista ?? undefined,
