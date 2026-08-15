@@ -3,11 +3,12 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
   Copy, CheckCircle2, Undo2, Clock, Plus, Loader2, Mail, Pencil,
-  TrendingUp, TrendingDown, Minus, History, Users,
+  TrendingUp, TrendingDown, Minus, History, Users, Tag,
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct } from '@/lib/precio'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
+import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 
 interface Cliente {
   id: string
@@ -52,6 +53,11 @@ interface OtroClienteReferencia {
   fecha_proforma: string | null
   proforma_numero: string | null
 }
+interface PrecioEspecialResumen {
+  id: string
+  precio_usd: number
+  motivo: string | null
+}
 interface LineaComparacion {
   linea_id: string
   codigo: string | null
@@ -65,6 +71,7 @@ interface LineaComparacion {
   diferencia_pct: number | null
   tendencia: 'subio' | 'bajo' | 'igual' | 'sin_datos'
   otros_clientes: OtroClienteReferencia[]
+  precio_especial: PrecioEspecialResumen | null
 }
 
 const ESTADO_STYLE: Record<string, { bg: string; text: string; label: string }> = {
@@ -107,6 +114,7 @@ export default function SolicitudesPage() {
   const [comparacion, setComparacion] = useState<Record<string, LineaComparacion> | null>(null)
   const [cargandoComparacion, setCargandoComparacion] = useState(false)
   const [agregandoPrecioCodigo, setAgregandoPrecioCodigo] = useState<string | null>(null)
+  const [fijandoPrecioCodigo, setFijandoPrecioCodigo] = useState<string | null>(null)
 
   const cargar = useCallback(() => {
     setLoading(true)
@@ -141,6 +149,13 @@ export default function SolicitudesPage() {
     setComparacion(null)
     cargarComparacion()
   }, [seleccionada?.id])
+
+  async function quitarPrecioEspecial(overrideId: string) {
+    const clienteId = seleccionada?.cliente?.id
+    if (!clienteId) return
+    await fetch(`/api/clientes/${clienteId}/precios-especiales/${overrideId}`, { method: 'PATCH' })
+    cargarComparacion()
+  }
 
   async function crearCliente() {
     if (!nombreNuevo.trim()) return
@@ -409,6 +424,34 @@ export default function SolicitudesPage() {
                             </div>
                           ) : null
                         )}
+                        {l.producto_id && l.producto?.codigo && !cargandoComparacion && (
+                          <div className="mt-0.5">
+                            {comp?.precio_especial ? (
+                              <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
+                                <Tag size={10} className="text-amber-500 flex-shrink-0" />
+                                <span className="text-amber-600 font-semibold">
+                                  Precio especial: {formatUSD(comp.precio_especial.precio_usd)}
+                                </span>
+                                {comp.precio_especial.motivo && (
+                                  <span className="text-gray-400">— {comp.precio_especial.motivo}</span>
+                                )}
+                                <button
+                                  onClick={() => quitarPrecioEspecial(comp.precio_especial!.id)}
+                                  className="text-gray-400 hover:text-red-500 hover:underline"
+                                >
+                                  Quitar
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setFijandoPrecioCodigo(l.producto!.codigo)}
+                                className="text-[11px] text-amber-600 hover:underline font-medium"
+                              >
+                                + Fijar precio especial para este cliente
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <span className="text-sm font-semibold text-gray-600 flex-shrink-0">×{l.cantidad}</span>
                     </div>
@@ -502,6 +545,15 @@ export default function SolicitudesPage() {
           codigo={agregandoPrecioCodigo}
           onClose={() => setAgregandoPrecioCodigo(null)}
           onGuardado={() => { setAgregandoPrecioCodigo(null); cargarComparacion() }}
+        />
+      )}
+
+      {fijandoPrecioCodigo && seleccionada?.cliente?.id && (
+        <FijarPrecioEspecialModal
+          clienteId={seleccionada.cliente.id}
+          codigo={fijandoPrecioCodigo}
+          onClose={() => setFijandoPrecioCodigo(null)}
+          onGuardado={() => { setFijandoPrecioCodigo(null); cargarComparacion() }}
         />
       )}
 

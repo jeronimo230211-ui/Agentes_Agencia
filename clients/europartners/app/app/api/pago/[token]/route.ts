@@ -5,6 +5,14 @@ import { enviarNotificacionComprobante } from '@/lib/email'
 
 type Params = { params: { token: string } }
 
+// Sin cookies()/headers()/searchParams (createAdminClient no depende de
+// sesión, y el token viaja por path param, no query string), Next.js
+// cachearía el fetch a Supabase por defecto — mismo bug real encontrado el
+// 2026-08-13 en /api/solicitud/[token]/route.ts, aplica igual acá: sin esto
+// el estado de pago/proforma que ve el cliente podría quedar pegado al de
+// la primera visita después del build/redeploy.
+export const dynamic = 'force-dynamic'
+
 async function resolverToken(adminClient: ReturnType<typeof createAdminClient>, token: string) {
   const { data: tokenData } = await adminClient
     .from('tokens_pago')

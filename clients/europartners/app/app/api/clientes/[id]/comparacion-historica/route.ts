@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { precioPorTipo } from '@/lib/precio'
+import { getPreciosEspeciales } from '@/lib/preciosEspeciales'
 import type { TipoPrecio } from '@/types/europartners'
 
 type Params = { params: { id: string } }
@@ -12,6 +13,12 @@ export interface OtroClienteReferencia {
   precio_cliente_usd: number
   fecha_proforma: string | null
   proforma_numero: string | null
+}
+
+export interface PrecioEspecialResumen {
+  id: string
+  precio_usd: number
+  motivo: string | null
 }
 
 export interface ComparacionPrecio {
@@ -26,6 +33,7 @@ export interface ComparacionPrecio {
   diferencia_pct: number | null
   tendencia: 'subio' | 'bajo' | 'igual' | 'sin_datos'
   otros_clientes: OtroClienteReferencia[]
+  precio_especial: PrecioEspecialResumen | null
 }
 
 // Misma comparación que /api/solicitudes/[id]/comparacion-historica, pero por cliente+códigos
@@ -52,10 +60,17 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { data: productos } = await supabase
     .from('productos')
-    .select('codigo, precio_mayorista, precio_detallista')
+    .select('id, codigo, precio_mayorista, precio_detallista')
     .in('codigo', codigos)
 
   const precioPorCodigo = new Map((productos || []).map(p => [p.codigo, p]))
+
+  const preciosEspeciales = await getPreciosEspeciales(supabase, params.id)
+  const especialPorCodigo = new Map(
+    (productos || [])
+      .filter(p => preciosEspeciales.has(p.id))
+      .map(p => [p.codigo, preciosEspeciales.get(p.id)!])
+  )
 
   const { data: historial } = await supabase
     .from('historial_precios')
@@ -154,6 +169,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       diferencia_pct: diferenciaPct,
       tendencia,
       otros_clientes: !ultimo ? (recomendacionesPorCodigo.get(codigo) || []) : [],
+      precio_especial: especialPorCodigo.get(codigo) ?? null,
     }
   })
 

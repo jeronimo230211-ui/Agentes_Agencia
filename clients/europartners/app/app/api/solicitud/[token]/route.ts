@@ -5,6 +5,16 @@ import { enviarNotificacionSolicitudNueva } from '@/lib/email'
 
 type Params = { params: { token: string } }
 
+// Ruta pública — a diferencia de las rutas autenticadas, esta no llama a
+// cookies()/headers() (createAdminClient no depende de la sesión), así que
+// Next.js no la detecta como dinámica automáticamente y cachea el fetch a
+// Supabase por defecto (App Router, Next 14) — sirviendo el catálogo/precio
+// de la PRIMERA visita a TODOS los clientes después, hasta el próximo
+// build/redeploy. force-dynamic la saca de ese cacheo. Bug real encontrado
+// el 2026-08-13 probando el override de precio especial: el precio no
+// cambiaba entre requests pese a escribir un valor nuevo en la base.
+export const dynamic = 'force-dynamic'
+
 // Ruta pública — el cliente accede desde su link fijo de pedido, sin login.
 // Nunca expone precio_fob_usd (costo de Emily) ni ningún dato de margen.
 export async function GET(_req: NextRequest, { params }: Params) {
@@ -24,7 +34,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   // no clientes.tipo — así Marta puede compartir el link mayorista o el
   // detallista del mismo cliente según a quién se lo esté mandando.
   const tipoPrecio = params.token === cliente.token_mayorista ? 'mayorista' : 'detallista'
-  const { categorias, productos } = await getCatalogoPublico(adminClient, tipoPrecio)
+  const { categorias, productos } = await getCatalogoPublico(adminClient, tipoPrecio, cliente.id)
 
   return NextResponse.json({
     cliente: { id: cliente.id, nombre: cliente.nombre, contactoCompleto: !!cliente.contacto_email },

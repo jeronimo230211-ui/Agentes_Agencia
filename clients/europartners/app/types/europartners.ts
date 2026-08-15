@@ -77,6 +77,21 @@ export interface ProductoComponente {
   orden: number
 }
 
+export interface PrecioEspecialCliente {
+  id: string
+  cliente_id: string
+  producto_id: string
+  componente_id?: string
+  precio_usd: number
+  motivo?: string
+  activo: boolean
+  creado_por?: string
+  created_at: string
+  updated_at: string
+  // Joined
+  producto?: Producto
+}
+
 export interface ParametrosPrecio {
   id: string
   nombre: string

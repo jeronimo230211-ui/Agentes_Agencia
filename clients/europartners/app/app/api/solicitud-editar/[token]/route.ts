@@ -4,6 +4,11 @@ import { getCatalogoPublico } from '@/lib/catalogoPublico'
 
 type Params = { params: { token: string } }
 
+// Sin cookies()/headers() (createAdminClient no depende de sesión), Next.js
+// cachearía el fetch a Supabase por defecto — ver nota igual en
+// /api/solicitud/[token]/route.ts, mismo bug real encontrado el 2026-08-13.
+export const dynamic = 'force-dynamic'
+
 // Ruta pública — el cliente entra aquí cuando Deisy/Marta le devuelven su
 // solicitud con una observación. Solo funciona mientras estado='devuelta' y
 // el token no haya sido usado (se anula al reenviar).
@@ -28,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'This link is no longer valid' }, { status: 404 })
   }
 
-  const { categorias, productos } = await getCatalogoPublico(adminClient, cliente.tipo || 'mayorista')
+  const { categorias, productos } = await getCatalogoPublico(adminClient, cliente.tipo || 'mayorista', cliente.id)
 
   return NextResponse.json({
     cliente: { id: cliente.id, nombre: cliente.nombre },

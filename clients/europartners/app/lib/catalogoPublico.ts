@@ -1,5 +1,6 @@
 import { createAdminClient } from './supabase-server'
 import { precioPorTipo } from './precio'
+import { getPreciosEspeciales } from './preciosEspeciales'
 import type { TipoPrecio } from '@/types/europartners'
 
 // Catálogo que ven el link público de pedido (/solicitud/[token]) y el link
@@ -7,7 +8,11 @@ import type { TipoPrecio } from '@/types/europartners'
 // precio_fob_usd (costo de Emily) ni ningún dato de margen. Solo se devuelve
 // precio_cliente (ya resuelto según el tipo del cliente que pide el
 // catálogo), nunca las columnas crudas precio_mayorista/precio_detallista.
-export async function getCatalogoPublico(adminClient: ReturnType<typeof createAdminClient>, tipoCliente: TipoPrecio) {
+//
+// clienteId es opcional para no romper llamadores que todavía no lo pasen,
+// pero sin él no se pueden aplicar precios especiales por cliente (ver
+// migración 012) — pasarlo siempre que se conozca el cliente.
+export async function getCatalogoPublico(adminClient: ReturnType<typeof createAdminClient>, tipoCliente: TipoPrecio, clienteId?: string) {
   const { data: categorias } = await adminClient
     .from('categorias_producto')
     .select('id, nombre, orden')
@@ -20,12 +25,15 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
     .order('categoria_id', { ascending: true })
     .order('codigo', { ascending: true })
 
+  const overrides = clienteId ? await getPreciosEspeciales(adminClient, clienteId) : new Map()
+
   const productos = (productosRaw || []).map(p => {
     const { precio_mayorista, precio_detallista, dimensiones, ...resto } = p
+    const override = overrides.get(p.id)
     return {
       ...resto,
       dimensiones: formatDimensiones(dimensiones),
-      precio_cliente: precioPorTipo(precio_mayorista, precio_detallista, tipoCliente) ?? null,
+      precio_cliente: override?.precio_usd ?? precioPorTipo(precio_mayorista, precio_detallista, tipoCliente) ?? null,
     }
   })
 

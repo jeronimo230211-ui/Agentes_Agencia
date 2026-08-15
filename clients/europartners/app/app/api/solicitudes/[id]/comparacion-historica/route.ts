@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { precioPorTipo } from '@/lib/precio'
+import { getPreciosEspeciales } from '@/lib/preciosEspeciales'
 import type { TipoPrecio } from '@/types/europartners'
 
 type Params = { params: { id: string } }
@@ -12,6 +13,12 @@ interface OtroClienteReferencia {
   precio_cliente_usd: number
   fecha_proforma: string | null
   proforma_numero: string | null
+}
+
+interface PrecioEspecialResumen {
+  id: string
+  precio_usd: number
+  motivo: string | null
 }
 
 interface LineaComparacion {
@@ -29,6 +36,7 @@ interface LineaComparacion {
   // Cuando este cliente no tiene historial propio: precios que sí se le dieron a otros
   // clientes por este mismo código, para que Deisy/Marta tengan una referencia con qué decidir.
   otros_clientes: OtroClienteReferencia[]
+  precio_especial: PrecioEspecialResumen | null
 }
 
 // Para cada línea de la solicitud, busca el último precio que se le dio a ESTE cliente específico
@@ -45,7 +53,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .select(`
       cliente_id,
       cliente:clientes(tipo),
-      lineas:solicitud_lineas(id, producto_id, producto:productos(codigo, precio_mayorista, precio_detallista))
+      lineas:solicitud_lineas(id, producto_id, producto:productos(id, codigo, precio_mayorista, precio_detallista))
     `)
     .eq('id', params.id)
     .single()
@@ -59,7 +67,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   type LineaConProducto = {
     id: string
     producto_id: string | null
-    producto: { codigo?: string; precio_mayorista?: number; precio_detallista?: number } | { codigo?: string; precio_mayorista?: number; precio_detallista?: number }[] | null
+    producto: { id?: string; codigo?: string; precio_mayorista?: number; precio_detallista?: number } | { id?: string; codigo?: string; precio_mayorista?: number; precio_detallista?: number }[] | null
   }
   const lineas = (solicitud.lineas || []) as LineaConProducto[]
 
@@ -68,6 +76,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
       .map(l => (Array.isArray(l.producto) ? l.producto[0] : l.producto)?.codigo)
       .filter((c): c is string => Boolean(c))
   ))
+
+  const preciosEspeciales = await getPreciosEspeciales(supabase, solicitud.cliente_id)
 
   const historialPorCodigo = new Map<string, { precio_cliente_usd: number; fecha_proforma: string | null; proforma_numero: string | null }[]>()
 
@@ -144,6 +154,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const resultado: LineaComparacion[] = lineas.map(l => {
     const producto = Array.isArray(l.producto) ? l.producto[0] : l.producto
     const codigo = producto?.codigo || null
+    const precioEspecial = producto?.id ? preciosEspeciales.get(producto.id) ?? null : null
     const registros = codigo ? historialPorCodigo.get(codigo) : undefined
     const ultimo = registros?.[0]
     const precioCatalogo = precioPorTipo(producto?.precio_mayorista, producto?.precio_detallista, tipoPrecio) ?? null
@@ -171,6 +182,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       diferencia_pct: diferenciaPct,
       tendencia,
       otros_clientes: !ultimo && codigo ? (recomendacionesPorCodigo.get(codigo) || []) : [],
+      precio_especial: precioEspecial,
     }
   })
 
