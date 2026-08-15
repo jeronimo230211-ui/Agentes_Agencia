@@ -1,8 +1,17 @@
 'use client'
-import { X, Package, Pencil } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { X, Package, Pencil, Tag, Plus, Loader2 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 
 interface Dimensiones { largo_mm?: number; ancho_mm?: number; alto_mm?: number }
+
+interface PrecioEspecialFila {
+  id: string
+  cliente_id: string
+  precio_usd: number
+  motivo: string | null
+  cliente: { nombre: string } | null
+}
 
 export interface ProductoDetalleInterno {
   id: string
@@ -26,15 +35,42 @@ export default function ProductoDetalleInternoModal({
   producto,
   onClose,
   onEditar,
+  onFijarPrecioEspecial,
+  puedeEditar,
+  refrescarPrecios,
 }: {
   producto: ProductoDetalleInterno
   onClose: () => void
   onEditar?: () => void
+  onFijarPrecioEspecial?: () => void
+  puedeEditar?: boolean
+  refrescarPrecios?: number
 }) {
   const dim = producto.dimensiones
   const dimTexto = dim && (dim.largo_mm || dim.ancho_mm || dim.alto_mm)
     ? [dim.largo_mm, dim.ancho_mm, dim.alto_mm].filter(Boolean).join(' × ') + ' mm'
     : null
+
+  const [preciosEspeciales, setPreciosEspeciales] = useState<PrecioEspecialFila[]>([])
+  const [cargandoPrecios, setCargandoPrecios] = useState(true)
+  const [quitando, setQuitando] = useState<string | null>(null)
+
+  const cargarPreciosEspeciales = useCallback(() => {
+    setCargandoPrecios(true)
+    fetch(`/api/productos/${producto.id}/precios-especiales`)
+      .then(r => r.json())
+      .then(({ data }) => { setPreciosEspeciales(data || []); setCargandoPrecios(false) })
+      .catch(() => setCargandoPrecios(false))
+  }, [producto.id])
+
+  useEffect(() => { cargarPreciosEspeciales() }, [cargarPreciosEspeciales, refrescarPrecios])
+
+  async function quitarPrecioEspecial(fila: PrecioEspecialFila) {
+    setQuitando(fila.id)
+    await fetch(`/api/clientes/${fila.cliente_id}/precios-especiales/${fila.id}`, { method: 'PATCH' })
+    setQuitando(null)
+    cargarPreciosEspeciales()
+  }
 
   return (
     <div
@@ -141,6 +177,52 @@ export default function ProductoDetalleInternoModal({
               <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
                 <p className="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-1">Notas internas</p>
                 <p className="text-sm text-amber-700 whitespace-pre-line">{producto.notas}</p>
+              </div>
+            )}
+
+            {(puedeEditar || preciosEspeciales.length > 0) && (
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                  Precios especiales por cliente
+                </p>
+                {cargandoPrecios ? (
+                  <Loader2 size={16} className="animate-spin text-gray-300" />
+                ) : (
+                  <div className="space-y-1.5">
+                    {preciosEspeciales.map(fila => (
+                      <div
+                        key={fila.id}
+                        className="flex items-center justify-between gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Tag size={12} className="text-amber-500 flex-shrink-0" />
+                          <span className="text-sm text-gray-800 truncate">
+                            {fila.cliente?.nombre || 'Cliente'}:{' '}
+                            <strong className="text-amber-700">{formatUSD(fila.precio_usd)}</strong>
+                            {fila.motivo && <span className="text-gray-400"> — {fila.motivo}</span>}
+                          </span>
+                        </div>
+                        {puedeEditar && (
+                          <button
+                            onClick={() => quitarPrecioEspecial(fila)}
+                            disabled={quitando === fila.id}
+                            className="text-xs text-gray-400 hover:text-red-500 hover:underline flex-shrink-0 disabled:opacity-50"
+                          >
+                            {quitando === fila.id ? 'Quitando...' : 'Quitar'}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {puedeEditar && (
+                      <button
+                        onClick={onFijarPrecioEspecial}
+                        className="flex items-center gap-1.5 text-sm text-[#1E3A5F] font-medium hover:underline mt-1"
+                      >
+                        <Plus size={14} /> Fijar precio especial para otro cliente
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -6,6 +6,8 @@ import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import NuevoProductoModal from '@/components/NuevoProductoModal'
 import ProductoDetalleInternoModal from '@/components/ProductoDetalleInternoModal'
+import SeleccionarClienteModal, { type ClienteOpcion } from '@/components/SeleccionarClienteModal'
+import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 
 interface Categoria {
   id: string
@@ -94,7 +96,20 @@ export default function CatalogoPage() {
   const [mostrarNuevo, setMostrarNuevo] = useState(false)
   const [productoEditando, setProductoEditando] = useState<Producto | null>(null)
   const [productoDetalle, setProductoDetalle] = useState<Producto | null>(null)
+  const [productoParaPrecioEspecial, setProductoParaPrecioEspecial] = useState<Producto | null>(null)
+  const [clienteParaPrecioEspecial, setClienteParaPrecioEspecial] = useState<ClienteOpcion | null>(null)
+  const [refrescarPrecios, setRefrescarPrecios] = useState(0)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+
+  function cerrarFlujoPrecioEspecial() {
+    setProductoParaPrecioEspecial(null)
+    setClienteParaPrecioEspecial(null)
+  }
+
+  function precioEspecialGuardado() {
+    cerrarFlujoPrecioEspecial()
+    setRefrescarPrecios(n => n + 1)
+  }
 
   useEffect(() => {
     fetch('/api/categorias')
@@ -141,6 +156,26 @@ export default function CatalogoPage() {
           producto={productoDetalle}
           onClose={() => setProductoDetalle(null)}
           onEditar={puedeEditar ? () => { setProductoEditando(productoDetalle); setProductoDetalle(null) } : undefined}
+          onFijarPrecioEspecial={puedeEditar ? () => setProductoParaPrecioEspecial(productoDetalle) : undefined}
+          puedeEditar={puedeEditar}
+          refrescarPrecios={refrescarPrecios}
+        />
+      )}
+
+      {productoParaPrecioEspecial && !clienteParaPrecioEspecial && (
+        <SeleccionarClienteModal
+          titulo={`Precio especial para ${productoParaPrecioEspecial.codigo}`}
+          onSeleccionar={setClienteParaPrecioEspecial}
+          onClose={cerrarFlujoPrecioEspecial}
+        />
+      )}
+
+      {productoParaPrecioEspecial && clienteParaPrecioEspecial && (
+        <FijarPrecioEspecialModal
+          clienteId={clienteParaPrecioEspecial.id}
+          codigo={productoParaPrecioEspecial.codigo}
+          onClose={cerrarFlujoPrecioEspecial}
+          onGuardado={precioEspecialGuardado}
         />
       )}
 
