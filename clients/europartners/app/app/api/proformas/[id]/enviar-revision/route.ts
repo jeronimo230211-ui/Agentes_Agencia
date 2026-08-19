@@ -66,8 +66,11 @@ export async function POST(_req: NextRequest, { params }: Params) {
     .select('token')
     .single()
 
-  // Buscar admin (Marta) una sola vez — sirve tanto para el email como la notificación in-app
-  const { data: marta } = await supabase
+  // Buscar admin (Marta) una sola vez — sirve tanto para el email como la notificación in-app.
+  // Usa adminClient (no `supabase`) por la misma razón que tokens_aprobacion arriba: la policy
+  // RLS "usuarios_own" (id = auth.uid()) solo deja ver la propia fila, así que con el cliente de
+  // sesión de Deisy esta consulta siempre volvía vacía y el correo nunca se intentaba.
+  const { data: marta } = await adminClient
     .from('usuarios')
     .select('id, email')
     .eq('rol', 'admin')
@@ -94,7 +97,10 @@ export async function POST(_req: NextRequest, { params }: Params) {
   }
 
   if (marta) {
-    await supabase.from('notificaciones').insert({
+    // Mismo motivo que arriba: notificaciones tiene policy RLS "notif_own" (usuario_id =
+    // auth.uid()), así que con el cliente de sesión de Deisy este insert para Marta también
+    // fallaba en silencio.
+    await adminClient.from('notificaciones').insert({
       usuario_id: marta.id,
       tipo: 'proforma_para_revisar',
       proforma_id: params.id,
