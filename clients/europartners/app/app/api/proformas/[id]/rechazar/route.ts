@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { enviarNotificacionResultado } from '@/lib/email'
 
@@ -57,14 +58,18 @@ export async function POST(req: NextRequest, { params }: Params) {
   let email_enviado = false
   let email_error: string | undefined
   if (proforma.creada_por) {
-    await supabase.from('notificaciones').insert({
+    // adminClient (no `supabase`) — RLS "notif_own"/"usuarios_own" solo dejan ver/escribir la
+    // propia fila, y aquí es Marta insertando/leyendo la fila de Deisy. Mismo bug ya corregido
+    // en enviar-revision/route.ts.
+    const adminClient = createAdminClient()
+    await adminClient.from('notificaciones').insert({
       usuario_id: proforma.creada_por,
       tipo: 'proforma_rechazada',
       proforma_id: params.id,
       mensaje: `Proforma ${proforma.numero} rechazada: ${motivo}`,
     })
 
-    const { data: creador } = await supabase.from('usuarios').select('email').eq('id', proforma.creada_por).single()
+    const { data: creador } = await adminClient.from('usuarios').select('email').eq('id', proforma.creada_por).single()
     if (creador?.email) {
       try {
         await enviarNotificacionResultado(proforma, 'rechazada', creador.email, motivo)

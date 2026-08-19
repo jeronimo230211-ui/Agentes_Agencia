@@ -107,14 +107,17 @@ export async function POST(req: NextRequest, { params }: Params) {
   let email_enviado = false
   let email_error: string | undefined
   if (proforma.creada_por) {
-    await supabase.from('notificaciones').insert({
+    // adminClient (no `supabase`) — RLS "notif_own"/"usuarios_own" solo dejan ver/escribir la
+    // propia fila, y aquí es Marta insertando/leyendo la fila de Deisy. Mismo bug ya corregido
+    // en enviar-revision/route.ts.
+    await adminClient.from('notificaciones').insert({
       usuario_id: proforma.creada_por,
       tipo: 'proforma_aprobada',
       proforma_id: params.id,
       mensaje: `Proforma ${proforma.numero} aprobada — ya puedes enviarla al cliente`,
     })
 
-    const { data: creador } = await supabase.from('usuarios').select('email').eq('id', proforma.creada_por).single()
+    const { data: creador } = await adminClient.from('usuarios').select('email').eq('id', proforma.creada_por).single()
     if (creador?.email) {
       try {
         await enviarNotificacionResultado(proforma, 'aprobada', creador.email)
