@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
+import { poblarHistorialPrecios } from '@/lib/historialPrecios'
 
 // Ruta pública para validar token y aprobar/rechazar sin login
 export async function GET(req: NextRequest) {
@@ -80,29 +81,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Poblar historial
-    const historial = (proforma.lineas || []).map((l: {
-      producto_id?: string
-      variante_id?: string
-      componente_id?: string
-      precio_costo_usd?: number
-      precio_cliente_usd?: number
-      margen_pct?: number
-    }) => ({
-      cliente_id: proforma.cliente_id,
-      producto_id: l.producto_id,
-      variante_id: l.variante_id,
-      componente_id: l.componente_id,
-      proforma_id: proforma.id,
-      proforma_numero: proforma.numero,
-      fecha_proforma: proforma.fecha,
-      precio_costo_usd: l.precio_costo_usd,
-      precio_cliente_usd: l.precio_cliente_usd,
-      margen_pct: l.margen_pct,
-    }))
-
-    if (historial.length > 0) {
-      await adminClient.from('historial_precios').insert(historial)
-    }
+    await poblarHistorialPrecios(adminClient, proforma)
 
     // Marcar token como usado
     await adminClient.from('tokens_aprobacion').update({ usado: true }).eq('token', token)

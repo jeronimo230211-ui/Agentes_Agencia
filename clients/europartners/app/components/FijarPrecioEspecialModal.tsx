@@ -13,7 +13,7 @@ export default function FijarPrecioEspecialModal({
   codigo: string
   precioSugerido?: number
   onClose: () => void
-  onGuardado: () => void
+  onGuardado: (precioUsd: number) => void
 }) {
   const [precio, setPrecio] = useState(precioSugerido != null ? String(precioSugerido) : '')
   const [motivo, setMotivo] = useState('')
@@ -42,7 +42,7 @@ export default function FijarPrecioEspecialModal({
       setError(j.error || 'No se pudo guardar')
       return
     }
-    onGuardado()
+    onGuardado(precioNum)
   }
 
   return (

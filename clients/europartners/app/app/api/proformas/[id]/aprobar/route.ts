@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { enviarNotificacionResultado } from '@/lib/email'
+import { poblarHistorialPrecios } from '@/lib/historialPrecios'
 
 type Params = { params: { id: string } }
 
@@ -71,30 +72,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Poblar historial_precios (operación crítica — usar service key)
   const adminClient = createAdminClient()
-  const lineas = proforma.lineas || []
-  const historialInserts = lineas.map((linea: {
-    producto_id?: string
-    variante_id?: string
-    componente_id?: string
-    precio_costo_usd?: number
-    precio_cliente_usd?: number
-    margen_pct?: number
-  }) => ({
-    cliente_id: proforma.cliente_id,
-    producto_id: linea.producto_id,
-    variante_id: linea.variante_id,
-    componente_id: linea.componente_id,
-    proforma_id: proforma.id,
-    proforma_numero: proforma.numero,
-    fecha_proforma: proforma.fecha,
-    precio_costo_usd: linea.precio_costo_usd,
-    precio_cliente_usd: linea.precio_cliente_usd,
-    margen_pct: linea.margen_pct,
-  }))
-
-  if (historialInserts.length > 0) {
-    await adminClient.from('historial_precios').insert(historialInserts)
-  }
+  await poblarHistorialPrecios(adminClient, proforma)
 
   // Marcar tokens como usados
   await adminClient

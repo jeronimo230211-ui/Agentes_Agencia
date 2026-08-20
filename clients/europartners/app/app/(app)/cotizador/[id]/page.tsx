@@ -360,13 +360,15 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [comparacion, setComparacion] = useState<Record<string, ComparacionPrecio>>({})
   const [agregandoPrecioCodigo, setAgregandoPrecioCodigo] = useState<string | null>(null)
   const [fijandoPrecioCodigo, setFijandoPrecioCodigo] = useState<string | null>(null)
+  const [especialesPorProducto, setEspecialesPorProducto] = useState<Map<string, PrecioEspecialResumen>>(new Map())
+  const [aprobando, setAprobando] = useState(false)
   const { puedeEditar: rolPuedeEditar } = useRol()
 
   const cargar = useCallback(async () => {
     const res = await fetch(`/api/proformas/${params.id}`)
     const { data } = await res.json()
     if (data) {
-      setProforma(data)
+      setProforma({ ...data, requiere_revision: data.requiere_revision ?? false })
       setTipoPrecio(data.tipo_precio || data.cliente?.tipo || 'mayorista')
       setLineas((data.lineas || []).map((l: ProformaLinea) => ({
         ...l,
@@ -398,11 +400,41 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
   useEffect(() => { cargarComparacion() }, [cargarComparacion])
 
+  const cargarEspeciales = useCallback(() => {
+    const clienteId = proforma?.cliente_id
+    if (!clienteId) { setEspecialesPorProducto(new Map()); return }
+    fetch(`/api/clientes/${clienteId}/precios-especiales`)
+      .then(r => r.json())
+      .then(({ data }) => {
+        const mapa = new Map<string, PrecioEspecialResumen>()
+        for (const e of (data || []) as { id: string; producto_id: string; precio_usd: number; motivo: string | null }[]) {
+          mapa.set(e.producto_id, { id: e.id, precio_usd: e.precio_usd, motivo: e.motivo })
+        }
+        setEspecialesPorProducto(mapa)
+      })
+      .catch(() => setEspecialesPorProducto(new Map()))
+  }, [proforma?.cliente_id])
+
+  useEffect(() => { cargarEspeciales() }, [cargarEspeciales])
+
   async function quitarPrecioEspecial(overrideId: string) {
     const clienteId = proforma?.cliente_id
     if (!clienteId) return
     await fetch(`/api/clientes/${clienteId}/precios-especiales/${overrideId}`, { method: 'PATCH' })
+    // Vuelve el precio de la(s) línea(s) con ese override al de catálogo
+    setLineas(prev => prev.map(l => {
+      const especial = l.producto_id ? especialesPorProducto.get(l.producto_id) : undefined
+      if (!especial || especial.id !== overrideId) return l
+      const precioCatalogo = precioPorTipo(l._precioMayorista, l._precioDetallista, tipoPrecio)
+      if (precioCatalogo === undefined) return l
+      return {
+        ...l,
+        precio_cliente_usd: precioCatalogo,
+        margen_pct: l.precio_costo_usd ? calcMargen(l.precio_costo_usd, precioCatalogo) : l.margen_pct,
+      }
+    }))
     cargarComparacion()
+    cargarEspeciales()
   }
 
   function agregarLinea() {
@@ -424,11 +456,11 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       if (l._key !== key) return l
       const updated = { ...l, [campo]: valor }
 
-      if (campo === 'precio_cliente_usd' && l.precio_costo_usd) {
-        updated.margen_pct = calcMargen(l.precio_costo_usd, valor as number)
+      if (campo === 'precio_cliente_usd' && l.precio_costo_usd && typeof valor === 'number' && !isNaN(valor)) {
+        updated.margen_pct = calcMargen(l.precio_costo_usd, valor)
       }
-      if (campo === 'margen_pct' && l.precio_costo_usd) {
-        updated.precio_cliente_usd = Number(l.precio_costo_usd) * (1 + (valor as number))
+      if (campo === 'margen_pct' && l.precio_costo_usd && typeof valor === 'number' && !isNaN(valor)) {
+        updated.precio_cliente_usd = Number(l.precio_costo_usd) * (1 + valor)
       }
 
       return updated
@@ -468,7 +500,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   function seleccionarProducto(producto: ProductoOpcion) {
     if (!lineaParaSelector) return
     const precioCosto = producto.precio_fob_usd || 0
-    const precioCliente = precioPorTipo(producto.precio_mayorista, producto.precio_detallista, tipoPrecio)
+    const especial = especialesPorProducto.get(producto.id)
+    const precioCliente = especial?.precio_usd ?? precioPorTipo(producto.precio_mayorista, producto.precio_detallista, tipoPrecio)
 
     setLineas(prev => prev.map(l => {
       if (l._key !== lineaParaSelector) return l
@@ -554,7 +587,12 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     const res = await fetch(`/api/proformas/${proforma.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lineas: lineasData, tipo_precio: tipoPrecio }),
+      body: JSON.stringify({
+        lineas: lineasData,
+        tipo_precio: tipoPrecio,
+        notas_internas: proforma.notas_internas,
+        requiere_revision: proforma.requiere_revision,
+      }),
     })
 
     if (!res.ok) {
@@ -579,6 +617,19 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       setError(j.error || 'Error al enviar')
     }
     setEnviando(false)
+  }
+
+  async function aprobarDirecto() {
+    await guardar()
+    setAprobando(true)
+    const res = await fetch(`/api/proformas/${proforma!.id}/aprobar-directo`, { method: 'POST' })
+    if (res.ok) {
+      await cargar()
+    } else {
+      const j = await res.json()
+      setError(j.error || 'Error al aprobar')
+    }
+    setAprobando(false)
   }
 
   async function enviarCliente() {
@@ -609,7 +660,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
   const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
-  const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0
+  const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
+  const puedeAprobarDirecto = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0 && !proforma?.requiere_revision
   const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
 
   if (loading) {
@@ -660,7 +712,20 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           codigo={fijandoPrecioCodigo}
           precioSugerido={lineas.find(l => l.codigo_pdf === fijandoPrecioCodigo)?.precio_cliente_usd}
           onClose={() => setFijandoPrecioCodigo(null)}
-          onGuardado={() => { setFijandoPrecioCodigo(null); cargarComparacion() }}
+          onGuardado={(precioUsd) => {
+            const codigo = fijandoPrecioCodigo
+            setLineas(prev => prev.map(l => {
+              if (l.codigo_pdf !== codigo) return l
+              return {
+                ...l,
+                precio_cliente_usd: precioUsd,
+                margen_pct: l.precio_costo_usd ? calcMargen(l.precio_costo_usd, precioUsd) : l.margen_pct,
+              }
+            }))
+            setFijandoPrecioCodigo(null)
+            cargarComparacion()
+            cargarEspeciales()
+          }}
         />
       )}
 
@@ -727,15 +792,27 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               >
                 {guardando ? 'Guardando...' : 'Guardar'}
               </button>
-              <button
-                onClick={enviarRevision}
-                disabled={!puedeEnviarRevision || enviando}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-                style={{ background: '#1E3A5F' }}
-              >
-                <Send size={16} />
-                {enviando ? 'Enviando...' : 'Enviar a Marta'}
-              </button>
+              {proforma.requiere_revision ? (
+                <button
+                  onClick={enviarRevision}
+                  disabled={!puedeEnviarRevision || enviando}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
+                  style={{ background: '#1E3A5F' }}
+                >
+                  <Send size={16} />
+                  {enviando ? 'Enviando...' : 'Enviar a Marta'}
+                </button>
+              ) : (
+                <button
+                  onClick={aprobarDirecto}
+                  disabled={!puedeAprobarDirecto || aprobando}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
+                  style={{ background: '#1E3A5F' }}
+                >
+                  <CheckCircle size={16} />
+                  {aprobando ? 'Aprobando...' : 'Aprobar'}
+                </button>
+              )}
             </>
           )}
 
@@ -1009,7 +1086,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                               <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
                                 <Tag size={10} className="text-amber-500 flex-shrink-0" />
                                 <span className="text-amber-600 font-semibold">
-                                  Precio especial: {formatUSD(comp.precio_especial.precio_usd)}
+                                  Precio especial aplicado: {formatUSD(comp.precio_especial.precio_usd)}
                                 </span>
                                 {comp.precio_especial.motivo && (
                                   <span className="text-gray-400">— {comp.precio_especial.motivo}</span>
@@ -1059,7 +1136,11 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                       <input
                         type="number"
                         value={linea.precio_costo_usd ?? ''}
-                        onChange={e => actualizarLinea(linea._key, 'precio_costo_usd', parseFloat(e.target.value) || 0)}
+                        onChange={e => {
+                          const raw = e.target.value
+                          const parsed = parseFloat(raw)
+                          actualizarLinea(linea._key, 'precio_costo_usd', raw === '' || isNaN(parsed) ? undefined : parsed)
+                        }}
                         step="0.01"
                         placeholder="0.00"
                         className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
@@ -1075,7 +1156,11 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                       <input
                         type="number"
                         value={linea.precio_cliente_usd ?? ''}
-                        onChange={e => actualizarLinea(linea._key, 'precio_cliente_usd', parseFloat(e.target.value) || 0)}
+                        onChange={e => {
+                          const raw = e.target.value
+                          const parsed = parseFloat(raw)
+                          actualizarLinea(linea._key, 'precio_cliente_usd', raw === '' || isNaN(parsed) ? undefined : parsed)
+                        }}
                         step="0.01"
                         placeholder="0.00"
                         className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right font-medium focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
@@ -1139,7 +1224,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         )}
       </div>
 
-      {/* Notas internas */}
+      {/* Notas internas + requiere revisión */}
       {puedeEditar && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <h3 className="font-medium text-gray-700 mb-2 text-sm">Notas internas (no aparecen en el PDF)</h3>
@@ -1149,6 +1234,14 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             placeholder="Comentarios para Marta..."
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
           />
+          <label className="flex items-center gap-2 mt-3 text-sm text-gray-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!proforma.requiere_revision}
+              onChange={e => setProforma(prev => prev ? { ...prev, requiere_revision: e.target.checked } : prev)}
+            />
+            Requiere revisión de Marta antes de aprobar y enviar al cliente
+          </label>
         </div>
       )}
     </div>

@@ -141,6 +141,7 @@ export interface Proforma {
   total_flete_usd?: number
   total_cif_usd?: number
   estado: EstadoProforma
+  requiere_revision: boolean
   notas_internas?: string
   motivo_rechazo?: string
   comentario_cliente?: string
