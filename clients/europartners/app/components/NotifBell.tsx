@@ -14,7 +14,9 @@ function tiempoRelativo(iso: string) {
 
 function reproducirBeep() {
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     const ctx = new AudioCtx()
     ;[880, 660].forEach((freq, i) => {
       const osc = ctx.createOscillator()
