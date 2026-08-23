@@ -12,16 +12,46 @@ function tiempoRelativo(iso: string) {
   return `hace ${Math.round(horas / 24)} d`
 }
 
+function reproducirBeep() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    const ctx = new AudioCtx()
+    ;[880, 660].forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      const inicio = ctx.currentTime + i * 0.16
+      gain.gain.setValueAtTime(0.0001, inicio)
+      gain.gain.exponentialRampToValueAtTime(0.2, inicio + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.15)
+      osc.connect(gain).connect(ctx.destination)
+      osc.start(inicio)
+      osc.stop(inicio + 0.16)
+    })
+    setTimeout(() => ctx.close(), 500)
+  } catch {
+    // navegador sin soporte de Web Audio — sin sonido, sin romper la campanita
+  }
+}
+
 export default function NotifBell() {
   const [notifs, setNotifs] = useState<Notificacion[]>([])
   const [abierto, setAbierto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const noLeidasPrevRef = useRef<number | null>(null)
 
   async function cargar() {
     const res = await fetch('/api/notificaciones')
     if (!res.ok) return
     const { data } = await res.json()
-    setNotifs(data || [])
+    const lista: Notificacion[] = data || []
+    const noLeidasNuevo = lista.filter(n => !n.leida).length
+    if (noLeidasPrevRef.current !== null && noLeidasNuevo > noLeidasPrevRef.current) {
+      reproducirBeep()
+    }
+    noLeidasPrevRef.current = noLeidasNuevo
+    setNotifs(lista)
   }
 
   useEffect(() => {
