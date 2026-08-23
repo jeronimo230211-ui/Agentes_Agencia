@@ -12,6 +12,17 @@ function tiempoRelativo(iso: string) {
   return `hace ${Math.round(horas / 24)} d`
 }
 
+function mostrarNotificacionNativa(mensajes: string[]) {
+  if (typeof window === 'undefined' || !('Notification' in window)) return
+  if (Notification.permission !== 'granted') return
+  const cuerpo = mensajes.length === 1 ? mensajes[0] : `${mensajes.length} novedades nuevas en Europartners`
+  const notif = new Notification('Europartners', { body: cuerpo, icon: '/favicon.ico', tag: 'europartners-notif' })
+  notif.onclick = () => {
+    window.focus()
+    notif.close()
+  }
+}
+
 function reproducirBeep() {
   try {
     const AudioCtx =
@@ -41,22 +52,29 @@ export default function NotifBell() {
   const [notifs, setNotifs] = useState<Notificacion[]>([])
   const [abierto, setAbierto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const noLeidasPrevRef = useRef<number | null>(null)
+  const idsVistosRef = useRef<Set<string> | null>(null)
 
   async function cargar() {
     const res = await fetch('/api/notificaciones')
     if (!res.ok) return
     const { data } = await res.json()
     const lista: Notificacion[] = data || []
-    const noLeidasNuevo = lista.filter(n => !n.leida).length
-    if (noLeidasPrevRef.current !== null && noLeidasNuevo > noLeidasPrevRef.current) {
-      reproducirBeep()
+
+    if (idsVistosRef.current) {
+      const nuevas = lista.filter(n => !n.leida && !idsVistosRef.current!.has(n.id))
+      if (nuevas.length > 0) {
+        reproducirBeep()
+        if (document.hidden) mostrarNotificacionNativa(nuevas.map(n => n.mensaje || 'Nueva notificación'))
+      }
     }
-    noLeidasPrevRef.current = noLeidasNuevo
+    idsVistosRef.current = new Set(lista.map(n => n.id))
     setNotifs(lista)
   }
 
   useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
     cargar()
     const interval = setInterval(cargar, 60_000)
     return () => clearInterval(interval)
