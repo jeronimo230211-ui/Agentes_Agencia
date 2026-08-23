@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Ship, Plus, X, Upload, CheckCircle2, Clock, PackageCheck,
-  ChevronRight, AlertTriangle,
+  ChevronRight, AlertTriangle, Search,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
@@ -68,6 +68,8 @@ export default function DespachosPage() {
   const [showNuevo, setShowNuevo] = useState(false)
   const [creando, setCreando] = useState(false)
   const [confirmandoPago, setConfirmandoPago] = useState<string | null>(null)
+  const [busquedaModal, setBusquedaModal] = useState('')
+  const [filtroPagoModal, setFiltroPagoModal] = useState<'' | 'listo' | 'pendiente'>('')
 
   const cargarDespachos = useCallback(() => {
     setLoading(true)
@@ -91,6 +93,20 @@ export default function DespachosPage() {
     const idsConDespacho = new Set(despachos.map(d => d.proforma?.id).filter(Boolean))
     return proformas.filter(p => !idsConDespacho.has(p.id))
   }, [proformas, despachos])
+
+  const proformasFiltradasModal = useMemo(() => {
+    const q = busquedaModal.trim().toLowerCase()
+    return proformasSinDespacho.filter(p => {
+      if (q && !p.numero.toLowerCase().includes(q)) return false
+      if (filtroPagoModal) {
+        const esHL = p.cliente?.slug === 'hl'
+        const pagoOk = esHL || p.estado_pago === 'pagado'
+        if (filtroPagoModal === 'listo' && !pagoOk) return false
+        if (filtroPagoModal === 'pendiente' && pagoOk) return false
+      }
+      return true
+    })
+  }, [proformasSinDespacho, busquedaModal, filtroPagoModal])
 
   async function confirmarPago(proformaId: string) {
     setConfirmandoPago(proformaId)
@@ -156,7 +172,7 @@ export default function DespachosPage() {
           </div>
           {puedeEditar && (
             <button
-              onClick={() => { setShowNuevo(true); cargarProformasElegibles() }}
+              onClick={() => { setShowNuevo(true); setBusquedaModal(''); setFiltroPagoModal(''); cargarProformasElegibles() }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm text-white"
               style={{ background: '#D4A017', color: '#1E3A5F' }}
             >
@@ -244,12 +260,44 @@ export default function DespachosPage() {
               <h2 className="text-lg font-bold text-gray-800">Nuevo despacho</h2>
               <button onClick={() => setShowNuevo(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
+            {proformasSinDespacho.length > 0 && (
+              <div className="px-5 pt-4 pb-1 space-y-2 flex-shrink-0">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                  <input
+                    value={busquedaModal}
+                    onChange={e => setBusquedaModal(e.target.value)}
+                    placeholder="Buscar por # de proforma..."
+                    className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { label: 'Todos', value: '' as const },
+                    { label: 'Listos para despacho', value: 'listo' as const },
+                    { label: 'Pago pendiente', value: 'pendiente' as const },
+                  ].map(({ label, value }) => (
+                    <button
+                      key={value}
+                      onClick={() => setFiltroPagoModal(value)}
+                      className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
+                        filtroPagoModal === value ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex-1 overflow-y-auto p-5">
               {proformasSinDespacho.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-6">No hay proformas enviadas sin despacho todavía</p>
+              ) : proformasFiltradasModal.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6">Ninguna proforma coincide con la búsqueda/filtro</p>
               ) : (
                 <div className="space-y-2">
-                  {proformasSinDespacho.map(p => {
+                  {proformasFiltradasModal.map(p => {
                     const esHL = p.cliente?.slug === 'hl'
                     const pagoOk = esHL || p.estado_pago === 'pagado'
                     const total = p.total_cif_usd ?? p.total_fob_usd ?? 0
