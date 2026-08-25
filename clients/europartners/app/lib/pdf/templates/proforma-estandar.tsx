@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import type { Proforma } from '@/types/europartners'
 import { formatUSD } from '@/lib/precio'
 
@@ -35,12 +35,14 @@ const styles = StyleSheet.create({
   tableHeaderText: { color: 'white', fontFamily: 'Helvetica-Bold', fontSize: 8 },
   tableRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#e5e7eb', padding: '3 6' },
   tableRowAlt: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#e5e7eb', padding: '3 6', backgroundColor: '#f9fafb' },
-  col1: { width: '10%' },
-  col2: { width: '8%' },
-  col3: { width: '44%' },
-  col4: { width: '12%', textAlign: 'right' },
+  colImg: { width: '10%' },
+  col1: { width: '9%' },
+  col2: { width: '7%' },
+  col3: { width: '35%' },
+  col4: { width: '11%', textAlign: 'right' },
   col5: { width: '12%', textAlign: 'right' },
-  col6: { width: '14%', textAlign: 'right' },
+  col6: { width: '13%', textAlign: 'right' },
+  productImg: { width: 22, height: 22, objectFit: 'contain' },
   totalsSection: { marginTop: 8, alignItems: 'flex-end' },
   totalRow: { flexDirection: 'row', gap: 16, marginBottom: 2 },
   totalLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151' },
@@ -64,6 +66,8 @@ export function ProformaPDF({ proforma }: Props) {
   const totalFlete = proforma.total_flete_usd || 0
   const totalFinal = proforma.total_cif_usd || proforma.total_fob_usd || 0
   const labelTotal = proforma.incoterm === 'FOB' ? 'TOTAL FOB' : `TOTAL ${proforma.incoterm}`
+  const totalUnidades = lineas.reduce((sum, l) => sum + (l.cantidad || 0), 0)
+  const destino = [cliente.ciudad, cliente.pais].filter(Boolean).join(', ')
 
   return (
     <Document>
@@ -100,16 +104,19 @@ export function ProformaPDF({ proforma }: Props) {
             {cliente.ciudad && <Text style={styles.value}>{cliente.ciudad}</Text>}
             <Text style={styles.value}>{cliente.pais}</Text>
             {cliente.contacto_email && <Text style={styles.value}>{cliente.contacto_email}</Text>}
+            <Text style={{ marginTop: 6, fontSize: 8, color: '#6b7280' }}>Order No: {proforma.numero_cliente || '—'}</Text>
           </View>
           <View style={styles.infoBlock}>
             <Text style={styles.sectionTitle}>SHIPPING TERMS</Text>
             <Text style={styles.value}>Incoterm: {proforma.incoterm}</Text>
+            <Text style={styles.value}>Freight: {proforma.incoterm}</Text>
+            <Text style={styles.value}>Insurance: {proforma.insurance || 'COLLECT'}</Text>
             <Text style={styles.value}>Via: Maritime</Text>
             <Text style={styles.value}>Shipped from: Xingang, China</Text>
-            <Text style={styles.value}>Destination: Kingston, Jamaica</Text>
+            <Text style={styles.value}>Destination: {destino || 'Kingston, Jamaica'}</Text>
             {params && (
               <Text style={{ marginTop: 4, fontSize: 7, color: '#6b7280' }}>
-                Freight: {formatUSD(params.flete_usd)} / {params.cbm_total_contenedor} CBM container
+                Freight cost: {formatUSD(params.flete_usd)} / {params.cbm_total_contenedor} CBM container
               </Text>
             )}
           </View>
@@ -123,6 +130,7 @@ export function ProformaPDF({ proforma }: Props) {
         {/* TABLE */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderText, styles.colImg]}></Text>
             <Text style={[styles.tableHeaderText, styles.col1]}>QTY</Text>
             <Text style={[styles.tableHeaderText, styles.col2]}>UNIT</Text>
             <Text style={[styles.tableHeaderText, styles.col3]}>DESCRIPTION</Text>
@@ -132,6 +140,9 @@ export function ProformaPDF({ proforma }: Props) {
           </View>
           {lineas.map((linea, i) => (
             <View key={linea.id} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+              <View style={styles.colImg}>
+                {linea.producto?.imagen_url && <Image src={linea.producto.imagen_url} style={styles.productImg} />}
+              </View>
               <Text style={styles.col1}>{linea.cantidad}</Text>
               <Text style={styles.col2}>SETS</Text>
               <Text style={styles.col3}>{linea.descripcion_pdf}</Text>
@@ -144,6 +155,10 @@ export function ProformaPDF({ proforma }: Props) {
 
         {/* TOTALS */}
         <View style={styles.totalsSection}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>TOTAL UNITS:</Text>
+            <Text style={styles.totalValue}>{totalUnidades}</Text>
+          </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>TOTAL AMOUNT FOB:</Text>
             <Text style={styles.totalValue}>{formatUSD(totalFob)}</Text>

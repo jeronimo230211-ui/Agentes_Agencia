@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       *,
       cliente:clientes(*),
       parametros_precio:parametros_precio(*),
-      lineas:proforma_lineas(*)
+      lineas:proforma_lineas(*, producto:productos(imagen_url))
     `)
     .eq('id', params.id)
     .order('orden', { referencedTable: 'proforma_lineas', ascending: true })

@@ -10,7 +10,7 @@ import {
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
-import type { Proforma, ProformaLinea, TipoPrecio } from '@/types/europartners'
+import type { Proforma, ProformaLinea, TipoPrecio, Insurance } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
@@ -592,6 +592,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         tipo_precio: tipoPrecio,
         notas_internas: proforma.notas_internas,
         requiere_revision: proforma.requiere_revision,
+        numero_cliente: proforma.numero_cliente,
+        insurance: proforma.insurance,
       }),
     })
 
@@ -847,6 +849,39 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               {labelTipo(t)}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Datos de envío para el PDF */}
+      <div className="flex items-center gap-6 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 font-medium">Order No:</span>
+          {puedeEditar ? (
+            <input
+              type="text"
+              value={proforma.numero_cliente || ''}
+              onChange={e => setProforma(prev => prev ? { ...prev, numero_cliente: e.target.value } : prev)}
+              placeholder="Ej. EMAIL 12/08/2026"
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            />
+          ) : (
+            <span className="text-sm text-gray-700">{proforma.numero_cliente || '—'}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 font-medium">Insurance:</span>
+          {puedeEditar ? (
+            <select
+              value={proforma.insurance || 'COLLECT'}
+              onChange={e => setProforma(prev => prev ? { ...prev, insurance: e.target.value as Insurance } : prev)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            >
+              <option value="COLLECT">COLLECT</option>
+              <option value="PREPAID">PREPAID</option>
+            </select>
+          ) : (
+            <span className="text-sm text-gray-700">{proforma.insurance || 'COLLECT'}</span>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 export type Rol = 'operaciones' | 'admin' | 'analista' | 'diseñadora'
 export type Incoterm = 'FOB' | 'CFR' | 'CIF'
+export type Insurance = 'COLLECT' | 'PREPAID'
 export type ModoPricing = 'set' | 'componente'
 export type TipoPrecio = 'mayorista' | 'detallista'
 export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada' | 'cambios_solicitados'
@@ -53,10 +54,15 @@ export interface Producto {
   precio_fob_fecha?: string
   precio_mayorista?: number
   precio_detallista?: number
+  imagen_url?: string | null
   cbm_unitario?: number
   estado: EstadoProducto
   variantes?: ProductoVariante[]
   componentes?: ProductoComponente[]
+  descripcion_larga_es?: string | null
+  descripcion_larga_en?: string | null
+  ficha_tecnica?: { campos: { label: string; valor: string }[] } | null
+  ficha_tecnica_estado?: 'borrador' | 'aprobada'
 }
 
 export interface ProductoVariante {
@@ -135,6 +141,7 @@ export interface Proforma {
   fecha: string
   fecha_vencimiento?: string
   incoterm: Incoterm
+  insurance: Insurance
   modo_pricing: ModoPricing
   tipo_precio: TipoPrecio
   total_fob_usd?: number
