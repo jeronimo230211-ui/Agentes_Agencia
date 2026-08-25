@@ -42,7 +42,14 @@ const styles = StyleSheet.create({
   col4: { width: '11%', textAlign: 'right' },
   col5: { width: '12%', textAlign: 'right' },
   col6: { width: '13%', textAlign: 'right' },
-  productImg: { width: 22, height: 22, objectFit: 'contain' },
+  productImgBox: {
+    width: 26,
+    height: 26,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 3,
+    padding: 2,
+  },
+  productImg: { width: '100%', height: '100%', objectFit: 'contain' },
   totalsSection: { marginTop: 8, alignItems: 'flex-end' },
   totalRow: { flexDirection: 'row', gap: 16, marginBottom: 2 },
   totalLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151' },
@@ -141,7 +148,11 @@ export function ProformaPDF({ proforma }: Props) {
           {lineas.map((linea, i) => (
             <View key={linea.id} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
               <View style={styles.colImg}>
-                {linea.producto?.imagen_url && <Image src={linea.producto.imagen_url} style={styles.productImg} />}
+                {linea.producto?.imagen_url && (
+                  <View style={styles.productImgBox}>
+                    <Image src={linea.producto.imagen_url} style={styles.productImg} />
+                  </View>
+                )}
               </View>
               <Text style={styles.col1}>{linea.cantidad}</Text>
               <Text style={styles.col2}>SETS</Text>
