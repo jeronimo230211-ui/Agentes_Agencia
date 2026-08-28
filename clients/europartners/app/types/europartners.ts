@@ -207,6 +207,35 @@ export interface Notificacion {
   proforma?: Proforma
 }
 
+// ── Módulo Emily (piloto, ver migración 017) ─────────────────────────
+export type EstadoProformaChina = 'enviada' | 'aprobada' | 'rechazada'
+export type EstadoLineaChina = 'pendiente' | 'aprobada' | 'rechazada'
+
+export interface ProformaChinaLinea {
+  id: string
+  proforma_china_id: string
+  producto_id: string
+  cantidad: number
+  precio_fob_propuesto: number
+  precio_fob_anterior?: number
+  notas?: string
+  estado_linea: EstadoLineaChina
+  created_at: string
+  producto?: { codigo: string; nombre: string; imagen_url?: string | null }
+}
+
+export interface ProformaChina {
+  id: string
+  colaborador_id: string
+  estado: EstadoProformaChina
+  notas?: string
+  revisada_por?: string
+  revisada_at?: string
+  created_at: string
+  colaborador?: { nombre: string }
+  lineas?: ProformaChinaLinea[]
+}
+
 // Tipos de respuesta API
 export interface ApiResponse<T> {
   data?: T

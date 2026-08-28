@@ -2,9 +2,9 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PROTECTED_PATHS = ['/dashboard', '/catalogo', '/precios', '/cotizador', '/aprobacion', '/historial', '/facturador', '/solicitudes', '/despachos', '/reportes']
+const PROTECTED_PATHS = ['/dashboard', '/catalogo', '/precios', '/cotizador', '/aprobacion', '/historial', '/facturador', '/solicitudes', '/despachos', '/reportes', '/proformas-china']
 const AUTH_PATHS = ['/login']
-const PUBLIC_PATHS = ['/aprobacion-token', '/aprobacion-cliente', '/solicitud/', '/solicitud-editar/', '/pago/'] // Marta aprueba, el cliente pide/aprueba/paga, todo por link sin login
+const PUBLIC_PATHS = ['/aprobacion-token', '/aprobacion-cliente', '/solicitud/', '/solicitud-editar/', '/pago/', '/emily/'] // Marta aprueba, el cliente pide/aprueba/paga, Emily cotiza, todo por link sin login
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()

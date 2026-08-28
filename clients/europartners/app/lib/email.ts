@@ -163,6 +163,37 @@ export async function enviarNotificacionSolicitudNueva(
   await enviarEmail(destinatarioEmail, `Nueva solicitud de ${clienteNombre}`, html)
 }
 
+export async function enviarNotificacionProformaChina(
+  numLineas: number,
+  destinatarioEmail: string
+): Promise<void> {
+  const url = `${APP_URL}/proformas-china`
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#1E3A5F;padding:20px;text-align:center">
+        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+        <p style="color:white;margin:4px 0 0;font-size:13px">Sistema de Operaciones</p>
+      </div>
+      <div style="padding:24px;background:#f9fafb">
+        <h2 style="color:#1E3A5F;margin:0 0 8px">Nueva proforma de Emily (China)</h2>
+        <p style="color:#6b7280;margin:0 0 20px">
+          Emily envió una propuesta de costo con ${numLineas} línea${numLineas !== 1 ? 's' : ''},
+          pendiente de tu revisión.
+        </p>
+        <div style="text-align:center;margin:24px 0">
+          <a href="${url}"
+             style="background:#1E3A5F;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+            Revisar
+          </a>
+        </div>
+      </div>
+    </div>
+  `
+
+  await enviarEmail(destinatarioEmail, `Nueva proforma de Emily (${numLineas} línea${numLineas !== 1 ? 's' : ''})`, html)
+}
+
 interface ProformaResumen {
   numero: string
   // Supabase infiere el join como objeto o arreglo según cómo se escriba el

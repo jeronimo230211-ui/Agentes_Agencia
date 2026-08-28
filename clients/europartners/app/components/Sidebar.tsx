@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, BookOpen, DollarSign,
-  CheckSquare, History, Receipt, LogOut, ClipboardList, Inbox, Ship, BarChart3,
+  CheckSquare, History, Receipt, LogOut, ClipboardList, Inbox, Ship, BarChart3, Container,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Usuario } from '@/types/europartners'
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/solicitudes', label: 'Solicitudes',     icon: Inbox,           roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
   { href: '/proformas',  label: 'Proformas',         icon: ClipboardList,   roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
   { href: '/despachos',  label: 'Despachos',         icon: Ship,            roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
+  { href: '/proformas-china', label: 'Proformas China', icon: Container,    roles: ['operaciones', 'admin'] as string[] },
   { href: '/catalogo',   label: 'Catálogo',          icon: BookOpen,        roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
   { href: '/precios',    label: 'Motor de Precios',  icon: DollarSign,      roles: ['operaciones', 'admin', 'analista', 'diseñadora'] as string[] },
   { href: '/aprobacion', label: 'Aprobaciones',      icon: CheckSquare,     roles: ['admin'] as string[] },
