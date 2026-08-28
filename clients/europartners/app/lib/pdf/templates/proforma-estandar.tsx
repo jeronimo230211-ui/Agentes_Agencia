@@ -116,7 +116,7 @@ export function ProformaPDF({ proforma }: Props) {
           <View style={styles.infoBlock}>
             <Text style={styles.sectionTitle}>SHIPPING TERMS</Text>
             <Text style={styles.value}>Incoterm: {proforma.incoterm}</Text>
-            <Text style={styles.value}>Freight: {proforma.incoterm}</Text>
+            <Text style={styles.value}>Freight: {proforma.freight || proforma.incoterm}</Text>
             <Text style={styles.value}>Insurance: {proforma.insurance || 'COLLECT'}</Text>
             <Text style={styles.value}>Via: Maritime</Text>
             <Text style={styles.value}>Shipped from: Xingang, China</Text>

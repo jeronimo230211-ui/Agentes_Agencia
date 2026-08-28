@@ -1,6 +1,8 @@
 export type Rol = 'operaciones' | 'admin' | 'analista' | 'diseñadora'
 export type Incoterm = 'FOB' | 'CFR' | 'CIF'
 export type Insurance = 'COLLECT' | 'PREPAID'
+export const INCOTERM_SUGERENCIAS: Incoterm[] = ['FOB', 'CFR', 'CIF']
+export const INSURANCE_SUGERENCIAS: Insurance[] = ['COLLECT', 'PREPAID']
 export type ModoPricing = 'set' | 'componente'
 export type TipoPrecio = 'mayorista' | 'detallista'
 export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada' | 'cambios_solicitados'
@@ -140,8 +142,9 @@ export interface Proforma {
   aprobada_por?: string
   fecha: string
   fecha_vencimiento?: string
-  incoterm: Incoterm
-  insurance: Insurance
+  incoterm: string
+  freight?: string | null
+  insurance: string
   modo_pricing: ModoPricing
   tipo_precio: TipoPrecio
   total_fob_usd?: number

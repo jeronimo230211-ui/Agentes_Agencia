@@ -10,7 +10,8 @@ import {
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
-import type { Proforma, ProformaLinea, TipoPrecio, Insurance } from '@/types/europartners'
+import type { Proforma, ProformaLinea, TipoPrecio } from '@/types/europartners'
+import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
@@ -593,6 +594,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         notas_internas: proforma.notas_internas,
         requiere_revision: proforma.requiere_revision,
         numero_cliente: proforma.numero_cliente,
+        incoterm: proforma.incoterm,
+        freight: proforma.freight,
         insurance: proforma.insurance,
       }),
     })
@@ -853,7 +856,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       </div>
 
       {/* Datos de envío para el PDF */}
-      <div className="flex items-center gap-6 mb-4">
+      <div className="flex items-center flex-wrap gap-x-6 gap-y-2 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 font-medium">Order No:</span>
           {puedeEditar ? (
@@ -869,16 +872,58 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           )}
         </div>
         <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 font-medium">Incoterm:</span>
+          {puedeEditar ? (
+            <>
+              <input
+                type="text"
+                list="incoterm-opciones"
+                value={proforma.incoterm || ''}
+                onChange={e => setProforma(prev => prev ? { ...prev, incoterm: e.target.value } : prev)}
+                placeholder="Ej. FOB"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              />
+              <datalist id="incoterm-opciones">
+                {INCOTERM_SUGERENCIAS.map(op => <option key={op} value={op} />)}
+              </datalist>
+            </>
+          ) : (
+            <span className="text-sm text-gray-700">{proforma.incoterm || '—'}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 font-medium">Freight:</span>
+          {puedeEditar ? (
+            <>
+              <input
+                type="text"
+                list="incoterm-opciones"
+                value={proforma.freight ?? proforma.incoterm ?? ''}
+                onChange={e => setProforma(prev => prev ? { ...prev, freight: e.target.value } : prev)}
+                placeholder="Ej. FOB"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              />
+            </>
+          ) : (
+            <span className="text-sm text-gray-700">{proforma.freight || proforma.incoterm || '—'}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 font-medium">Insurance:</span>
           {puedeEditar ? (
-            <select
-              value={proforma.insurance || 'COLLECT'}
-              onChange={e => setProforma(prev => prev ? { ...prev, insurance: e.target.value as Insurance } : prev)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
-            >
-              <option value="COLLECT">COLLECT</option>
-              <option value="PREPAID">PREPAID</option>
-            </select>
+            <>
+              <input
+                type="text"
+                list="insurance-opciones"
+                value={proforma.insurance || ''}
+                onChange={e => setProforma(prev => prev ? { ...prev, insurance: e.target.value } : prev)}
+                placeholder="Ej. COLLECT"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              />
+              <datalist id="insurance-opciones">
+                {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
+              </datalist>
+            </>
           ) : (
             <span className="text-sm text-gray-700">{proforma.insurance || 'COLLECT'}</span>
           )}
