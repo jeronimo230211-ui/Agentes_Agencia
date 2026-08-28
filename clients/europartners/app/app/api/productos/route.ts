@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
       precio_fob_usd, precio_fob_fecha, estado, notas,
       precio_mayorista, precio_detallista, cbm_unitario, moq, color_variante,
       tiene_historial, veces_vendido, fecha_ultima_venta, precio_cliente_historico_ultimo,
+      descripcion_larga_es, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado,
       categoria:categorias_producto(id, nombre),
       variantes:producto_variantes(*),
       componentes:producto_componentes(*)

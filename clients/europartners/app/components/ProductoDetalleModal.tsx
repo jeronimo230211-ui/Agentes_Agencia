@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { X, Package, Ruler, Palette, Boxes } from 'lucide-react'
+import { X, Package, Ruler, Palette, Boxes, Info } from 'lucide-react'
 import QuantityStepper from './QuantityStepper'
 import { formatUSD } from '@/lib/precio'
 
@@ -15,6 +15,8 @@ export interface ProductoDetalle {
   color_variante?: string | null
   moq?: string | null
   precio_cliente?: number | null
+  descripcion_larga_en?: string | null
+  ficha_tecnica?: { campos: { label: string; valor: string }[] } | null
 }
 
 interface Props {
@@ -42,7 +44,10 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
     producto.dimensiones ? { icon: Ruler, label: 'Dimensions', valor: producto.dimensiones } : null,
     producto.color_variante ? { icon: Palette, label: 'Color / Variant', valor: producto.color_variante } : null,
     producto.moq ? { icon: Boxes, label: 'MOQ', valor: producto.moq } : null,
+    ...(producto.ficha_tecnica?.campos || []).map(c => ({ icon: Info, label: c.label, valor: c.valor })),
   ].filter((s): s is { icon: typeof Ruler; label: string; valor: string } => s !== null)
+
+  const descripcion = producto.descripcion_larga_en || producto.descripcion
 
   return (
     <div
@@ -101,10 +106,10 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
               </div>
             )}
 
-            {producto.descripcion && (
+            {descripcion && (
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Description</p>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{descripcion}</p>
               </div>
             )}
 

@@ -21,6 +21,8 @@ interface Producto {
   color_variante?: string | null
   moq?: string | null
   precio_cliente?: number | null
+  descripcion_larga_en?: string | null
+  ficha_tecnica?: { campos: { label: string; valor: string }[] } | null
 }
 
 export interface LineaCarrito {

@@ -42,6 +42,10 @@ interface Producto {
   veces_vendido: number | null
   fecha_ultima_venta: string | null
   precio_cliente_historico_ultimo: number | null
+  descripcion_larga_es: string | null
+  descripcion_larga_en: string | null
+  ficha_tecnica: { campos: { label: string; valor: string }[] } | null
+  ficha_tecnica_estado: 'borrador' | 'aprobada' | null
 }
 
 function ProductCard({ p, onClick }: { p: Producto; onClick: () => void }) {

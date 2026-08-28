@@ -1,9 +1,11 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { X, Package, Pencil, Tag, Plus, Loader2 } from 'lucide-react'
+import { X, Package, Pencil, Tag, Plus, Loader2, Sparkles, CheckCircle2 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 
 interface Dimensiones { largo_mm?: number; ancho_mm?: number; alto_mm?: number }
+
+interface FichaTecnica { campos: { label: string; valor: string }[] }
 
 interface PrecioEspecialFila {
   id: string
@@ -29,6 +31,10 @@ export interface ProductoDetalleInterno {
   categoria: { id: string; nombre: string } | null
   tiene_historial: boolean
   veces_vendido: number | null
+  descripcion_larga_es?: string | null
+  descripcion_larga_en?: string | null
+  ficha_tecnica?: FichaTecnica | null
+  ficha_tecnica_estado?: 'borrador' | 'aprobada' | null
 }
 
 export default function ProductoDetalleInternoModal({
@@ -46,6 +52,15 @@ export default function ProductoDetalleInternoModal({
   puedeEditar?: boolean
   refrescarPrecios?: number
 }) {
+  const [estadoFicha, setEstadoFicha] = useState(producto.ficha_tecnica_estado)
+  const [aprobando, setAprobando] = useState(false)
+
+  async function aprobarFicha() {
+    setAprobando(true)
+    const res = await fetch(`/api/productos/${producto.id}/aprobar-ficha`, { method: 'POST' })
+    if (res.ok) setEstadoFicha('aprobada')
+    setAprobando(false)
+  }
   const dim = producto.dimensiones
   const dimTexto = dim && (dim.largo_mm || dim.ancho_mm || dim.alto_mm)
     ? [dim.largo_mm, dim.ancho_mm, dim.alto_mm].filter(Boolean).join(' × ') + ' mm'
@@ -134,6 +149,51 @@ export default function ProductoDetalleInternoModal({
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Descripción</p>
                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
+              </div>
+            )}
+
+            {(producto.descripcion_larga_es || (producto.ficha_tecnica?.campos?.length ?? 0) > 0) && (
+              <div className="border border-gray-100 rounded-xl p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <Sparkles size={12} className="text-[#1E3A5F]" /> Ficha técnica
+                  </p>
+                  <span
+                    className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${
+                      estadoFicha === 'aprobada'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        : 'bg-amber-50 text-amber-700 border-amber-100'
+                    }`}
+                  >
+                    {estadoFicha === 'aprobada' ? 'Aprobada' : 'Borrador'}
+                  </span>
+                </div>
+
+                {producto.descripcion_larga_es && (
+                  <p className="text-sm text-gray-700 leading-relaxed mb-3">{producto.descripcion_larga_es}</p>
+                )}
+
+                {(producto.ficha_tecnica?.campos?.length ?? 0) > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {producto.ficha_tecnica!.campos.map((c, i) => (
+                      <div key={i} className="bg-gray-50 rounded-lg p-2">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{c.label}</p>
+                        <p className="text-xs font-medium text-gray-800">{c.valor}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {puedeEditar && estadoFicha !== 'aprobada' && (
+                  <button
+                    onClick={aprobarFicha}
+                    disabled={aprobando}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={13} />
+                    {aprobando ? 'Aprobando...' : 'Aprobar — mostrar al cliente'}
+                  </button>
+                )}
               </div>
             )}
 

@@ -20,7 +20,7 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
 
   const { data: productosRaw } = await adminClient
     .from('productos')
-    .select('id, categoria_id, codigo, nombre, descripcion, imagen_url, imagenes_urls, dimensiones, color_variante, moq, precio_mayorista, precio_detallista')
+    .select('id, categoria_id, codigo, nombre, descripcion, imagen_url, imagenes_urls, dimensiones, color_variante, moq, precio_mayorista, precio_detallista, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado')
     .eq('estado', 'activo')
     .order('categoria_id', { ascending: true })
     .order('codigo', { ascending: true })
@@ -28,12 +28,18 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
   const overrides = clienteId ? await getPreciosEspeciales(adminClient, clienteId) : new Map()
 
   const productos = (productosRaw || []).map(p => {
-    const { precio_mayorista, precio_detallista, dimensiones, ...resto } = p
+    const { precio_mayorista, precio_detallista, dimensiones, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado, ...resto } = p
     const override = overrides.get(p.id)
+    // La ficha técnica generada por IA (ver migración 014) solo se expone al
+    // cliente una vez aprobada a mano desde el catálogo interno — nunca
+    // confiar en el frontend para ocultar contenido sin revisar.
+    const aprobada = ficha_tecnica_estado === 'aprobada'
     return {
       ...resto,
       dimensiones: formatDimensiones(dimensiones),
       precio_cliente: override?.precio_usd ?? precioPorTipo(precio_mayorista, precio_detallista, tipoCliente) ?? null,
+      descripcion_larga_en: aprobada ? descripcion_larga_en : null,
+      ficha_tecnica: aprobada ? ficha_tecnica : null,
     }
   })
 
