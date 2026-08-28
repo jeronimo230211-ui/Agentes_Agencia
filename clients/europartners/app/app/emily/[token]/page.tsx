@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { Loader2, AlertCircle, CheckCircle, Package, Search } from 'lucide-react'
+import { Loader2, AlertCircle, CheckCircle, Package, Search, HelpCircle, X } from 'lucide-react'
+
+const ONBOARDING_KEY = 'emily_onboarding_dismissed_v1'
 
 interface Categoria { id: string; nombre: string }
 interface Producto {
@@ -27,6 +29,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
   const [filas, setFilas] = useState<Record<string, Fila>>({})
   const [notas, setNotas] = useState('')
   const [error, setError] = useState('')
+  const [mostrarOnboarding, setMostrarOnboarding] = useState(false)
 
   useEffect(() => {
     fetch(`/api/emily/${params.token}`)
@@ -43,6 +46,20 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
       })
       .catch(() => setEstado('invalid'))
   }, [params.token])
+
+  useEffect(() => {
+    if (estado !== 'form') return
+    try {
+      if (!window.localStorage.getItem(ONBOARDING_KEY)) setMostrarOnboarding(true)
+    } catch {
+      setMostrarOnboarding(true)
+    }
+  }, [estado])
+
+  function cerrarOnboarding() {
+    setMostrarOnboarding(false)
+    try { window.localStorage.setItem(ONBOARDING_KEY, '1') } catch {}
+  }
 
   const productosFiltrados = useMemo(() => {
     let list = productos
@@ -123,11 +140,68 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
       <div className="bg-[#1E3A5F] text-white px-4 py-5 sticky top-0 z-10 shadow-md">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-lg font-bold text-[#D4A017]">Europartners</h1>
-          <p className="text-sm opacity-75">Supplier pricing · {nombre}</p>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-[#D4A017]">Europartners</h1>
+            <p className="text-sm opacity-75">Supplier pricing · {nombre}</p>
+          </div>
+          <button
+            onClick={() => setMostrarOnboarding(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg flex-shrink-0"
+          >
+            <HelpCircle size={14} />
+            How it works
+          </button>
         </div>
       </div>
+
+      {mostrarOnboarding && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800">Welcome, {nombre}</h2>
+              <button onClick={cerrarOnboarding} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 text-sm text-gray-600">
+              <p>This is your private pricing link with Europartners. It only shows two product
+                categories for now: <strong>Toilets</strong> and <strong>Pedestal Washbasins</strong>.</p>
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">1. Quote the products you want</p>
+                <p>For any product, enter the <strong>Qty</strong> and <strong>Your FOB price</strong> in
+                  USD. You don&apos;t need to fill in every product — only the ones you&apos;re quoting
+                  right now.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">2. &quot;Current cost&quot; is just a reference</p>
+                <p>It&apos;s the price Europartners has on file today. It won&apos;t change until your
+                  new price is reviewed and approved.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">3. Send it</p>
+                <p>Click <strong>Send to Europartners</strong> at the bottom of the page. You can come
+                  back to this same link anytime to send new prices.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-800 mb-1">4. Europartners reviews it</p>
+                <p>Your quote is not final until Europartners approves it — this replaces the price
+                  list you normally send by email, it doesn&apos;t change anything else about how you
+                  work with them.</p>
+              </div>
+            </div>
+            <div className="p-5 border-t border-gray-100">
+              <button
+                onClick={cerrarOnboarding}
+                className="w-full py-3 rounded-lg font-bold text-white"
+                style={{ background: '#1E3A5F' }}
+              >
+                Got it, let&apos;s start
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 pt-5">
         {estado === 'error' && (
