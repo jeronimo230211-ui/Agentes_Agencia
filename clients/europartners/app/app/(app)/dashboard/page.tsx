@@ -15,6 +15,8 @@ interface KPIs {
   recientes: Proforma[]
 }
 
+interface MargenStats { min: number; max: number; avg: number; n: number }
+
 interface StatsCEO {
   facturacion_total: number
   otif: { total_entregados: number; a_tiempo: number; pct: number | null }
@@ -24,9 +26,10 @@ interface StatsCEO {
     proformas: Record<string, number>
     despachos: Record<string, number>
   }
+  margenes_catalogo: { mayorista: MargenStats | null; detallista: MargenStats | null }
 }
 
-interface Cliente { id: string; nombre: string; tipo: string; margen_min: number; margen_max: number }
+interface Cliente { id: string; nombre: string; tipo: string }
 interface ParametroPrecio { id: string; nombre: string; flete_usd: number; arancel_pct: number; cbm_total_contenedor: number; valido_desde: string }
 
 function fechaLabel(horas: number) {
@@ -275,12 +278,26 @@ export default function DashboardPage() {
           <h3 className="font-bold text-gray-800 mb-3">Condiciones comerciales</h3>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Márgenes por cliente</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Margen real (calculado del catálogo)</p>
+              <div className="space-y-1.5 mb-3">
+                {(['mayorista', 'detallista'] as const).map(tipo => {
+                  const m = stats?.margenes_catalogo[tipo]
+                  return (
+                    <div key={tipo} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 capitalize">{tipo}</span>
+                      <span className="font-medium text-gray-800">
+                        {m ? `${m.min.toFixed(1)}% – ${m.max.toFixed(1)}% (prom. ${m.avg.toFixed(1)}%, ${m.n} productos)` : '—'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Clientes por tipo</p>
               <div className="space-y-1.5">
                 {clientes.map(c => (
                   <div key={c.id} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">{c.nombre} <span className="text-xs text-gray-400">({c.tipo})</span></span>
-                    <span className="font-medium text-gray-800">{c.margen_min}% – {c.margen_max}%</span>
+                    <span className="text-gray-600">{c.nombre}</span>
+                    <span className="text-xs text-gray-400 capitalize">{c.tipo}</span>
                   </div>
                 ))}
               </div>

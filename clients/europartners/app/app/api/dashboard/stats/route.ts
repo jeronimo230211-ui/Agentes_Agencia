@@ -100,6 +100,33 @@ export async function GET(req: NextRequest) {
     despachosConteo[d.estado] = (despachosConteo[d.estado] || 0) + 1
   }
 
+  // ── Margen real por tipo, calculado del catálogo (no de clientes.margen_min/max,
+  // que quedó congelado en el default del schema desde antes de que el margen pasara
+  // a definirse por producto — ver precio_mayorista/precio_detallista) ──
+  const { data: productosConPrecio } = await supabase
+    .from('productos')
+    .select('precio_fob_usd, precio_mayorista, precio_detallista')
+    .not('precio_fob_usd', 'is', null)
+    .not('precio_mayorista', 'is', null)
+    .not('precio_detallista', 'is', null)
+
+  function statsMargen(margenes: number[]) {
+    if (margenes.length === 0) return null
+    return {
+      min: Math.min(...margenes),
+      max: Math.max(...margenes),
+      avg: margenes.reduce((a, b) => a + b, 0) / margenes.length,
+      n: margenes.length,
+    }
+  }
+
+  const margenesMayorista = (productosConPrecio || [])
+    .filter(p => p.precio_fob_usd > 0)
+    .map(p => (p.precio_mayorista - p.precio_fob_usd) / p.precio_fob_usd * 100)
+  const margenesDetallista = (productosConPrecio || [])
+    .filter(p => p.precio_fob_usd > 0)
+    .map(p => (p.precio_detallista - p.precio_fob_usd) / p.precio_fob_usd * 100)
+
   return NextResponse.json({
     conteos,
     facturacion_total: facturacionTotal,
@@ -109,6 +136,10 @@ export async function GET(req: NextRequest) {
       solicitudes_pendientes: solicitudesPendientes ?? 0,
       proformas: conteos,
       despachos: despachosConteo,
+    },
+    margenes_catalogo: {
+      mayorista: statsMargen(margenesMayorista),
+      detallista: statsMargen(margenesDetallista),
     },
   })
 }
