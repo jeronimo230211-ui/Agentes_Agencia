@@ -21,7 +21,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const body = await req.json()
   const update: Record<string, string | null> = {}
-  for (const campo of ['contacto_nombre', 'contacto_email', 'contacto_telefono', 'direccion'] as const) {
+  for (const campo of [
+    'contacto_nombre', 'contacto_email', 'contacto_telefono', 'direccion',
+    'incoterm_default', 'freight_default', 'insurance_default',
+  ] as const) {
     if (campo in body) {
       update[campo] = typeof body[campo] === 'string' ? body[campo].trim() || null : null
     }
@@ -36,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .from('clientes')
     .update(update)
     .eq('id', params.id)
-    .select('id, nombre, contacto_nombre, contacto_email, contacto_telefono, direccion')
+    .select('id, nombre, contacto_nombre, contacto_email, contacto_telefono, direccion, incoterm_default, freight_default, insurance_default')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

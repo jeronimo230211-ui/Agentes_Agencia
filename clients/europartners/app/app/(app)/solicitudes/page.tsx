@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct } from '@/lib/precio'
+import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS } from '@/types/europartners'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 
@@ -19,6 +20,9 @@ interface Cliente {
   contacto_email: string | null
   contacto_telefono: string | null
   direccion: string | null
+  incoterm_default: string | null
+  freight_default: string | null
+  insurance_default: string | null
 }
 interface Producto { id: string; codigo: string; nombre: string; imagen_url: string | null }
 interface SolicitudLinea {
@@ -104,7 +108,10 @@ export default function SolicitudesPage() {
   const [creandoCliente, setCreandoCliente] = useState(false)
   const [errorNuevoCliente, setErrorNuevoCliente] = useState('')
   const [editandoContactoId, setEditandoContactoId] = useState<string | null>(null)
-  const [contactoForm, setContactoForm] = useState({ contacto_nombre: '', contacto_email: '', contacto_telefono: '', direccion: '' })
+  const [contactoForm, setContactoForm] = useState({
+    contacto_nombre: '', contacto_email: '', contacto_telefono: '', direccion: '',
+    incoterm_default: '', freight_default: '', insurance_default: '',
+  })
   const [guardandoContactoId, setGuardandoContactoId] = useState<string | null>(null)
   const [errorContacto, setErrorContacto] = useState('')
   const [showLinks, setShowLinks] = useState(false)
@@ -186,6 +193,9 @@ export default function SolicitudesPage() {
       contacto_email: cliente.contacto_email || '',
       contacto_telefono: cliente.contacto_telefono || '',
       direccion: cliente.direccion || '',
+      incoterm_default: cliente.incoterm_default || '',
+      freight_default: cliente.freight_default || '',
+      insurance_default: cliente.insurance_default || '',
     })
     setErrorContacto('')
   }
@@ -745,6 +755,49 @@ export default function SolicitudesPage() {
                           className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
                         />
                       </div>
+
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase pt-1.5">
+                        Condiciones comerciales por defecto
+                      </p>
+                      <p className="text-[11px] text-gray-400 -mt-1.5">
+                        Se usan al crear una proforma nueva para este cliente — siguen siendo
+                        editables por proforma individual.
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          list={`incoterm-cliente-${c.id}`}
+                          placeholder="Incoterm (ej. FOB)"
+                          value={contactoForm.incoterm_default}
+                          onChange={e => setContactoForm(f => ({ ...f, incoterm_default: e.target.value }))}
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        />
+                        <datalist id={`incoterm-cliente-${c.id}`}>
+                          {INCOTERM_SUGERENCIAS.map(op => <option key={op} value={op} />)}
+                        </datalist>
+                        <input
+                          type="text"
+                          list={`incoterm-cliente-${c.id}`}
+                          placeholder="Freight (ej. FOB)"
+                          value={contactoForm.freight_default}
+                          onChange={e => setContactoForm(f => ({ ...f, freight_default: e.target.value }))}
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          list={`insurance-cliente-${c.id}`}
+                          placeholder="Insurance (ej. COLLECT)"
+                          value={contactoForm.insurance_default}
+                          onChange={e => setContactoForm(f => ({ ...f, insurance_default: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        />
+                        <datalist id={`insurance-cliente-${c.id}`}>
+                          {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
+                        </datalist>
+                      </div>
+
                       {errorContacto && <p className="text-[11px] text-red-500">{errorContacto}</p>}
                       <div className="flex gap-2 pt-0.5">
                         <button

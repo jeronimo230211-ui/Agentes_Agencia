@@ -26,7 +26,9 @@ export interface Cliente {
   contacto_nombre?: string
   contacto_email?: string
   contacto_telefono?: string
-  incoterm: Incoterm
+  incoterm_default: string | null
+  freight_default?: string | null
+  insurance_default?: string | null
   modo_pricing: ModoPricing
   usa_numeracion_propia: boolean
   prefijo_numeracion?: string

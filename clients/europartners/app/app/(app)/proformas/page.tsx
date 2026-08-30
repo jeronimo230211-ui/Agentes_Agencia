@@ -7,7 +7,7 @@ import {
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 
-interface Cliente { id: string; nombre: string; slug: string; incoterm: string }
+interface Cliente { id: string; nombre: string; slug: string; incoterm_default: string | null }
 interface Proforma {
   id: string
   numero: string
@@ -432,7 +432,7 @@ export default function ProformasPage() {
                   }`}
                 >
                   <span className="font-semibold text-gray-800 text-sm">{c.nombre}</span>
-                  <span className="text-xs text-gray-400 font-mono">{c.incoterm}</span>
+                  <span className="text-xs text-gray-400 font-mono">{c.incoterm_default || 'FOB'}</span>
                 </button>
               ))}
             </div>

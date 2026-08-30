@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       id, numero, numero_cliente, fecha, fecha_vencimiento,
       incoterm, modo_pricing, estado, estado_pago,
       total_fob_usd, total_cif_usd,
-      cliente:clientes(id, nombre, slug, incoterm),
+      cliente:clientes(id, nombre, slug, incoterm_default),
       lineas:proforma_lineas(count)
     `)
     .order('fecha', { ascending: false })
@@ -64,10 +64,10 @@ export async function POST(req: NextRequest) {
 
   if (!cliente_id) return NextResponse.json({ error: 'cliente_id requerido' }, { status: 400 })
 
-  // Obtener cliente para copiar incoterm, modo_pricing y tipo_precio por defecto
+  // Obtener cliente para copiar incoterm/freight/insurance, modo_pricing y tipo_precio por defecto
   const { data: cliente } = await supabase
     .from('clientes')
-    .select('incoterm, modo_pricing, tipo')
+    .select('incoterm_default, freight_default, insurance_default, modo_pricing, tipo')
     .eq('id', cliente_id)
     .single()
 
@@ -77,7 +77,9 @@ export async function POST(req: NextRequest) {
       cliente_id,
       parametros_precio_id,
       creada_por: session.user.id,
-      incoterm: cliente?.incoterm || 'FOB',
+      incoterm: cliente?.incoterm_default || 'FOB',
+      freight: cliente?.freight_default || null,
+      insurance: cliente?.insurance_default || 'COLLECT',
       modo_pricing: cliente?.modo_pricing || 'set',
       tipo_precio: cliente?.tipo || 'mayorista',
       estado: 'borrador',

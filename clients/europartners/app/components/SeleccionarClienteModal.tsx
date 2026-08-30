@@ -5,7 +5,7 @@ import { X, Search, Loader2 } from 'lucide-react'
 export interface ClienteOpcion {
   id: string
   nombre: string
-  incoterm: string
+  incoterm_default: string | null
 }
 
 export default function SeleccionarClienteModal({
@@ -70,7 +70,7 @@ export default function SeleccionarClienteModal({
                   className="flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-100 hover:border-[#1E3A5F] hover:bg-[#1E3A5F]/5 text-left transition-all"
                 >
                   <span className="font-semibold text-gray-800 text-sm">{c.nombre}</span>
-                  <span className="text-xs text-gray-400 font-mono">{c.incoterm}</span>
+                  <span className="text-xs text-gray-400 font-mono">{c.incoterm_default || 'FOB'}</span>
                 </button>
               ))}
             </div>
