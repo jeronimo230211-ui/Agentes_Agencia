@@ -73,6 +73,7 @@ export function ProformaPDF({ proforma }: Props) {
   const totalFlete = proforma.total_flete_usd || 0
   const totalFinal = proforma.total_cif_usd || proforma.total_fob_usd || 0
   const labelTotal = proforma.incoterm === 'FOB' ? 'TOTAL FOB' : `TOTAL ${proforma.incoterm}`
+  const esFactura = proforma.estado === 'facturada' || proforma.estado === 'anulada'
   const totalUnidades = lineas.reduce((sum, l) => sum + (l.cantidad || 0), 0)
   const destino = [cliente.ciudad, cliente.pais].filter(Boolean).join(', ')
 
@@ -90,7 +91,7 @@ export function ProformaPDF({ proforma }: Props) {
             <Text style={{ fontSize: 7, color: '#6b7280' }}>egispty@gmail.com · +507 6608-5639</Text>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.proformaTitle}>PROFORMA INVOICE</Text>
+            <Text style={styles.proformaTitle}>{esFactura ? 'INVOICE' : 'PROFORMA'}</Text>
             <Text style={styles.proformaNum}>{proforma.numero}</Text>
             <Text style={{ fontSize: 8, color: '#6b7280', marginTop: 4 }}>
               Date: {new Date(proforma.fecha).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -188,7 +189,7 @@ export function ProformaPDF({ proforma }: Props) {
 
         {/* FOOTER */}
         <View style={styles.footer}>
-          <Text>This proforma invoice is valid for 15 days from the date of issue.</Text>
+          {!esFactura && <Text>This proforma invoice is valid for 15 days from the date of issue.</Text>}
           <Text>All prices are in USD. Payment terms: 100% upon arrival notification.</Text>
           <Text style={{ marginTop: 4 }}>
             Europartners International — San Francisco Calle 78 PH The View Apto 22A, Panama City, Panama

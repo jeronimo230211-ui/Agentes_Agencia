@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const cliente_id = searchParams.get('cliente_id')
   const estado     = searchParams.get('estado')
+  const estados    = searchParams.get('estados')
   const año        = searchParams.get('año')
   const mes        = searchParams.get('mes')
   const limit      = Math.min(parseInt(searchParams.get('limit') || '200'), 500)
@@ -28,7 +29,8 @@ export async function GET(req: NextRequest) {
     .limit(limit)
 
   if (cliente_id) query = query.eq('cliente_id', cliente_id)
-  if (estado)     query = query.eq('estado', estado)
+  if (estados)      query = query.in('estado', estados.split(','))
+  else if (estado)  query = query.eq('estado', estado)
 
   // Filtro por año y mes usando rango de fechas
   if (año) {

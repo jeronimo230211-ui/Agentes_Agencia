@@ -91,6 +91,7 @@ export default function DashboardPage() {
       rechazada:   'bg-red-100 text-red-600',
       enviada:     'bg-blue-100 text-blue-700',
       facturada:   'bg-purple-100 text-purple-700',
+      anulada:     'bg-slate-200 text-slate-600',
     }
     return styles[estado] || 'bg-gray-100 text-gray-600'
   }

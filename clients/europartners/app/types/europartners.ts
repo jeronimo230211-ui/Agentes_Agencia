@@ -5,7 +5,7 @@ export const INCOTERM_SUGERENCIAS: Incoterm[] = ['FOB', 'CFR', 'CIF']
 export const INSURANCE_SUGERENCIAS: Insurance[] = ['COLLECT', 'PREPAID']
 export type ModoPricing = 'set' | 'componente'
 export type TipoPrecio = 'mayorista' | 'detallista'
-export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada' | 'cambios_solicitados'
+export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada' | 'cambios_solicitados' | 'anulada'
 export type EstadoProducto = 'activo' | 'descontinuado' | 'pendiente'
 
 export interface Usuario {
@@ -156,6 +156,7 @@ export interface Proforma {
   requiere_revision: boolean
   notas_internas?: string
   motivo_rechazo?: string
+  motivo_anulacion?: string | null
   comentario_cliente?: string
   estado_pago?: EstadoPago
   monto_abono_requerido?: number

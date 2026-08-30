@@ -203,15 +203,16 @@ interface ProformaResumen {
 
 export async function enviarNotificacionResultado(
   proforma: ProformaResumen,
-  resultado: 'aprobada' | 'rechazada',
+  resultado: 'aprobada' | 'rechazada' | 'anulada',
   destinatarioEmail: string,
   motivo?: string
 ): Promise<void> {
   const clienteObj = Array.isArray(proforma.cliente) ? proforma.cliente[0] : proforma.cliente
   const clienteNombre = clienteObj?.nombre || 'Cliente'
-  const esAprobada = resultado === 'aprobada'
-  const color = esAprobada ? '#16a34a' : '#dc2626'
-  const etiqueta = esAprobada ? 'APROBADA' : 'RECHAZADA'
+  const COLORES: Record<typeof resultado, string> = { aprobada: '#16a34a', rechazada: '#dc2626', anulada: '#dc2626' }
+  const ETIQUETAS: Record<typeof resultado, string> = { aprobada: 'APROBADA', rechazada: 'RECHAZADA', anulada: 'ANULADA' }
+  const color = COLORES[resultado]
+  const etiqueta = ETIQUETAS[resultado]
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
