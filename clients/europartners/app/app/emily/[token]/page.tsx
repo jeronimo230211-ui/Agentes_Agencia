@@ -222,7 +222,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
             <input
               type="text"
               placeholder="Search product..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+              className="w-full pl-9 pr-4 py-2 text-base border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
@@ -256,8 +256,8 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
             <p>No products found</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
-            <div className="grid grid-cols-[auto_1fr_100px_90px_110px] gap-3 px-4 py-2.5 bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+          <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto mb-8">
+            <div className="hidden sm:grid sm:grid-cols-[auto_1fr_100px_90px_110px] gap-3 px-4 py-2.5 bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
               <span></span>
               <span>Product</span>
               <span>Current cost</span>
@@ -270,38 +270,87 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
               return (
                 <div
                   key={p.id}
-                  className={`grid grid-cols-[auto_1fr_100px_90px_110px] gap-3 px-4 py-2.5 items-center border-t border-gray-50 ${activa ? 'bg-amber-50/40' : ''}`}
+                  className={`border-t border-gray-50 ${activa ? 'bg-amber-50/40' : ''}`}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {p.imagen_url ? (
-                      <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain" />
-                    ) : (
-                      <Package size={14} className="text-gray-300" />
-                    )}
+                  {/* Mobile: card apilada */}
+                  <div className="sm:hidden px-4 py-3">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-11 h-11 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {p.imagen_url ? (
+                          <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain" />
+                        ) : (
+                          <Package size={16} className="text-gray-300" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
+                        <p className="text-sm text-gray-700">{p.nombre}</p>
+                      </div>
+                      <span className="text-xs text-gray-400 flex-shrink-0">
+                        {p.precio_fob_usd != null ? `$${p.precio_fob_usd.toFixed(2)}` : '—'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Qty</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          step="1"
+                          value={fila.cantidad}
+                          onChange={e => setFila(p.id, 'cantidad', e.target.value)}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Your FOB $</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          step="0.01"
+                          value={fila.precio}
+                          onChange={e => setFila(p.id, 'precio', e.target.value)}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        />
+                      </label>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
-                    <p className="text-sm text-gray-700 truncate">{p.nombre}</p>
+
+                  {/* Desktop/tablet: grid original */}
+                  <div className="hidden sm:grid sm:grid-cols-[auto_1fr_100px_90px_110px] gap-3 px-4 py-2.5 items-center">
+                    <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {p.imagen_url ? (
+                        <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain" />
+                      ) : (
+                        <Package size={14} className="text-gray-300" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
+                      <p className="text-sm text-gray-700 truncate">{p.nombre}</p>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {p.precio_fob_usd != null ? `$${p.precio_fob_usd.toFixed(2)}` : '—'}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={fila.cantidad}
+                      onChange={e => setFila(p.id, 'cantidad', e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={fila.precio}
+                      onChange={e => setFila(p.id, 'precio', e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    />
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {p.precio_fob_usd != null ? `$${p.precio_fob_usd.toFixed(2)}` : '—'}
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={fila.cantidad}
-                    onChange={e => setFila(p.id, 'cantidad', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={fila.precio}
-                    onChange={e => setFila(p.id, 'precio', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
-                  />
                 </div>
               )
             })}
