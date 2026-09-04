@@ -129,7 +129,13 @@ export default function CatalogoPage() {
 
   async function cargar() {
     setCargando(true)
-    const params = new URLSearchParams({ limit: '300' })
+    // Límite alto para que "Todas" traiga el catálogo completo: el orden es
+    // por categoria_id (uuid), no por la columna "orden" visible en el filtro,
+    // así que un límite bajo cortaba antes de llegar a categorías cuyo uuid
+    // cae lexicográficamente tarde (ej. Toilets, Windows) aunque tuvieran
+    // productos — quedaban invisibles en "Todas" pero sí aparecían al
+    // filtrar por esa categoría puntual (bug reportado 2026-09-03).
+    const params = new URLSearchParams({ limit: '1000' })
     if (busqueda.trim())  params.set('q', busqueda.trim())
     if (categoriaId)      params.set('categoria_id', categoriaId)
     const res = await fetch(`/api/productos?${params}`)

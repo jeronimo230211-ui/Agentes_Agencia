@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase-server'
+import { randomUUID } from 'crypto'
 
 export async function GET(req: NextRequest) {
   const supabase = createRouteHandlerClient({ cookies })
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const q = searchParams.get('q') || ''
   const categoria_id = searchParams.get('categoria_id')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 500)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 1000)
   const offset = parseInt(searchParams.get('offset') || '0')
 
   let query = supabase
@@ -92,25 +93,34 @@ export async function POST(req: NextRequest) {
   // admin client aquí, ya con el chequeo de rol de arriba como barrera real.
   const adminClient = createAdminClient()
 
+  // Id generado acá (en vez de dejarlo al default de la tabla) para poder
+  // nombrar el archivo de Storage con el id, no con el código: el código se
+  // puede editar después desde /api/productos/[id], y usarlo como nombre de
+  // archivo permite que un código liberado por un rename sea reutilizado por
+  // otro producto y sobrescriba en Storage la foto de uno completamente
+  // distinto (pasó con HK2347/HK2347BLACK, 2026-09-02).
+  const id = randomUUID()
+
   let imagen_url: string | null = null
   let tiene_foto = false
   if (imagen && imagen.size > 0) {
     const ext = imagen.name.split('.').pop() || 'jpg'
-    const fileName = `${codigo}.${ext}`
+    const fileName = `${id}.${ext}`
     const buffer = Buffer.from(await imagen.arrayBuffer())
     const { error: uploadError } = await adminClient.storage
       .from('productos')
       .upload(fileName, buffer, { contentType: imagen.type, upsert: true })
     if (uploadError) return NextResponse.json({ error: `Error subiendo imagen: ${uploadError.message}` }, { status: 500 })
     const { data: urlData } = adminClient.storage.from('productos').getPublicUrl(fileName)
-    imagen_url = urlData.publicUrl
+    // Cache-bust: el bucket sirve con cache-control max-age=3600.
+    imagen_url = `${urlData.publicUrl}?v=${Date.now()}`
     tiene_foto = true
   }
 
   const { data, error } = await adminClient
     .from('productos')
     .insert({
-      codigo, nombre, descripcion, categoria_id, notas,
+      id, codigo, nombre, descripcion, categoria_id, notas,
       precio_fob_usd, precio_mayorista, precio_detallista,
       cbm_unitario, moq, dimensiones, imagen_url, tiene_foto,
       estado: 'activo',
