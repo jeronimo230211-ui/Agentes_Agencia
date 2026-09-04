@@ -1,0 +1,77 @@
+[
+  {
+    "codigo": "BX7725-100",
+    "dimensiones": {
+      "main_cabinet_mm": {
+        "largo_mm": 1000,
+        "ancho_mm": 470,
+        "alto_mm": 490
+      },
+      "mirror_cabinet_mm": {
+        "largo_mm": 900,
+        "ancho_mm": 130,
+        "alto_mm": 700
+      }
+    }
+  },
+  {
+    "codigo": "7719-100",
+    "dimensiones": {
+      "main_cabinet_mm": {
+        "largo_mm": 1000,
+        "ancho_mm": 470,
+        "alto_mm": 490
+      },
+      "mirror_cabinet_mm": {
+        "largo_mm": 900,
+        "ancho_mm": 130,
+        "alto_mm": 700
+      }
+    }
+  },
+  {
+    "codigo": "7713-80",
+    "dimensiones": {
+      "main_cabinet_mm": {
+        "largo_mm": 800,
+        "ancho_mm": 470,
+        "alto_mm": 490
+      },
+      "mirror_cabinet_mm": {
+        "largo_mm": 750,
+        "ancho_mm": 130,
+        "alto_mm": 700
+      }
+    }
+  },
+  {
+    "codigo": "7750-120",
+    "dimensiones": {
+      "main_cabinet_mm": {
+        "largo_mm": 1200,
+        "ancho_mm": 470,
+        "alto_mm": 565
+      },
+      "mirror_cabinet_mm": {
+        "largo_mm": 1100,
+        "ancho_mm": 110,
+        "alto_mm": 700
+      }
+    }
+  },
+  {
+    "codigo": "7747-120",
+    "dimensiones": {
+      "main_cabinet_mm": {
+        "largo_mm": 1200,
+        "ancho_mm": 470,
+        "alto_mm": 565
+      },
+      "mirror_cabinet_mm": {
+        "largo_mm": 1100,
+        "ancho_mm": 110,
+        "alto_mm": 700
+      }
+    }
+  }
+]
