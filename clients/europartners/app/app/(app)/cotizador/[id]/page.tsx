@@ -6,15 +6,17 @@ import {
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
   Search, X, Package, FileText,
   TrendingUp, TrendingDown, Minus, History, Users, Tag,
+  Wallet,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
-import type { Proforma, ProformaLinea, TipoPrecio } from '@/types/europartners'
+import type { Proforma, ProformaLinea, TipoPrecio, TipoPago } from '@/types/europartners'
 import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
+import HistorialPagos from '@/components/HistorialPagos'
 
 interface OtroClienteReferencia {
   cliente_nombre: string
@@ -342,6 +344,172 @@ function ModalCambioTipoPrecio({
   )
 }
 
+// ─── Modal registrar pago ───────────────────────────────────────────────────
+function RegistrarPagoModal({
+  proformaId,
+  onClose,
+  onGuardado,
+}: {
+  proformaId: string
+  onClose: () => void
+  onGuardado: () => void
+}) {
+  const [tipo, setTipo] = useState<TipoPago>('cliente')
+  const [monto, setMonto] = useState('')
+  const [comision, setComision] = useState('')
+  const [referencia, setReferencia] = useState('')
+  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
+  const [nota, setNota] = useState('')
+  const [archivo, setArchivo] = useState<File | null>(null)
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function guardar() {
+    if (!monto || Number(monto) <= 0) {
+      setError('Ingresa un monto válido')
+      return
+    }
+    setGuardando(true)
+    setError('')
+
+    const formData = new FormData()
+    formData.append('tipo', tipo)
+    formData.append('monto', monto)
+    if (comision) formData.append('comision_bancaria', comision)
+    if (referencia.trim()) formData.append('referencia', referencia.trim())
+    formData.append('fecha', fecha)
+    if (nota.trim()) formData.append('nota', nota.trim())
+    if (archivo) formData.append('comprobante', archivo)
+
+    const res = await fetch(`/api/proformas/${proformaId}/pagos`, { method: 'POST', body: formData })
+    if (res.ok) {
+      onGuardado()
+    } else {
+      const j = await res.json()
+      setError(j.error || 'Error al registrar el pago')
+    }
+    setGuardando(false)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '90vh' }}>
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
+          <h3 className="font-bold text-[#1E3A5F]">Registrar pago</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-4 space-y-3">
+          <div>
+            <label className="text-xs font-medium text-gray-500">Tipo de pago</label>
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm mt-1">
+              {(['cliente', 'china'] as TipoPago[]).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTipo(t)}
+                  className={`flex-1 py-2 transition-colors ${tipo === t ? 'text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                  style={tipo === t ? { background: '#1E3A5F' } : undefined}
+                >
+                  {t === 'cliente' ? 'Cobro al cliente' : 'Pago a China'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-500">Monto (USD)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={monto}
+                onChange={e => setMonto(e.target.value)}
+                placeholder="0.00"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Comisión bancaria</label>
+              <input
+                type="number"
+                step="0.01"
+                value={comision}
+                onChange={e => setComision(e.target.value)}
+                placeholder="0.00"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Referencia</label>
+            <input
+              type="text"
+              value={referencia}
+              onChange={e => setReferencia(e.target.value)}
+              placeholder="No. de transferencia, wire, etc."
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Fecha</label>
+            <input
+              type="date"
+              value={fecha}
+              onChange={e => setFecha(e.target.value)}
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Nota</label>
+            <textarea
+              value={nota}
+              onChange={e => setNota(e.target.value)}
+              placeholder="Observaciones (opcional)"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Comprobante (opcional)</label>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={e => setArchivo(e.target.files?.[0] || null)}
+              className="w-full mt-1 text-sm text-gray-500"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-2.5 text-xs">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 flex-none">
+          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700">
+            Cancelar
+          </button>
+          <button
+            onClick={guardar}
+            disabled={guardando}
+            className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
+            style={{ background: '#1E3A5F' }}
+          >
+            {guardando ? 'Guardando...' : 'Registrar pago'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Editor Principal ─────────────────────────────────────────────────────────
 export default function ProformaEditorPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -357,10 +525,12 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [selectorAbierto, setSelectorAbierto] = useState(false)
   const [mostrarNuevoProducto, setMostrarNuevoProducto] = useState(false)
   const [lineaParaSelector, setLineaParaSelector] = useState<string | null>(null)
-  const [confirmandoPago, setConfirmandoPago] = useState(false)
+  const [pagosRefreshKey, setPagosRefreshKey] = useState(0)
+  const [mostrarModalPago, setMostrarModalPago] = useState(false)
   const [comparacion, setComparacion] = useState<Record<string, ComparacionPrecio>>({})
   const [agregandoPrecioCodigo, setAgregandoPrecioCodigo] = useState<string | null>(null)
   const [fijandoPrecioCodigo, setFijandoPrecioCodigo] = useState<string | null>(null)
+  const [fijandoPrecioProductoId, setFijandoPrecioProductoId] = useState<string | null>(null)
   const [especialesPorProducto, setEspecialesPorProducto] = useState<Map<string, PrecioEspecialResumen>>(new Map())
   const [aprobando, setAprobando] = useState(false)
   const { puedeEditar: rolPuedeEditar } = useRol()
@@ -417,6 +587,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   }, [proforma?.cliente_id])
 
   useEffect(() => { cargarEspeciales() }, [cargarEspeciales])
+
 
   async function quitarPrecioEspecial(overrideId: string) {
     const clienteId = proforma?.cliente_id
@@ -649,20 +820,6 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     setEnviando(false)
   }
 
-  async function confirmarPago() {
-    if (!proforma) return
-    setConfirmandoPago(true)
-    const res = await fetch(`/api/proformas/${proforma.id}/confirmar-pago`, { method: 'POST' })
-    if (res.ok) {
-      const { data } = await res.json()
-      setProforma(prev => prev ? { ...prev, estado_pago: data.estado_pago } : prev)
-    } else {
-      const j = await res.json()
-      setError(j.error || 'Error al confirmar el pago')
-    }
-    setConfirmandoPago(false)
-  }
-
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
   const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
   const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
@@ -715,8 +872,9 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         <FijarPrecioEspecialModal
           clienteId={proforma.cliente_id}
           codigo={fijandoPrecioCodigo}
+          productoId={fijandoPrecioProductoId ?? undefined}
           precioSugerido={lineas.find(l => l.codigo_pdf === fijandoPrecioCodigo)?.precio_cliente_usd}
-          onClose={() => setFijandoPrecioCodigo(null)}
+          onClose={() => { setFijandoPrecioCodigo(null); setFijandoPrecioProductoId(null) }}
           onGuardado={(precioUsd) => {
             const codigo = fijandoPrecioCodigo
             setLineas(prev => prev.map(l => {
@@ -728,6 +886,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               }
             }))
             setFijandoPrecioCodigo(null)
+            setFijandoPrecioProductoId(null)
             cargarComparacion()
             cargarEspeciales()
           }}
@@ -1007,17 +1166,47 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               <span className="text-xs text-blue-600 underline">Ver comprobante</span>
             </a>
           </div>
-          {proforma.estado_pago === 'parcial' && rolPuedeEditar && (
+        </div>
+      )}
+
+      {/* Pagos (Registro Maestro Vivo) — reemplaza el botón viejo "Confirmar
+          pago recibido": estado_pago ahora se recalcula solo desde `pagos`. */}
+      {mostrarModalPago && proforma && (
+        <RegistrarPagoModal
+          proformaId={proforma.id}
+          onClose={() => setMostrarModalPago(false)}
+          onGuardado={() => { setMostrarModalPago(false); setPagosRefreshKey(k => k + 1); cargar() }}
+        />
+      )}
+
+      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Wallet size={16} className="text-gray-400" />
+            <h3 className="font-medium text-gray-800 text-sm">Pagos</h3>
+            {proforma.estado_pago && (
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                proforma.estado_pago === 'pagado' ? 'bg-green-100 text-green-700' :
+                proforma.estado_pago === 'parcial' ? 'bg-blue-100 text-blue-700' :
+                'bg-gray-100 text-gray-600'
+              }`}>
+                {proforma.estado_pago === 'pagado' ? 'Pagado' : proforma.estado_pago === 'parcial' ? 'Parcial' : 'Pendiente'}
+              </span>
+            )}
+          </div>
+          {rolPuedeEditar && (
             <button
-              onClick={confirmarPago}
-              disabled={confirmandoPago}
-              className="mt-3 px-4 py-2 rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+              onClick={() => setMostrarModalPago(true)}
+              className="flex items-center gap-1.5 text-sm text-[#1E3A5F] font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg"
             >
-              {confirmandoPago ? 'Confirmando...' : 'Confirmar pago recibido'}
+              <Plus size={16} />
+              Registrar pago
             </button>
           )}
         </div>
-      )}
+
+        <HistorialPagos proformaId={proforma.id} refreshKey={pagosRefreshKey} />
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4 text-sm flex items-center gap-2">
@@ -1182,7 +1371,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => setFijandoPrecioCodigo(linea.codigo_pdf!)}
+                                onClick={() => { setFijandoPrecioCodigo(linea.codigo_pdf!); setFijandoPrecioProductoId(linea.producto_id ?? null) }}
                                 className="text-[11px] text-amber-600 hover:underline font-medium"
                               >
                                 + Fijar precio especial para este cliente

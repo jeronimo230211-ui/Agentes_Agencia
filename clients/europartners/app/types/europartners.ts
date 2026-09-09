@@ -300,6 +300,29 @@ export interface SolicitudEvento {
 export type EstadoDespacho = 'preparando' | 'en_transito' | 'en_puerto' | 'entregado'
 export type EstadoPago = 'pendiente' | 'parcial' | 'pagado'
 
+// Registro Maestro Vivo — historial de pagos (ver migración 021_tabla_pagos.sql).
+// Reemplaza el modelo viejo de "un solo pago por proforma" en columnas de
+// `proformas` (monto_abono_requerido/monto_abono_recibido/fecha_abono/
+// comprobante_url, que quedan muertas). `estado_pago` en `proformas` ahora se
+// recalcula solo vía trigger a partir de la suma de pagos tipo='cliente'.
+export type TipoPago = 'cliente' | 'china'
+
+export interface Pago {
+  id: string
+  proforma_id: string
+  tipo: TipoPago
+  monto: number
+  comision_bancaria: number
+  referencia?: string | null
+  comprobante_url?: string | null
+  fecha: string
+  registrado_por?: string | null
+  nota?: string | null
+  created_at: string
+  // Joined
+  usuario?: { nombre: string } | null
+}
+
 export interface Despacho {
   id: string
   proforma_id: string

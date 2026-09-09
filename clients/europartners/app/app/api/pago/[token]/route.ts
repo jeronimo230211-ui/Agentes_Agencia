@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
 import { formatUSD } from '@/lib/precio'
 import { enviarNotificacionComprobante } from '@/lib/email'
+import { randomUUID } from 'crypto'
 
 type Params = { params: { token: string } }
 
@@ -59,13 +60,28 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const formData = await req.formData()
   const archivo = formData.get('comprobante') as File | null
-  const monto = formData.get('monto') as string | null
+  const montoRaw = formData.get('monto') as string | null
 
   if (!archivo) return NextResponse.json({ error: 'Upload the payment proof' }, { status: 400 })
   if (archivo.size > 10 * 1024 * 1024) return NextResponse.json({ error: 'The file must not exceed 10MB' }, { status: 400 })
 
+  // La tabla `pagos` (migración 021) exige monto > 0 — a diferencia del
+  // modelo viejo, ya no se puede guardar un comprobante sin monto. El
+  // frontend (app/pago/[token]/page.tsx) ahora lo pide como obligatorio.
+  const monto = montoRaw ? Number(montoRaw) : NaN
+  if (!monto || isNaN(monto) || monto <= 0) {
+    return NextResponse.json({ error: 'Enter the amount paid' }, { status: 400 })
+  }
+
+  // Se registra en `pagos` (Registro Maestro Vivo, migración 021) en vez de
+  // sobreescribir columnas de `proformas` — cada comprobante que sube el
+  // cliente queda como una fila propia, con su propio archivo
+  // (comprobantes/{pagoId}.{ext}, no comprobantes/{proformaId}-{timestamp}
+  // como antes) para no pisar comprobantes anteriores. `registrado_por`
+  // queda null porque no hay sesión (mismo caso que `tokens_pago`).
+  const pagoId = randomUUID()
   const ext = archivo.name.split('.').pop() || 'bin'
-  const fileName = `comprobantes/${resuelto.proformaId}-${Date.now()}.${ext}`
+  const fileName = `comprobantes/${pagoId}.${ext}`
   const buffer = Buffer.from(await archivo.arrayBuffer())
 
   const { error: uploadError } = await adminClient.storage
@@ -76,17 +92,26 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: urlData } = adminClient.storage.from('documentos').getPublicUrl(fileName)
 
+  const { error: pagoError } = await adminClient
+    .from('pagos')
+    .insert({
+      id: pagoId,
+      proforma_id: resuelto.proformaId,
+      tipo: 'cliente',
+      monto,
+      comprobante_url: urlData.publicUrl,
+      registrado_por: null,
+    })
+
+  if (pagoError) return NextResponse.json({ error: pagoError.message }, { status: 500 })
+
+  // El trigger trg_recalcular_estado_pago (migración 021) ya recalculó
+  // proformas.estado_pago solo desde `pagos` — se relee acá para la
+  // notificación/email de abajo.
   const { data: proforma } = await adminClient
     .from('proformas')
-    .update({
-      comprobante_url: urlData.publicUrl,
-      fecha_abono: new Date().toISOString().split('T')[0],
-      monto_abono_recibido: monto ? Number(monto) : null,
-      estado_pago: 'parcial',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', resuelto.proformaId)
     .select('numero, creada_por, cliente:clientes(nombre)')
+    .eq('id', resuelto.proformaId)
     .single()
 
   if (proforma?.creada_por) {
@@ -101,7 +126,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { data: creador } = await adminClient.from('usuarios').select('email').eq('id', proforma.creada_por).single()
     if (creador?.email) {
       try {
-        await enviarNotificacionComprobante(proforma.numero, clienteNombre, monto ? Number(monto) : null, resuelto.proformaId, creador.email)
+        await enviarNotificacionComprobante(proforma.numero, clienteNombre, monto, resuelto.proformaId, creador.email)
       } catch (e) {
         console.error('Error enviando email de comprobante subido:', e instanceof Error ? e.message : String(e))
         // No fallar el request si el email falla — la notificación in-app ya se guardó

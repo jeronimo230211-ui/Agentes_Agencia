@@ -109,8 +109,23 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Solo se pueden eliminar borradores' }, { status: 400 })
   }
 
-  const { error } = await supabase.from('proformas').delete().eq('id', params.id)
+  // Soft-delete: el número ya fue consumido de la secuencia al crear el
+  // borrador y no hay forma de devolverlo, así que en vez de borrar la fila
+  // (lo que además se llevaba en cascada el historial en proforma_eventos y
+  // dejaba el número desaparecido sin rastro — ver migración 020) marcamos
+  // el estado como 'descartada' y dejamos el evento registrado.
+  const { error } = await supabase
+    .from('proformas')
+    .update({ estado: 'descartada', updated_at: new Date().toISOString() })
+    .eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await supabase.from('proforma_eventos').insert({
+    proforma_id: params.id,
+    usuario_id: session.user.id,
+    estado_desde: 'borrador',
+    estado_hacia: 'descartada',
+  })
 
   return NextResponse.json({ ok: true })
 }

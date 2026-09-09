@@ -60,15 +60,23 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   // Es un formulario completo (no un PATCH parcial): los campos vacíos se
   // guardan como null a propósito, para poder borrar un precio/nota existente.
   if (imagen && imagen.size > 0) {
+    // El nombre del archivo se deriva del id (inmutable), no del código: el
+    // código se puede editar libremente en este mismo formulario, y usarlo
+    // como nombre de archivo permite que un código liberado por un rename
+    // sea reutilizado por otro producto y sobrescriba en Storage la foto de
+    // uno completamente distinto (pasó con HK2347/HK2347BLACK, 2026-09-02).
     const ext = imagen.name.split('.').pop() || 'jpg'
-    const fileName = `${codigo}.${ext}`
+    const fileName = `${params.id}.${ext}`
     const buffer = Buffer.from(await imagen.arrayBuffer())
     const { error: uploadError } = await adminClient.storage
       .from('productos')
       .upload(fileName, buffer, { contentType: imagen.type, upsert: true })
     if (uploadError) return NextResponse.json({ error: `Error subiendo imagen: ${uploadError.message}` }, { status: 500 })
     const { data: urlData } = adminClient.storage.from('productos').getPublicUrl(fileName)
-    update.imagen_url = urlData.publicUrl
+    // Cache-bust: el bucket sirve con cache-control max-age=3600, así que sin
+    // esto un re-upload al mismo path (misma foto reemplazada) puede tardar
+    // hasta una hora en verse reflejado en el navegador.
+    update.imagen_url = `${urlData.publicUrl}?v=${Date.now()}`
     update.tiene_foto = true
   }
 

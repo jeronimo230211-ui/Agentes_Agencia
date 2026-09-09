@@ -32,10 +32,15 @@ export default function PagoPage({ params }: { params: { token: string } }) {
 
   async function enviar() {
     if (!archivo) return
+    if (!monto || Number(monto) <= 0) {
+      setError('Enter the amount paid')
+      setEstado('error')
+      return
+    }
     setEstado('sending')
     const formData = new FormData()
     formData.append('comprobante', archivo)
-    if (monto) formData.append('monto', monto)
+    formData.append('monto', monto)
 
     const res = await fetch(`/api/pago/${params.token}`, { method: 'POST', body: formData })
     if (res.ok) {
@@ -117,10 +122,11 @@ export default function PagoPage({ params }: { params: { token: string } }) {
           <p className="text-sm text-gray-500 mb-1">Total</p>
           <p className="text-2xl font-bold text-gray-800 mb-5">{proforma?.total_formateado}</p>
 
-          <label className="text-xs font-semibold text-gray-500 uppercase">Amount paid (optional)</label>
+          <label className="text-xs font-semibold text-gray-500 uppercase">Amount paid</label>
           <input
             type="number"
             step="0.01"
+            required
             placeholder="0.00"
             value={monto}
             onChange={e => setMonto(e.target.value)}
@@ -145,7 +151,7 @@ export default function PagoPage({ params }: { params: { token: string } }) {
 
           <button
             onClick={enviar}
-            disabled={!archivo || estado === 'sending'}
+            disabled={!archivo || !monto || estado === 'sending'}
             className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
             style={{ background: '#1E3A5F' }}
           >

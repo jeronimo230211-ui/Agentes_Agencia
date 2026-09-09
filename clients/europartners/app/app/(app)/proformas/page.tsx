@@ -37,6 +37,7 @@ const ESTADO_STYLE: Record<string, { bg: string; text: string; icon: React.React
   facturada:   { bg: 'bg-purple-100', text: 'text-purple-700', icon: <Receipt size={12} /> },
   cambios_solicitados: { bg: 'bg-amber-100', text: 'text-amber-700', icon: <AlertCircle size={12} /> },
   anulada:     { bg: 'bg-slate-200', text: 'text-slate-600', icon: <Ban size={12} /> },
+  descartada:  { bg: 'bg-slate-100', text: 'text-slate-400', icon: <XCircle size={12} /> },
 }
 
 const MESES = [
@@ -144,6 +145,7 @@ export default function ProformasPage() {
     { label: 'Cambios solicitados', value: 'cambios_solicitados' },
     { label: 'Facturada', value: 'facturada' },
     { label: 'Anulada', value: 'anulada' },
+    { label: 'Descartada', value: 'descartada' },
   ]
 
   return (
