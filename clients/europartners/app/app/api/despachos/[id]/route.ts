@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 type Params = { params: { id: string } }
 
 const CAMPOS_EDITABLES = [
-  'naviera', 'numero_bl', 'puerto_origen', 'puerto_destino',
+  'naviera', 'numero_bl', 'booking_no', 'puerto_origen', 'puerto_destino',
   'fecha_despacho', 'fecha_llegada_estimada', 'fecha_llegada_real',
   'shipping_fee_usd', 'estado', 'picking_descripcion', 'notas',
 ]

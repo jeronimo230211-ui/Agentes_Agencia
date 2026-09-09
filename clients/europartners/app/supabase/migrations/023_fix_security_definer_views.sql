@@ -1,0 +1,73 @@
+-- ══════════════════════════════════════════════════════════════
+-- MIGRACIÓN 023 — Fix Security Advisor: vistas SECURITY DEFINER
+-- Incremental, no destructiva — ver nota en migración 001.
+--
+-- El Security Advisor de Supabase reportó como CRITICAL que la vista
+-- `public.proformas_deuda_vivo` (creada en 021_tabla_pagos.sql) está
+-- definida SECURITY DEFINER — que es el comportamiento por defecto de
+-- toda vista en Postgres cuando no se especifica lo contrario. Una
+-- vista SECURITY DEFINER corre con los permisos del rol que la creó
+-- (típicamente `postgres`, que tiene BYPASSRLS) en vez de correr con
+-- los permisos del rol que la está consultando — es decir, la vista
+-- IGNORA las políticas RLS de las tablas que usa (`proformas`, `pagos`).
+--
+-- Se auditaron TODAS las migraciones de este repo (001 a 022) buscando
+-- `create view` / `create or replace view`: la ÚNICA vista que existe
+-- en todo el schema es `proformas_deuda_vivo`. No hay otras vistas que
+-- corregir.
+--
+-- ── Por qué esto es un problema real y no solo un warning cosmético ──
+-- `proformas` y `pagos` tienen RLS habilitado con el patrón estándar de
+-- este repo: policy "read_auth" (solo rol `authenticated`) + "service_all"
+-- (solo rol `service_role`). El rol `anon` (usuarios sin sesión, la
+-- anon key pública que usa cualquier cliente sin login) NO tiene ninguna
+-- policy que le dé acceso — así que consultando `proformas` o `pagos`
+-- directo, `anon` recibe 0 filas.
+--
+-- Pero Supabase expone automáticamente vía PostgREST (`/rest/v1/...`)
+-- cualquier tabla o vista del schema `public`, y por default el rol
+-- `anon` tiene GRANT SELECT a nivel de schema sobre ellas (los permisos
+-- reales de acceso a filas dependen de RLS, no del GRANT). Como
+-- `proformas_deuda_vivo` es SECURITY DEFINER, al consultarla el rol que
+-- efectivamente lee `proformas`/`pagos` por debajo es el dueño de la
+-- vista (con BYPASSRLS), NO el rol `anon` que hizo el request — así que
+-- las policies de RLS de esas tablas nunca se evalúan para esta vista.
+-- Resultado concreto: CUALQUIERA con la anon key pública (sin login,
+-- sin token, sin ser cliente ni usuario de la app) podría pegarle a
+-- `/rest/v1/proformas_deuda_vivo` y ver deuda_cliente_usd y
+-- deuda_china_usd de TODOS los clientes y TODAS las proformas —
+-- información financiera sensible que ni siquiera un `anon` normal
+-- puede ver hoy en `proformas` ni en `pagos`. Este es exactamente el
+-- tipo de bypass que el advisor de Supabase marca como Critical, y en
+-- este caso el riesgo es real (no solo teórico): la vista expone MÁS
+-- de lo que expone hoy cualquier tabla base a un usuario sin sesión.
+--
+-- (Si la vista solo hubiera repetido lo que ya ve cualquier usuario
+-- `authenticated` —que es el caso de la gran mayoría de tablas de este
+-- schema, todas con el mismo patrón read_auth/service_all sin
+-- distinción de rol de negocio a nivel de RLS— el hallazgo sería mucho
+-- más leve. No es el caso acá: el gap concreto es `anon` vs `authenticated`.)
+--
+-- ── El fix ────────────────────────────────────────────────────────
+-- `security_invoker = true` (soportado en Postgres 15+; Supabase corre
+-- Postgres 15+ hace tiempo — no se encontró un archivo de config.toml
+-- ni mención explícita de versión en este repo, así que se asume, pero
+-- Jero debería confirmarlo en el dashboard de Supabase antes de aplicar
+-- si quiere estar 100% seguro) hace que la vista corra con los permisos
+-- de QUIEN LA CONSULTA, no de quien la creó. Con esto, `proformas_deuda_vivo`
+-- queda sujeta a las mismas policies RLS de `proformas` y `pagos` que ya
+-- existen — `anon` vuelve a ver 0 filas (igual que si consultara las
+-- tablas base directo), y `authenticated`/`service_role` siguen viendo
+-- exactamente lo mismo que ven hoy. No cambia ningún comportamiento para
+-- el código de la app (que siempre consulta con sesión de usuario
+-- autenticado o con service_role) — solo cierra el bypass para `anon`.
+--
+-- No se tocan funciones SECURITY DEFINER (ej. el trigger
+-- `recalcular_estado_pago_proforma` de 021_tabla_pagos.sql NI SIQUIERA
+-- tiene SECURITY DEFINER explícito — corre con los permisos normales de
+-- quien dispara el trigger). No se encontró ninguna función con
+-- SECURITY DEFINER explícito en ninguna migración de este repo — nada
+-- que revisar ahí.
+-- ══════════════════════════════════════════════════════════════
+
+alter view proformas_deuda_vivo set (security_invoker = true);

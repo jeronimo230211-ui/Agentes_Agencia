@@ -17,6 +17,7 @@ interface Despacho {
   id: string
   naviera: string | null
   numero_bl: string | null
+  booking_no: string | null
   puerto_origen: string
   puerto_destino: string
   fecha_despacho: string | null
@@ -211,6 +212,7 @@ export default function DespachosPage() {
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Proforma / Cliente</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Naviera / BL</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Booking No.</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Llegada est. / real</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Estado</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">OTIF</th>
@@ -232,6 +234,9 @@ export default function DespachosPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-600 text-xs">
                         {d.naviera || '—'} {d.numero_bl ? `· ${d.numero_bl}` : ''}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 text-xs font-mono">
+                        {d.booking_no || '—'}
                       </td>
                       <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">
                         {fechaCorta(d.fecha_llegada_estimada)} / {fechaCorta(d.fecha_llegada_real)}
@@ -397,6 +402,7 @@ function DetalleDespacho({
           <div className="grid grid-cols-2 gap-3">
             <CampoTexto label="Naviera" valor={despacho.naviera} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'naviera', v)} />
             <CampoTexto label="No. BL" valor={despacho.numero_bl} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'numero_bl', v)} />
+            <CampoTexto label="Booking No." valor={despacho.booking_no} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'booking_no', v)} />
             <CampoTexto label="Puerto origen" valor={despacho.puerto_origen} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'puerto_origen', v)} />
             <CampoTexto label="Puerto destino" valor={despacho.puerto_destino} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'puerto_destino', v)} />
             <CampoFecha label="Fecha despacho" valor={despacho.fecha_despacho} disabled={!puedeEditar} onChange={v => onCampo(despacho.id, 'fecha_despacho', v)} />

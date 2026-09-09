@@ -305,6 +305,7 @@ export interface Despacho {
   proforma_id: string
   naviera?: string
   numero_bl?: string
+  booking_no?: string
   puerto_origen: string
   puerto_destino: string
   fecha_despacho?: string
