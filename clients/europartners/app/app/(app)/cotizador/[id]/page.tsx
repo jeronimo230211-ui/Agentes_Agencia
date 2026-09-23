@@ -11,7 +11,7 @@ import {
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
-import type { Proforma, ProformaLinea, TipoPrecio, TipoPago } from '@/types/europartners'
+import type { Proforma, ProformaLinea, TipoPrecio, TipoPago, PaymentTermsOpcion } from '@/types/europartners'
 import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
@@ -510,6 +510,79 @@ function RegistrarPagoModal({
   )
 }
 
+// ─── Modal "+ agregar" opción de Payment Terms ─────────────────────────────────
+// Gestión inline pedida — sin pantalla de administración aparte (migración
+// 025_payment_terms.sql). Inserta una fila en payment_terms_opciones y avisa
+// al padre para refrescar el <select> sin recargar la página.
+function ModalNuevoPaymentTerm({
+  onClose,
+  onCreado,
+}: {
+  onClose: () => void
+  onCreado: (opcion: PaymentTermsOpcion) => void
+}) {
+  const [valor, setValor] = useState('')
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function guardar() {
+    if (!valor.trim()) return
+    setGuardando(true)
+    setError('')
+    const res = await fetch('/api/payment-terms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valor: valor.trim() }),
+    })
+    const j = await res.json()
+    if (!res.ok) {
+      setError(j.error || 'Error al guardar')
+      setGuardando(false)
+      return
+    }
+    onCreado(j.data)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
+          <h3 className="font-bold text-[#1E3A5F]">Nueva opción de Payment Terms</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+        <div className="p-4 space-y-2">
+          <label className="text-xs font-medium text-gray-500">Texto de la opción</label>
+          <input
+            autoFocus
+            type="text"
+            value={valor}
+            onChange={e => setValor(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') guardar() }}
+            placeholder="Ej. 50% in advance, 50% before shipment"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+          />
+          {error && <p className="text-xs text-red-600">{error}</p>}
+        </div>
+        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 flex-none">
+          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700">
+            Cancelar
+          </button>
+          <button
+            onClick={guardar}
+            disabled={guardando || !valor.trim()}
+            className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
+            style={{ background: '#1E3A5F' }}
+          >
+            {guardando ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Editor Principal ─────────────────────────────────────────────────────────
 export default function ProformaEditorPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -533,6 +606,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [fijandoPrecioProductoId, setFijandoPrecioProductoId] = useState<string | null>(null)
   const [especialesPorProducto, setEspecialesPorProducto] = useState<Map<string, PrecioEspecialResumen>>(new Map())
   const [aprobando, setAprobando] = useState(false)
+  const [paymentTermsOpciones, setPaymentTermsOpciones] = useState<PaymentTermsOpcion[]>([])
+  const [mostrarNuevoPaymentTerm, setMostrarNuevoPaymentTerm] = useState(false)
   const { puedeEditar: rolPuedeEditar } = useRol()
 
   const cargar = useCallback(async () => {
@@ -553,6 +628,15 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   }, [params.id])
 
   useEffect(() => { cargar() }, [cargar])
+
+  const cargarPaymentTerms = useCallback(() => {
+    fetch('/api/payment-terms')
+      .then(r => r.json())
+      .then(({ data }) => setPaymentTermsOpciones(data || []))
+      .catch(() => setPaymentTermsOpciones([]))
+  }, [])
+
+  useEffect(() => { cargarPaymentTerms() }, [cargarPaymentTerms])
 
   const codigosLineas = lineas.map(l => l.codigo_pdf).filter(Boolean).join(',')
 
@@ -768,6 +852,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         incoterm: proforma.incoterm,
         freight: proforma.freight,
         insurance: proforma.insurance,
+        payment_terms: proforma.payment_terms,
       }),
     })
 
@@ -854,6 +939,17 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         <NuevoProductoModal
           onClose={() => setMostrarNuevoProducto(false)}
           onSaved={productoCreado}
+        />
+      )}
+
+      {mostrarNuevoPaymentTerm && (
+        <ModalNuevoPaymentTerm
+          onClose={() => setMostrarNuevoPaymentTerm(false)}
+          onCreado={opcion => {
+            setPaymentTermsOpciones(prev => [...prev, opcion])
+            setProforma(prev => prev ? { ...prev, payment_terms: opcion.valor } : prev)
+            setMostrarNuevoPaymentTerm(false)
+          }}
         />
       )}
 
@@ -1085,6 +1181,32 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             </>
           ) : (
             <span className="text-sm text-gray-700">{proforma.insurance || 'COLLECT'}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 font-medium">Payment Terms:</span>
+          {puedeEditar ? (
+            <>
+              <select
+                value={proforma.payment_terms || ''}
+                onChange={e => setProforma(prev => prev ? { ...prev, payment_terms: e.target.value || null } : prev)}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm max-w-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              >
+                <option value="">—</option>
+                {paymentTermsOpciones.map(op => (
+                  <option key={op.id} value={op.valor}>{op.valor}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setMostrarNuevoPaymentTerm(true)}
+                className="text-xs font-medium text-[#1E3A5F] hover:underline whitespace-nowrap"
+              >
+                + agregar
+              </button>
+            </>
+          ) : (
+            <span className="text-sm text-gray-700">{proforma.payment_terms || '—'}</span>
           )}
         </div>
       </div>

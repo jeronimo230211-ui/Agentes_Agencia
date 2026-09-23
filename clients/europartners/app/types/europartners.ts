@@ -29,6 +29,7 @@ export interface Cliente {
   incoterm_default: string | null
   freight_default?: string | null
   insurance_default?: string | null
+  payment_terms_default?: string | null
   modo_pricing: ModoPricing
   usa_numeracion_propia: boolean
   prefijo_numeracion?: string
@@ -38,6 +39,16 @@ export interface Cliente {
   issuer_pdf: string
   notas?: string
   activo: boolean
+}
+
+// Migración 025_payment_terms.sql — opciones administrables del selector
+// "Payment Terms" del cotizador (activo=true, ordenadas por `orden`).
+export interface PaymentTermsOpcion {
+  id: string
+  valor: string
+  activo: boolean
+  orden: number | null
+  created_at: string
 }
 
 export interface CategoriaProducto {
@@ -147,6 +158,7 @@ export interface Proforma {
   incoterm: string
   freight?: string | null
   insurance: string
+  payment_terms?: string | null
   modo_pricing: ModoPricing
   tipo_precio: TipoPrecio
   total_fob_usd?: number

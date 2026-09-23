@@ -321,6 +321,89 @@ export async function enviarProformaParaAprobacion(
   if (error) throw new Error(error.message)
 }
 
+// Item de un envío en lote — ver POST /api/proformas/enviar-multiples.
+// `tokenAprobacion` es opcional porque, si en algún caso puntual no se pudo
+// generar el link de aprobación para una proforma del lote, el endpoint la
+// descarta del correo en vez de bloquear el envío de las demás (ver
+// comentario de "errores parciales" en ese endpoint) — nunca se llama a esta
+// función con un array vacío.
+interface ProformaLote {
+  proforma: Proforma
+  pdfBuffer: Buffer
+  tokenAprobacion: string
+}
+
+// Envío de VARIAS proformas del MISMO cliente en un solo correo con Resend —
+// un adjunto por proforma (no un PDF combinado, decisión de Jero 2026-09-22).
+// Reutiliza texto/formato de enviarProformaParaAprobacion (que es la función
+// que realmente usa el flujo "Enviar a cliente" de una sola proforma, ver
+// app/api/proformas/[id]/enviar-cliente/route.ts) adaptado a plural: se
+// listan todas las proformas incluidas, cada una con su propio link de
+// aprobación por token (mismo mecanismo — tokens_aprobacion_cliente — que el
+// endpoint individual, uno por proforma).
+export async function enviarProformasCliente(items: ProformaLote[]): Promise<void> {
+  if (items.length === 0) throw new Error('No hay proformas para enviar')
+
+  const clienteEmail = items[0].proforma.cliente?.contacto_email
+  if (!clienteEmail) throw new Error('Cliente sin email de contacto')
+
+  const clienteNombre = items[0].proforma.cliente?.contacto_nombre || items[0].proforma.cliente?.nombre || 'Customer'
+  const totalGeneral = items.reduce((sum, it) => sum + (it.proforma.total_cif_usd || it.proforma.total_fob_usd || 0), 0)
+  const numeros = items.map(it => it.proforma.numero)
+
+  const filas = items.map(it => {
+    const total = it.proforma.total_cif_usd || it.proforma.total_fob_usd || 0
+    const approveUrl = `${APP_URL}/aprobacion-cliente/${it.tokenAprobacion}`
+    return `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb">${it.proforma.numero}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${formatUSD(total)}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">
+          <a href="${approveUrl}" style="color:#1E3A5F;font-weight:bold;text-decoration:underline">Review &amp; Approve</a>
+        </td>
+      </tr>`
+  }).join('')
+
+  const attachments = items.map(it => ({
+    filename: `Proforma-${it.proforma.numero}.pdf`,
+    content: it.pdfBuffer.toString('base64'),
+  }))
+
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to: clienteEmail,
+    subject: `Proformas ${numeros.join(', ')} — Please Review — Europartners International`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+        <div style="background:#1E3A5F;padding:20px">
+          <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners International</h1>
+        </div>
+        <div style="padding:24px">
+          <p>Dear ${clienteNombre},</p>
+          <p>Please find attached ${items.length} proforma invoice${items.length !== 1 ? 's' : ''} for your review: <strong>${numeros.join(', ')}</strong>.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin:16px 0">
+            <thead>
+              <tr style="background:#f9fafb">
+                <th style="padding:8px;text-align:left">Proforma</th>
+                <th style="padding:8px;text-align:right">Total</th>
+                <th style="padding:8px;text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+          <p><strong>Grand total: ${formatUSD(totalGeneral)}</strong></p>
+          <p>Please review each one and let us know if you approve it or need any changes before we issue the final invoice.</p>
+          <p>Each proforma is valid for 15 days from the date of issue.</p>
+          <p>Best regards,<br><strong>Deisy</strong><br>Europartners International<br>Panama City, Panama</p>
+        </div>
+      </div>
+    `,
+    attachments,
+  })
+
+  if (error) throw new Error(error.message)
+}
+
 export async function enviarProformaCliente(
   proforma: Proforma,
   pdfBuffer: Buffer,

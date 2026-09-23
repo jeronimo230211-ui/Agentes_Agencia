@@ -130,8 +130,14 @@ export function ProformaPDF({ proforma }: Props) {
           </View>
           <View style={styles.infoBlock}>
             <Text style={styles.sectionTitle}>PAYMENT TERMS</Text>
-            <Text style={styles.value}>100% Arrival Notification</Text>
-            <Text style={styles.value}>of Shipment to Jamaica</Text>
+            {proforma.payment_terms ? (
+              <Text style={styles.value}>{proforma.payment_terms}</Text>
+            ) : (
+              <>
+                <Text style={styles.value}>100% Arrival Notification</Text>
+                <Text style={styles.value}>of Shipment to Jamaica</Text>
+              </>
+            )}
           </View>
         </View>
 

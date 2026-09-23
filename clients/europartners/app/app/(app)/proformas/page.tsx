@@ -1,8 +1,8 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   FileText, Clock, CheckCircle, XCircle, Send,
-  Receipt, ChevronRight, Plus, Download, AlertCircle, Ban,
+  Receipt, ChevronRight, Plus, Download, AlertCircle, Ban, Loader2,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
@@ -68,6 +68,9 @@ export default function ProformasPage() {
   const [nuevoCliente, setNuevoCliente] = useState('')
   const [creando, setCreando]           = useState(false)
   const [exportando, setExportando]     = useState(false)
+  const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set())
+  const [enviandoLote, setEnviandoLote]   = useState(false)
+  const [errorLote, setErrorLote]         = useState('')
 
   // Cargar clientes una vez
   useEffect(() => {
@@ -77,7 +80,7 @@ export default function ProformasPage() {
   }, [])
 
   // Cargar proformas cada vez que cambie algún filtro
-  useEffect(() => {
+  const cargarProformas = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams({ limit: '300' })
     if (clienteTab !== 'todos') params.set('cliente_id', clienteTab)
@@ -85,10 +88,12 @@ export default function ProformasPage() {
     if (mes)    params.set('mes', mes)
     if (estado) params.set('estado', estado)
 
-    fetch(`/api/proformas?${params}`)
+    return fetch(`/api/proformas?${params}`)
       .then(r => r.json())
       .then(({ data }) => { setProformas(data || []); setLoading(false) })
   }, [clienteTab, año, mes, estado])
+
+  useEffect(() => { cargarProformas(); setSeleccionadas(new Set()) }, [cargarProformas])
 
   // KPIs de la vista actual
   const kpis = useMemo(() => {
@@ -133,6 +138,44 @@ export default function ProformasPage() {
     const { data } = await res.json()
     if (data) window.location.href = `/cotizador/${data.id}`
     setCreando(false)
+  }
+
+  // Solo se pueden seleccionar/enviar proformas 'aprobada' — mismo requisito
+  // que POST /api/proformas/[id]/enviar-cliente.
+  const proformasEnviables = useMemo(() => proformas.filter(p => p.estado === 'aprobada'), [proformas])
+  const todasSeleccionadas = proformasEnviables.length > 0 && proformasEnviables.every(p => seleccionadas.has(p.id))
+
+  function toggleSeleccion(id: string) {
+    setSeleccionadas(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleTodas() {
+    setSeleccionadas(todasSeleccionadas ? new Set() : new Set(proformasEnviables.map(p => p.id)))
+  }
+
+  async function enviarSeleccionadas() {
+    if (seleccionadas.size === 0) return
+    setEnviandoLote(true)
+    setErrorLote('')
+    const res = await fetch('/api/proformas/enviar-multiples', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: Array.from(seleccionadas) }),
+    })
+    const j = await res.json()
+    if (!res.ok) {
+      setErrorLote(j.error || 'Error al enviar las proformas seleccionadas')
+    } else if (j.errores?.length) {
+      setErrorLote(`Se enviaron ${j.enviadas?.length ?? 0}, fallaron: ${j.errores.map((e: { numero?: string; error: string }) => `${e.numero || ''} (${e.error})`).join(', ')}`)
+    }
+    await cargarProformas()
+    setSeleccionadas(new Set())
+    setEnviandoLote(false)
   }
 
   const estadosDisponibles = [
@@ -305,6 +348,27 @@ export default function ProformasPage() {
         </div>
       </div>
 
+      {/* ── Barra de acciones en lote ── */}
+      {seleccionadas.size > 0 && (
+        <div className="px-8 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center justify-between flex-shrink-0">
+          <p className="text-sm text-blue-800 font-medium">
+            {seleccionadas.size} proforma{seleccionadas.size !== 1 ? 's' : ''} seleccionada{seleccionadas.size !== 1 ? 's' : ''}
+          </p>
+          <div className="flex items-center gap-3">
+            {errorLote && <p className="text-xs text-red-600 max-w-xl">{errorLote}</p>}
+            <button
+              onClick={enviarSeleccionadas}
+              disabled={enviandoLote}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm text-white disabled:opacity-50 transition-opacity"
+              style={{ background: '#1E3A5F' }}
+            >
+              {enviandoLote ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              {enviandoLote ? 'Enviando...' : 'Enviar seleccionadas'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Tabla ── */}
       <div className="flex-1 overflow-y-auto px-8 py-4">
         {loading ? (
@@ -321,6 +385,16 @@ export default function ProformasPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="px-4 py-3 w-8">
+                    <input
+                      type="checkbox"
+                      checked={todasSeleccionadas}
+                      disabled={proformasEnviables.length === 0}
+                      onChange={toggleTodas}
+                      title="Seleccionar todas las proformas aprobadas"
+                      className="rounded border-gray-300"
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Proforma</th>
                   {clienteTab === 'todos' && (
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Cliente</th>
@@ -345,6 +419,16 @@ export default function ProformasPage() {
                       className={`border-b border-gray-50 hover:bg-blue-50/30 transition-colors cursor-pointer`}
                       onClick={() => window.location.href = `/cotizador/${p.id}`}
                     >
+                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={seleccionadas.has(p.id)}
+                          disabled={p.estado !== 'aprobada'}
+                          onChange={() => toggleSeleccion(p.id)}
+                          title={p.estado !== 'aprobada' ? 'Solo se pueden enviar proformas aprobadas' : undefined}
+                          className="rounded border-gray-300 disabled:opacity-30"
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <span className="font-mono font-bold text-[#1E3A5F]">{p.numero}</span>
                         {p.numero_cliente && (

@@ -23,7 +23,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     .from('solicitudes')
     .select(`
       *,
-      cliente:clientes(id, incoterm_default, freight_default, insurance_default, modo_pricing, tipo),
+      cliente:clientes(id, incoterm_default, freight_default, insurance_default, payment_terms_default, modo_pricing, tipo),
       lineas:solicitud_lineas(*, producto:productos(id, codigo, nombre, precio_fob_usd, precio_mayorista, precio_detallista))
     `)
     .eq('id', params.id)
@@ -42,6 +42,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       incoterm: solicitud.cliente?.incoterm_default || 'FOB',
       freight: solicitud.cliente?.freight_default || null,
       insurance: solicitud.cliente?.insurance_default || 'COLLECT',
+      payment_terms: solicitud.cliente?.payment_terms_default || null,
       modo_pricing: solicitud.cliente?.modo_pricing || 'set',
       tipo_precio: solicitud.cliente?.tipo || 'mayorista',
       estado: 'borrador',

@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   // Obtener cliente para copiar incoterm/freight/insurance, modo_pricing y tipo_precio por defecto
   const { data: cliente } = await supabase
     .from('clientes')
-    .select('incoterm_default, freight_default, insurance_default, modo_pricing, tipo')
+    .select('incoterm_default, freight_default, insurance_default, payment_terms_default, modo_pricing, tipo')
     .eq('id', cliente_id)
     .single()
 
@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       incoterm: cliente?.incoterm_default || 'FOB',
       freight: cliente?.freight_default || null,
       insurance: cliente?.insurance_default || 'COLLECT',
+      payment_terms: cliente?.payment_terms_default || null,
       modo_pricing: cliente?.modo_pricing || 'set',
       tipo_precio: cliente?.tipo || 'mayorista',
       estado: 'borrador',
