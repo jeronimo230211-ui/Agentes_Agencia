@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
+import FiltroCliente from '@/components/FiltroCliente'
 
 interface Cliente { id: string; nombre: string; slug: string; incoterm_default: string | null }
 interface Proforma {
@@ -244,33 +245,14 @@ export default function ProformasPage() {
           </div>
         </div>
 
-        {/* Tabs de cliente */}
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          <button
-            onClick={() => { setClienteTab('todos'); setMes('') }}
-            className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              clienteTab === 'todos'
-                ? 'text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-            style={clienteTab === 'todos' ? { background: '#1E3A5F' } : {}}
-          >
-            Todos los clientes
-          </button>
-          {clientes.map(c => (
-            <button
-              key={c.id}
-              onClick={() => { setClienteTab(c.id); setMes('') }}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                clienteTab === c.id
-                  ? 'text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              style={clienteTab === c.id ? { background: '#D4A017', color: '#1E3A5F' } : {}}
-            >
-              {c.nombre}
-            </button>
-          ))}
+        {/* Filtro de cliente */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-400 uppercase">Cliente</span>
+          <FiltroCliente
+            clientes={clientes}
+            value={clienteTab}
+            onChange={id => { setClienteTab(id); setMes('') }}
+          />
         </div>
       </div>
 
