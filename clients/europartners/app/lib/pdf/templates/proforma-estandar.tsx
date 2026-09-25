@@ -80,6 +80,21 @@ interface Props {
   proforma: Proforma
 }
 
+// cliente.ciudad existe en el schema pero en la practica quedo vacio para
+// TODOS los clientes reales (nadie lo llena) — la ciudad de destino solo
+// vive, si acaso, como el penultimo segmento separado por coma dentro de
+// cliente.direccion (ej. "...Kgn. 11, Jamaica, West Indies, KINGSTON,
+// JAMAICA"). Heuristica de mejor esfuerzo para el campo TO del PDF; no es
+// perfecta para direcciones con formato distinto, pero sin esto TO
+// mostraba solo el pais.
+function ciudadDesdeCliente(cliente: NonNullable<Proforma['cliente']>): string {
+  if (cliente.ciudad) return cliente.ciudad
+  const partes = (cliente.direccion || '').split(',').map(p => p.trim()).filter(Boolean)
+  if (partes.length < 2) return ''
+  const candidata = partes[partes.length - 2]
+  return candidata.toLowerCase() === cliente.pais.toLowerCase() ? '' : candidata
+}
+
 export function ProformaPDF({ proforma }: Props) {
   const cliente = proforma.cliente!
   const lineas = proforma.lineas || []
@@ -91,7 +106,7 @@ export function ProformaPDF({ proforma }: Props) {
   const labelTotal = proforma.incoterm === 'FOB' ? 'TOTAL FOB' : `TOTAL ${proforma.incoterm}`
   const esFactura = proforma.estado === 'facturada' || proforma.estado === 'anulada'
   const totalUnidades = lineas.reduce((sum, l) => sum + (l.cantidad || 0), 0)
-  const to = [cliente.ciudad, cliente.pais].filter(Boolean).join(' ')
+  const to = [ciudadDesdeCliente(cliente), cliente.pais].filter(Boolean).join(' ')
   const direccionComprador = cliente.direccion || [cliente.ciudad, cliente.pais].filter(Boolean).join(', ') || '—'
   const contactoComprador = [cliente.contacto_telefono, cliente.contacto_email].filter(Boolean).join(' | ') || '—'
   const fecha = new Date(proforma.fecha).toLocaleDateString('en-GB')
