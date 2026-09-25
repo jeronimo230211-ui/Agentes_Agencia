@@ -82,8 +82,12 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   if (!current) return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
 
-  // Solo se puede editar el resto de la proforma en estado borrador o rechazada
-  if (hayEdicionEstandar && !['borrador', 'rechazada'].includes(current.estado)) {
+  // Editable en borrador/rechazada/cambios_solicitados (flujo normal antes de
+  // aprobar) y también en aprobada (permite corregir datos ya aprobados sin
+  // reiniciar el flujo — ver mismo permiso en cotizador/[id]/page.tsx). No
+  // editable en en_revision/facturada/anulada/descartada.
+  const ESTADOS_EDITABLES = ['borrador', 'rechazada', 'cambios_solicitados', 'aprobada']
+  if (hayEdicionEstandar && !ESTADOS_EDITABLES.includes(current.estado)) {
     return NextResponse.json({ error: `No se puede editar una proforma en estado '${current.estado}'` }, { status: 400 })
   }
 

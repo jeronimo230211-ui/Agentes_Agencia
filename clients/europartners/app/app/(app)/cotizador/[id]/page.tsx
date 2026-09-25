@@ -947,9 +947,15 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   }
 
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
-  const puedeEditar = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && rolPuedeEditar
-  const puedeEnviarRevision = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
-  const puedeAprobarDirecto = (proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados') && puedeEditar && lineas.length > 0 && !proforma?.requiere_revision
+  // Estados "de transición" (previos a una aprobación) habilitan además los
+  // botones de enviar a revisión / aprobar directo. 'aprobada' se puede
+  // editar (para corregir datos ya aprobados sin reiniciar el flujo), pero
+  // no vuelve a mostrar esos botones — ver mismo permiso en el PUT de
+  // app/api/proformas/[id]/route.ts.
+  const enTransicion = proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados'
+  const puedeEditar = (enTransicion || proforma?.estado === 'aprobada') && rolPuedeEditar
+  const puedeEnviarRevision = enTransicion && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
+  const puedeAprobarDirecto = enTransicion && puedeEditar && lineas.length > 0 && !proforma?.requiere_revision
   const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
 
   if (loading) {
