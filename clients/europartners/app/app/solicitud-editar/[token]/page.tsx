@@ -11,6 +11,7 @@ interface Producto {
   nombre: string
   descripcion: string | null
   imagen_url: string | null
+  precio_cliente?: number | null
 }
 interface SolicitudLineaExistente {
   producto_id: string | null
@@ -46,7 +47,7 @@ export default function SolicitudEditarPage({ params }: { params: { token: strin
         const carrito: LineaCarrito[] = (json.lineas || []).map((l: SolicitudLineaExistente, i: number) => {
           if (l.producto_id) {
             const p = productosPorId.get(l.producto_id)
-            return { key: l.producto_id, producto_id: l.producto_id, codigo: p?.codigo, nombre: p?.nombre || 'Product', cantidad: l.cantidad }
+            return { key: l.producto_id, producto_id: l.producto_id, codigo: p?.codigo, nombre: p?.nombre || 'Product', cantidad: l.cantidad, precio_cliente: p?.precio_cliente }
           }
           return { key: `libre-${i}`, descripcion_libre: l.descripcion_libre || '', nombre: l.descripcion_libre || '', cantidad: l.cantidad }
         })

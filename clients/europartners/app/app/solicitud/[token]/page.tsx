@@ -11,6 +11,7 @@ interface Producto {
   nombre: string
   descripcion: string | null
   imagen_url: string | null
+  precio_cliente?: number | null
 }
 
 // Página pública — el cliente entra desde su link fijo de pedido, sin login.

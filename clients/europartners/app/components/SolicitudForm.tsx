@@ -32,6 +32,12 @@ export interface LineaCarrito {
   codigo?: string
   nombre: string
   cantidad: number
+  // Copiado de producto.precio_cliente al agregar la línea (no se
+  // recalcula desde `productos` en el carrito) — así el total no cambia
+  // si el catálogo se refresca a medio pedido. Los items de texto libre
+  // (descripcion_libre) siempre quedan sin precio, ya que no hay producto
+  // del catálogo con el que cotizarlos.
+  precio_cliente?: number | null
 }
 
 interface Props {
@@ -106,7 +112,7 @@ export default function SolicitudForm({
       if (existente) {
         return prev.map(l => l.producto_id === p.id ? { ...l, cantidad } : l)
       }
-      return [...prev, { key: p.id, producto_id: p.id, codigo: p.codigo, nombre: p.nombre, cantidad }]
+      return [...prev, { key: p.id, producto_id: p.id, codigo: p.codigo, nombre: p.nombre, cantidad, precio_cliente: p.precio_cliente }]
     })
   }
 
@@ -173,6 +179,8 @@ export default function SolicitudForm({
   }
 
   const totalItems = carrito.reduce((s, l) => s + l.cantidad, 0)
+  const totalPedido = carrito.reduce((s, l) => s + (l.precio_cliente != null ? l.precio_cliente * l.cantidad : 0), 0)
+  const hayItemsSinPrecio = carrito.some(l => l.precio_cliente == null)
 
   if (estado === 'done') {
     return (
@@ -420,6 +428,9 @@ export default function SolicitudForm({
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <p className="text-sm text-gray-600">
               <strong>{totalItems}</strong> item{totalItems !== 1 ? 's' : ''} in your order
+              {totalPedido > 0 && (
+                <> · <strong style={{ color: '#1E3A5F' }}>{formatUSD(totalPedido)}</strong>{hayItemsSinPrecio ? '+' : ''}</>
+              )}
             </p>
             <button
               onClick={() => setShowCarrito(true)}
@@ -453,6 +464,11 @@ export default function SolicitudForm({
                       <div className="flex-1 min-w-0">
                         {l.codigo && <p className="font-mono text-xs text-gray-400">{l.codigo}</p>}
                         <p className="text-sm text-gray-800 font-medium truncate">{l.nombre}</p>
+                        <p className="text-xs text-gray-400">
+                          {l.precio_cliente != null
+                            ? <>{formatUSD(l.precio_cliente)} × {l.cantidad} = <strong className="text-gray-600">{formatUSD(l.precio_cliente * l.cantidad)}</strong></>
+                            : 'Price to be confirmed'}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <QuantityStepper value={l.cantidad} onChange={v => fijarCantidadCarrito(l.key, v)} />
@@ -462,6 +478,17 @@ export default function SolicitudForm({
                       </div>
                     </div>
                   ))}
+                  <div className="flex items-center justify-between pt-1">
+                    <p className="text-sm font-semibold text-gray-700">
+                      {hayItemsSinPrecio ? 'Estimated total' : 'Total'}
+                    </p>
+                    <p className="text-lg font-bold" style={{ color: '#1E3A5F' }}>{formatUSD(totalPedido)}</p>
+                  </div>
+                  {hayItemsSinPrecio && (
+                    <p className="text-xs text-gray-400 -mt-2">
+                      Some items don&apos;t have a listed price yet — Europartners will confirm it in your proforma.
+                    </p>
+                  )}
                 </div>
               )}
 
