@@ -33,6 +33,7 @@ export interface Cliente {
   slug: string
   pais: string
   ciudad?: string
+  direccion?: string
   contacto_nombre?: string
   contacto_email?: string
   contacto_telefono?: string

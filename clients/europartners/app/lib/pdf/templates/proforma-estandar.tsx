@@ -12,20 +12,36 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingBottom: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: '#1E3A5F',
+    alignItems: 'flex-start',
+    marginBottom: 14,
   },
   headerLeft: { flex: 1 },
   headerRight: { alignItems: 'flex-end' },
-  companyName: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#1E3A5F' },
-  proformaTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#D4A017', marginBottom: 4 },
-  proformaNum: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#1E3A5F' },
-  sectionTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#6b7280', marginBottom: 2 },
-  value: { fontSize: 9 },
-  infoGrid: { flexDirection: 'row', gap: 16, marginBottom: 12 },
-  infoBlock: { flex: 1 },
+  companyName: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#1E3A5F' },
+  companySubname: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#D4A017', marginTop: 2 },
+  proformaTitle: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#1E3A5F' },
+  // Grilla PROFORMA NO / DATE / etc. — valores en mayúscula (convención de
+  // Incoterms y de la plantilla comercial que ya usaban Deisy/Marta antes
+  // del sistema, ver captura compartida por Jero el 2026-09-24).
+  infoGridTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
+  infoCol: { flex: 1 },
+  infoRow: { flexDirection: 'row', marginBottom: 3 },
+  infoRowRight: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 3 },
+  infoLabel: { fontSize: 8, color: '#6b7280', width: 82 },
+  infoLabelRight: { fontSize: 8, color: '#6b7280', width: 92, textAlign: 'right', marginRight: 6 },
+  infoValue: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', textTransform: 'uppercase' },
+  detailsGrid: {
+    flexDirection: 'row',
+    gap: 24,
+    marginBottom: 14,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  detailsCol: { flex: 1 },
+  sectionTitleOrange: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#D4A017', marginBottom: 3 },
+  detailsName: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', marginBottom: 2 },
+  detailsLine: { fontSize: 8, color: '#374151', marginBottom: 1 },
   table: { marginTop: 12 },
   tableHeader: {
     flexDirection: 'row',
@@ -75,69 +91,94 @@ export function ProformaPDF({ proforma }: Props) {
   const labelTotal = proforma.incoterm === 'FOB' ? 'TOTAL FOB' : `TOTAL ${proforma.incoterm}`
   const esFactura = proforma.estado === 'facturada' || proforma.estado === 'anulada'
   const totalUnidades = lineas.reduce((sum, l) => sum + (l.cantidad || 0), 0)
-  const destino = [cliente.ciudad, cliente.pais].filter(Boolean).join(', ')
+  const to = [cliente.ciudad, cliente.pais].filter(Boolean).join(' ')
+  const direccionComprador = cliente.direccion || [cliente.ciudad, cliente.pais].filter(Boolean).join(', ') || '—'
+  const contactoComprador = [cliente.contacto_telefono, cliente.contacto_email].filter(Boolean).join(' | ') || '—'
+  const fecha = new Date(proforma.fecha).toLocaleDateString('en-GB')
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* HEADER */}
+        {/* HEADER — nombre completo de la empresa (EUROPARTNERS + razón
+            social) fijo acá, ya no se lee de cliente.issuer_pdf (decisión
+            de Jero, 2026-09-24: ese campo quedó desactualizado). */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.companyName}>{cliente.issuer_pdf}</Text>
-            <Text style={{ fontSize: 7, color: '#6b7280', marginTop: 2 }}>
-              San Francisco Calle 78, PH The View Apto 22A
-            </Text>
-            <Text style={{ fontSize: 7, color: '#6b7280' }}>Panama City, Panama</Text>
-            <Text style={{ fontSize: 7, color: '#6b7280' }}>egispty@gmail.com · +507 6608-5639</Text>
+            <Text style={styles.companyName}>EUROPARTNERS</Text>
+            <Text style={styles.companySubname}>GLOBAL INVESTORS SERVICES S.A.</Text>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.proformaTitle}>{esFactura ? 'INVOICE' : 'PROFORMA'}</Text>
-            <Text style={styles.proformaNum}>{proforma.numero}</Text>
-            <Text style={{ fontSize: 8, color: '#6b7280', marginTop: 4 }}>
-              Date: {new Date(proforma.fecha).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </Text>
-            {proforma.fecha_vencimiento && (
-              <Text style={{ fontSize: 7, color: '#9ca3af' }}>
-                Valid until: {new Date(proforma.fecha_vencimiento).toLocaleDateString('en-US')}
-              </Text>
-            )}
           </View>
         </View>
 
-        {/* BUYER INFO */}
-        <View style={styles.infoGrid}>
-          <View style={styles.infoBlock}>
-            <Text style={styles.sectionTitle}>BUYER / CONSIGNEE</Text>
-            <Text style={{ fontFamily: 'Helvetica-Bold' }}>{cliente.nombre}</Text>
-            {cliente.ciudad && <Text style={styles.value}>{cliente.ciudad}</Text>}
-            <Text style={styles.value}>{cliente.pais}</Text>
-            {cliente.contacto_email && <Text style={styles.value}>{cliente.contacto_email}</Text>}
-            <Text style={{ marginTop: 6, fontSize: 8, color: '#6b7280' }}>Order No: {proforma.numero_cliente || '—'}</Text>
+        {/* PROFORMA NO / ORDER NO / VIA / TO / INCOTERM — DATE / PAYMENT
+            TERMS / SHIPPED FROM / FREIGHT / INSURANCE */}
+        <View style={styles.infoGridTop}>
+          <View style={styles.infoCol}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>PROFORMA NO:</Text>
+              <Text style={styles.infoValue}>{proforma.numero}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>ORDER NO:</Text>
+              <Text style={styles.infoValue}>{proforma.numero_cliente || '—'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>VIA:</Text>
+              <Text style={styles.infoValue}>Maritime</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>TO:</Text>
+              <Text style={styles.infoValue}>{to || '—'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>INCOTERM:</Text>
+              <Text style={styles.infoValue}>{proforma.incoterm}</Text>
+            </View>
           </View>
-          <View style={styles.infoBlock}>
-            <Text style={styles.sectionTitle}>SHIPPING TERMS</Text>
-            <Text style={styles.value}>Incoterm: {proforma.incoterm}</Text>
-            <Text style={styles.value}>Freight: {proforma.freight || proforma.incoterm}</Text>
-            <Text style={styles.value}>Insurance: {proforma.insurance || 'COLLECT'}</Text>
-            <Text style={styles.value}>Via: Maritime</Text>
-            <Text style={styles.value}>Shipped from: Xingang, China</Text>
-            <Text style={styles.value}>Destination: {destino || 'Kingston, Jamaica'}</Text>
-            {params && (
-              <Text style={{ marginTop: 4, fontSize: 7, color: '#6b7280' }}>
-                Freight cost: {formatUSD(params.flete_usd)} / {params.cbm_total_contenedor} CBM container
-              </Text>
-            )}
+          <View style={styles.infoCol}>
+            <View style={styles.infoRowRight}>
+              <Text style={styles.infoLabelRight}>DATE:</Text>
+              <Text style={styles.infoValue}>{fecha}</Text>
+            </View>
+            <View style={styles.infoRowRight}>
+              <Text style={styles.infoLabelRight}>PAYMENT TERMS:</Text>
+              <Text style={styles.infoValue}>{proforma.payment_terms || '100% Arrival Notification'}</Text>
+            </View>
+            <View style={styles.infoRowRight}>
+              <Text style={styles.infoLabelRight}>SHIPPED FROM:</Text>
+              <Text style={styles.infoValue}>Xingang-China</Text>
+            </View>
+            <View style={styles.infoRowRight}>
+              <Text style={styles.infoLabelRight}>FREIGHT:</Text>
+              <Text style={styles.infoValue}>{proforma.freight || proforma.incoterm}</Text>
+            </View>
+            <View style={styles.infoRowRight}>
+              <Text style={styles.infoLabelRight}>INSURANCE:</Text>
+              <Text style={styles.infoValue}>{proforma.insurance || 'COLLECT'}</Text>
+            </View>
           </View>
-          <View style={styles.infoBlock}>
-            <Text style={styles.sectionTitle}>PAYMENT TERMS</Text>
-            {proforma.payment_terms ? (
-              <Text style={styles.value}>{proforma.payment_terms}</Text>
-            ) : (
-              <>
-                <Text style={styles.value}>100% Arrival Notification</Text>
-                <Text style={styles.value}>of Shipment to Jamaica</Text>
-              </>
-            )}
+        </View>
+        {params && (
+          <Text style={{ fontSize: 7, color: '#9ca3af', marginTop: -10, marginBottom: 10 }}>
+            Freight cost: {formatUSD(params.flete_usd)} / {params.cbm_total_contenedor} CBM container
+          </Text>
+        )}
+
+        {/* ISSUER / SELLER DETAILS — BUYER / SELLER DETAILS */}
+        <View style={styles.detailsGrid}>
+          <View style={styles.detailsCol}>
+            <Text style={styles.sectionTitleOrange}>ISSUER / SELLER DETAILS</Text>
+            <Text style={styles.detailsName}>EUROPARTNERS GLOBAL INVESTORS SERVICES S.A.</Text>
+            <Text style={styles.detailsLine}>Address: San Francisco Calle 78 PH The View, Panama City, Panama</Text>
+            <Text style={styles.detailsLine}>Contact: +507 6608-5639 | E-mail: egispty@gmail.com</Text>
+          </View>
+          <View style={styles.detailsCol}>
+            <Text style={styles.sectionTitleOrange}>BUYER / SELLER DETAILS</Text>
+            <Text style={styles.detailsName}>{cliente.nombre}</Text>
+            <Text style={styles.detailsLine}>Address: {direccionComprador}</Text>
+            <Text style={styles.detailsLine}>Contact: {contactoComprador}</Text>
           </View>
         </View>
 
@@ -183,7 +224,7 @@ export function ProformaPDF({ proforma }: Props) {
           </View>
           {totalFlete > 0 && (
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>FREIGHT (Xingang → Kingston):</Text>
+              <Text style={styles.totalLabel}>FREIGHT (Xingang to Kingston):</Text>
               <Text style={styles.totalValue}>{formatUSD(totalFlete)}</Text>
             </View>
           )}
@@ -198,7 +239,7 @@ export function ProformaPDF({ proforma }: Props) {
           {!esFactura && <Text>This proforma invoice is valid for 15 days from the date of issue.</Text>}
           <Text>All prices are in USD. Payment terms: 100% upon arrival notification.</Text>
           <Text style={{ marginTop: 4 }}>
-            Europartners International — San Francisco Calle 78 PH The View Apto 22A, Panama City, Panama
+            Europartners Global Investors Services S.A. — San Francisco Calle 78 PH The View, Panama City, Panama
           </Text>
         </View>
       </Page>
