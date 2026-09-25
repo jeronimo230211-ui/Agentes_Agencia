@@ -99,9 +99,17 @@ export async function enviarNotificacionComprobante(
   clienteNombre: string,
   monto: number | null,
   proformaId: string,
-  destinatarioEmail: string
+  destinatarioEmail: string,
+  // 'factura' (default, sin cambios de comportamiento para las llamadas
+  // existentes) vs 'flete' — migración 024_pago_flete_despacho.sql, cuando el
+  // cliente sube el comprobante del pago de flete de su despacho desde el
+  // mismo link público /pago/[token]. Solo cambia el texto del email, no la
+  // lógica de envío ni el destinatario.
+  concepto: 'factura' | 'flete' = 'factura'
 ): Promise<void> {
   const verUrl = `${APP_URL}/cotizador/${proformaId}`
+  const textoConcepto = concepto === 'flete' ? 'el comprobante de pago de FLETE de la proforma' : 'el comprobante de pago de la proforma'
+  const asuntoConcepto = concepto === 'flete' ? 'Comprobante de pago de flete' : 'Comprobante de pago'
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
@@ -112,7 +120,7 @@ export async function enviarNotificacionComprobante(
       <div style="padding:24px;background:#f9fafb">
         <h2 style="color:#1E3A5F;margin:0 0 8px">Comprobante de pago recibido</h2>
         <p style="color:#6b7280;margin:0 0 12px">
-          <strong>${clienteNombre}</strong> subió el comprobante de pago de la proforma
+          <strong>${clienteNombre}</strong> subió ${textoConcepto}
           <strong>${numeroProforma}</strong>.
         </p>
         <p style="color:#6b7280;margin:0 0 20px">
@@ -128,7 +136,7 @@ export async function enviarNotificacionComprobante(
     </div>
   `
 
-  await enviarEmail(destinatarioEmail, `Comprobante de pago — Proforma ${numeroProforma}`, html)
+  await enviarEmail(destinatarioEmail, `${asuntoConcepto} — Proforma ${numeroProforma}`, html)
 }
 
 export async function enviarNotificacionSolicitudNueva(

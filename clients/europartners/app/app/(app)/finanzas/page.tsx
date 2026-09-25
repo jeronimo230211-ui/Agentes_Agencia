@@ -7,8 +7,19 @@ import {
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import HistorialPagos from '@/components/HistorialPagos'
+import FiltroCliente from '@/components/FiltroCliente'
 
 interface Cliente { id: string; nombre: string; pais: string }
+
+interface DespachoResumen {
+  proforma_id: string
+  naviera: string | null
+  booking_no: string | null
+  fecha_llegada_estimada: string | null
+  fecha_llegada_real: string | null
+  id: string
+  shipping_fee_usd: number | null
+}
 
 interface FilaFinanzas {
   id: string
@@ -16,10 +27,15 @@ interface FilaFinanzas {
   fecha: string
   estado: string
   cliente: { id: string; nombre: string; pais: string } | null
+  pais: string | null
   facturado: number
+  ganancia: number | null
   deuda_cliente_usd: number
   deuda_china_usd: number | null
   estado_deuda: 'sin_deuda' | 'pendiente' | 'parcial' | 'pagado'
+  notas_internas: string | null
+  despacho: DespachoResumen | null
+  fecha_factura: string | null
 }
 
 interface Indicadores {
@@ -145,29 +161,10 @@ export default function FinanzasPage() {
           ))}
         </div>
 
-        {/* Tabs de cliente */}
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          <button
-            onClick={() => setClienteTab('todos')}
-            className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              clienteTab === 'todos' ? 'text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-            style={clienteTab === 'todos' ? { background: '#1E3A5F' } : {}}
-          >
-            Todos los clientes
-          </button>
-          {clientes.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setClienteTab(c.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                clienteTab === c.id ? 'text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              style={clienteTab === c.id ? { background: '#D4A017', color: '#1E3A5F' } : {}}
-            >
-              {c.nombre}
-            </button>
-          ))}
+        {/* Filtro de cliente */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-400 uppercase">Cliente</span>
+          <FiltroCliente clientes={clientes} value={clienteTab} onChange={setClienteTab} />
         </div>
       </div>
 
@@ -271,6 +268,7 @@ export default function FinanzasPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Cliente</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Estado</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Facturado</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Ganancia</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Deuda cliente</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Deuda China</th>
                   <th className="w-8 px-4 py-3" />
@@ -292,6 +290,7 @@ export default function FinanzasPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-700 font-medium text-xs">
                         {f.cliente?.nombre ?? '—'}
+                        {f.pais && <span className="block text-[11px] text-gray-400 font-normal">{f.pais}</span>}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -306,6 +305,13 @@ export default function FinanzasPage() {
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-gray-800">
                         {f.facturado > 0 ? formatUSD(f.facturado) : <span className="text-gray-300 font-normal">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        {f.ganancia != null ? (
+                          <span className={f.ganancia >= 0 ? 'text-emerald-700' : 'text-red-600'}>{formatUSD(f.ganancia)}</span>
+                        ) : (
+                          <span className="text-gray-300 font-normal">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-medium">
                         {f.deuda_cliente_usd > 0 ? (
@@ -399,11 +405,17 @@ function DetalleProformaDrawer({
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
               <p className="text-xs text-gray-400 mb-0.5">Facturado</p>
               <p className="text-base font-bold text-gray-800">
                 {fila.facturado > 0 ? formatUSD(fila.facturado) : '—'}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <p className="text-xs text-gray-400 mb-0.5">Ganancia</p>
+              <p className={`text-base font-bold ${fila.ganancia != null ? (fila.ganancia >= 0 ? 'text-emerald-700' : 'text-red-600') : 'text-gray-800'}`}>
+                {fila.ganancia != null ? formatUSD(fila.ganancia) : '—'}
               </p>
             </div>
             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
@@ -418,6 +430,90 @@ function DetalleProformaDrawer({
                 {fila.deuda_china_usd != null && fila.deuda_china_usd > 0 ? formatUSD(fila.deuda_china_usd) : '—'}
               </p>
             </div>
+          </div>
+
+          {/* Fechas de proforma y factura final. Fecha de factura no tiene
+              columna dedicada — se deriva en /api/finanzas del evento
+              estado_hacia='facturada' en proforma_eventos. */}
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">Fecha proforma</p>
+              <p className="text-gray-700 font-medium">{fechaCorta(fila.fecha)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">Fecha factura final</p>
+              <p className="text-gray-700 font-medium">
+                {fila.fecha_factura ? new Date(fila.fecha_factura).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+              </p>
+            </div>
+          </div>
+
+          {/* Despacho — cruce con `despachos` por proforma_id (naviera, booking,
+              ETA y llegada real). Puede no existir todavía. */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Ship size={16} className="text-gray-400" />
+              <h3 className="font-medium text-gray-800 text-sm">Despacho</h3>
+            </div>
+            {fila.despacho ? (
+              <div className="grid grid-cols-2 gap-3 text-sm bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Naviera</p>
+                  <p className="text-gray-700 font-medium">{fila.despacho.naviera || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Booking No.</p>
+                  <p className="text-gray-700 font-medium">{fila.despacho.booking_no || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">ETA</p>
+                  <p className="text-gray-700 font-medium">{fila.despacho.fecha_llegada_estimada ? fechaCorta(fila.despacho.fecha_llegada_estimada) : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Llegada real</p>
+                  <p className="text-gray-700 font-medium">{fila.despacho.fecha_llegada_real ? fechaCorta(fila.despacho.fecha_llegada_real) : '—'}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs text-gray-400 mb-0.5">Shipping fee de referencia</p>
+                  <p className="text-gray-700 font-medium">{fila.despacho.shipping_fee_usd != null ? formatUSD(fila.despacho.shipping_fee_usd) : 'No cargado'}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 bg-gray-50 rounded-xl p-3 border border-gray-100">Sin despacho</p>
+            )}
+          </div>
+
+          {/* Pago de flete — historial real de cobros al cliente por el
+              shipping de este despacho (tabla `pagos`, tipo='flete', ver
+              migración 024_pago_flete_despacho.sql). Distinto del "Shipping
+              fee de referencia" de arriba, que es solo el monto manual que
+              carga operaciones. Solo lectura acá — el registro se hace desde
+              /despachos (drawer de detalle) o desde el link público del
+              cliente. */}
+          {fila.despacho && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Wallet size={16} className="text-gray-400" />
+                <h3 className="font-medium text-gray-800 text-sm">Pago de flete</h3>
+              </div>
+              <HistorialPagos
+                proformaId={fila.id}
+                tipos={['flete']}
+                vacioTexto="Todavía no hay pagos de flete registrados para este despacho."
+              />
+            </div>
+          )}
+
+          {/* Observaciones — proformas.notas_internas, mismo campo que se edita
+              en cotizador/[id] (no editable acá, /finanzas es solo lectura). */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText size={16} className="text-gray-400" />
+              <h3 className="font-medium text-gray-800 text-sm">Observaciones</h3>
+            </div>
+            <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-3 border border-gray-100 whitespace-pre-wrap">
+              {fila.notas_internas || 'Sin observaciones'}
+            </p>
           </div>
 
           <div>

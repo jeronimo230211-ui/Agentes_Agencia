@@ -6,13 +6,13 @@ import {
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
   Search, X, Package, FileText,
   TrendingUp, TrendingDown, Minus, History, Users, Tag,
-  Wallet,
+  Wallet, ChevronDown, ChevronUp,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
 import type { Proforma, ProformaLinea, TipoPrecio, TipoPago, PaymentTermsOpcion } from '@/types/europartners'
-import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS } from '@/types/europartners'
+import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS, INCOTERM_FREIGHT_INSURANCE_DEFAULTS, type Incoterm } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
@@ -610,6 +610,18 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [mostrarNuevoPaymentTerm, setMostrarNuevoPaymentTerm] = useState(false)
   const { puedeEditar: rolPuedeEditar } = useRol()
 
+  // Datos financieros adicionales (Registro Maestro Vivo — ver
+  // CAMPOS_FINANCIEROS_ADICIONALES en app/api/proformas/[id]/route.ts).
+  // Sección aparte, colapsada por defecto, con su propio guardado: a
+  // diferencia del resto de la proforma se puede cargar en cualquier estado
+  // (típicamente después de facturada/enviada, cuando llega la factura real
+  // del proveedor chino), así que NO usa el mismo botón "Guardar" ni el
+  // gate de estado (puedeEditar) del resto del formulario.
+  const [mostrarFinancieros, setMostrarFinancieros] = useState(false)
+  const [guardandoFinancieros, setGuardandoFinancieros] = useState(false)
+  const [financierosGuardadoOk, setFinancierosGuardadoOk] = useState(false)
+  const [errorFinancieros, setErrorFinancieros] = useState('')
+
   const cargar = useCallback(async () => {
     const res = await fetch(`/api/proformas/${params.id}`)
     const { data } = await res.json()
@@ -865,6 +877,35 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       setTimeout(() => setGuardadoOk(false), 3000)
     }
     setGuardando(false)
+  }
+
+  async function guardarFinancieros() {
+    if (!proforma) return
+    setGuardandoFinancieros(true)
+    setErrorFinancieros('')
+
+    const res = await fetch(`/api/proformas/${proforma.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        total_china_usd: proforma.total_china_usd ?? null,
+        acuerdo_pago: proforma.acuerdo_pago ?? null,
+        perdida_usd: proforma.perdida_usd ?? null,
+        motivo_perdida: proforma.motivo_perdida ?? null,
+        nota_credito_usd: proforma.nota_credito_usd ?? null,
+        motivo_nota_credito: proforma.motivo_nota_credito ?? null,
+      }),
+    })
+
+    if (!res.ok) {
+      const j = await res.json()
+      setErrorFinancieros(j.error || 'Error al guardar')
+    } else {
+      await cargar()
+      setFinancierosGuardadoOk(true)
+      setTimeout(() => setFinancierosGuardadoOk(false), 3000)
+    }
+    setGuardandoFinancieros(false)
   }
 
   async function enviarRevision() {
@@ -1134,8 +1175,17 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 type="text"
                 list="incoterm-opciones"
                 value={proforma.incoterm || ''}
-                onChange={e => setProforma(prev => prev ? { ...prev, incoterm: e.target.value } : prev)}
+                onChange={e => {
+                  const valor = e.target.value
+                  const defaults = INCOTERM_FREIGHT_INSURANCE_DEFAULTS[valor.trim().toUpperCase() as Incoterm]
+                  setProforma(prev => prev ? {
+                    ...prev,
+                    incoterm: valor,
+                    ...(defaults ? { freight: defaults.freight, insurance: defaults.insurance } : {}),
+                  } : prev)
+                }}
                 placeholder="Ej. FOB"
+                title="Al elegir FOB/CFR/CIF, Freight e Insurance se autocompletan según la regla de Marta (editable después)"
                 className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
               />
               <datalist id="incoterm-opciones">
@@ -1152,15 +1202,18 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             <>
               <input
                 type="text"
-                list="incoterm-opciones"
-                value={proforma.freight ?? proforma.incoterm ?? ''}
+                list="freight-opciones"
+                value={proforma.freight ?? ''}
                 onChange={e => setProforma(prev => prev ? { ...prev, freight: e.target.value } : prev)}
-                placeholder="Ej. FOB"
+                placeholder="Ej. COLLECT"
                 className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
               />
+              <datalist id="freight-opciones">
+                {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
+              </datalist>
             </>
           ) : (
-            <span className="text-sm text-gray-700">{proforma.freight || proforma.incoterm || '—'}</span>
+            <span className="text-sm text-gray-700">{proforma.freight || '—'}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -1635,6 +1688,175 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           </label>
         </div>
       )}
+
+      {/* Datos financieros adicionales (Registro Maestro Vivo) — colapsada por
+          defecto para no saturar la pantalla principal: son 4 campos de uso
+          puntual (total_china_usd es el que más se carga, cada vez que llega
+          la factura de China; los otros 3 son casos excepcionales). */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-4">
+        <button
+          type="button"
+          onClick={() => setMostrarFinancieros(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors rounded-xl"
+        >
+          <div className="flex items-center gap-2">
+            <Wallet size={16} className="text-gray-400" />
+            <h3 className="font-medium text-gray-800 text-sm">Datos financieros adicionales</h3>
+            {proforma.total_china_usd != null && (
+              <span className="text-xs text-gray-400">
+                · Total China {formatUSD(proforma.total_china_usd)}
+              </span>
+            )}
+          </div>
+          {mostrarFinancieros ? (
+            <ChevronUp size={16} className="text-gray-400" />
+          ) : (
+            <ChevronDown size={16} className="text-gray-400" />
+          )}
+        </button>
+
+        {mostrarFinancieros && (
+          <div className="border-t border-gray-100 p-4 space-y-4">
+            <div>
+              <label className="text-xs font-medium text-gray-500">Total China (USD)</label>
+              <p className="text-[11px] text-gray-400 mt-0.5 mb-1">
+                Total facturado por el proveedor chino para este embarque. Sin este dato la
+                deuda con China (módulo Finanzas) siempre queda en &quot;—&quot;.
+              </p>
+              {rolPuedeEditar ? (
+                <input
+                  type="number"
+                  step="0.01"
+                  value={proforma.total_china_usd ?? ''}
+                  onChange={e => {
+                    const raw = e.target.value
+                    const parsed = parseFloat(raw)
+                    setProforma(prev => prev ? { ...prev, total_china_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
+                  }}
+                  placeholder="0.00"
+                  className="w-full max-w-xs border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                />
+              ) : (
+                <p className="text-sm text-gray-700">
+                  {proforma.total_china_usd != null ? formatUSD(proforma.total_china_usd) : '—'}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-500">Acuerdo de pago</label>
+              {rolPuedeEditar ? (
+                <textarea
+                  value={proforma.acuerdo_pago || ''}
+                  onChange={e => setProforma(prev => prev ? { ...prev, acuerdo_pago: e.target.value } : prev)}
+                  placeholder="Ej. 50% anticipo, 50% contra BL..."
+                  className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                />
+              ) : (
+                <p className="text-sm text-gray-700 mt-1">{proforma.acuerdo_pago || '—'}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Pérdida (USD)</label>
+                {rolPuedeEditar ? (
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={proforma.perdida_usd ?? ''}
+                    onChange={e => {
+                      const raw = e.target.value
+                      const parsed = parseFloat(raw)
+                      setProforma(prev => prev ? { ...prev, perdida_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
+                    }}
+                    placeholder="0.00"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-700 mt-1">
+                    {proforma.perdida_usd != null ? formatUSD(proforma.perdida_usd) : '—'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Motivo de la pérdida</label>
+                {rolPuedeEditar ? (
+                  <input
+                    type="text"
+                    value={proforma.motivo_perdida || ''}
+                    onChange={e => setProforma(prev => prev ? { ...prev, motivo_perdida: e.target.value } : prev)}
+                    placeholder="Ej. producto dañado en tránsito"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-700 mt-1">{proforma.motivo_perdida || '—'}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Nota crédito (USD)</label>
+                {rolPuedeEditar ? (
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={proforma.nota_credito_usd ?? ''}
+                    onChange={e => {
+                      const raw = e.target.value
+                      const parsed = parseFloat(raw)
+                      setProforma(prev => prev ? { ...prev, nota_credito_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
+                    }}
+                    placeholder="0.00"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-700 mt-1">
+                    {proforma.nota_credito_usd != null ? formatUSD(proforma.nota_credito_usd) : '—'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Motivo nota crédito</label>
+                {rolPuedeEditar ? (
+                  <input
+                    type="text"
+                    value={proforma.motivo_nota_credito || ''}
+                    onChange={e => setProforma(prev => prev ? { ...prev, motivo_nota_credito: e.target.value } : prev)}
+                    placeholder="Ej. descuento comercial acordado"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-700 mt-1">{proforma.motivo_nota_credito || '—'}</p>
+                )}
+              </div>
+            </div>
+
+            {rolPuedeEditar && (
+              <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+                <button
+                  onClick={guardarFinancieros}
+                  disabled={guardandoFinancieros}
+                  className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
+                  style={{ background: '#1E3A5F' }}
+                >
+                  {guardandoFinancieros ? 'Guardando...' : 'Guardar datos financieros'}
+                </button>
+                {financierosGuardadoOk && (
+                  <span className="flex items-center gap-1.5 text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium">
+                    <CheckCircle size={14} />
+                    Guardado
+                  </span>
+                )}
+                {errorFinancieros && (
+                  <span className="text-red-600 text-sm">{errorFinancieros}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

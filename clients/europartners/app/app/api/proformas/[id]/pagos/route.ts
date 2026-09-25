@@ -11,6 +11,13 @@ type Params = { params: { id: string } }
 // proforma" — ahora hay N filas, tanto de cobro al cliente (tipo='cliente')
 // como de pago al proveedor en China (tipo='china'). `estado_pago` en
 // `proformas` se recalcula solo por trigger cuando cambian filas acá.
+//
+// tipo='flete' (migración 024_pago_flete_despacho.sql) también se registra
+// acá — mismo endpoint, no uno nuevo bajo /api/despachos/[id]/pagos — porque
+// `pagos` sigue siendo por proforma_id (not null) y este endpoint ya resuelve
+// sesión/rol/comprobante/storage; solo se le agrega el campo opcional
+// `despacho_id` al POST. Un pago de flete NO afecta estado_pago (ver trigger
+// recalcular_estado_pago_proforma, que solo suma tipo='cliente').
 export async function GET(_req: NextRequest, { params }: Params) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
@@ -52,9 +59,17 @@ export async function POST(req: NextRequest, { params }: Params) {
   const fechaRaw = (formData.get('fecha') as string | null)?.trim() || null
   const nota = (formData.get('nota') as string | null)?.trim() || null
   const archivo = formData.get('comprobante') as File | null
+  // Solo para tipo='flete' (migración 024_pago_flete_despacho.sql) — pago que
+  // el cliente hace por el shipping de SU embarque, ligado al despacho. Para
+  // 'cliente'/'china' este campo se ignora aunque venga en el body.
+  const despachoIdRaw = (formData.get('despacho_id') as string | null)?.trim() || null
 
-  if (!tipo || !['cliente', 'china'].includes(tipo)) {
+  if (!tipo || !['cliente', 'china', 'flete'].includes(tipo)) {
     return NextResponse.json({ error: 'Tipo de pago inválido' }, { status: 400 })
+  }
+
+  if (tipo === 'flete' && !despachoIdRaw) {
+    return NextResponse.json({ error: 'despacho_id requerido para pagos de flete' }, { status: 400 })
   }
 
   const monto = montoRaw ? Number(montoRaw) : NaN
@@ -75,6 +90,20 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: proforma } = await adminClient.from('proformas').select('id').eq('id', params.id).maybeSingle()
   if (!proforma) return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
+
+  // Verificación de integridad: el despacho tiene que existir y pertenecer a
+  // ESTA proforma (relación 1:1 hoy — ver POST /api/despachos, que bloquea
+  // crear un segundo despacho para la misma proforma) — evita que alguien
+  // ligue por error un pago de flete al despacho de otro cliente.
+  if (tipo === 'flete') {
+    const { data: despacho } = await adminClient
+      .from('despachos')
+      .select('id')
+      .eq('id', despachoIdRaw)
+      .eq('proforma_id', params.id)
+      .maybeSingle()
+    if (!despacho) return NextResponse.json({ error: 'Despacho no encontrado para esta proforma' }, { status: 404 })
+  }
 
   // Se genera el id acá (en vez de dejarlo al default de la tabla) porque el
   // nombre del archivo de comprobante debe incluir el id del pago — ver
@@ -102,6 +131,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     .insert({
       id: pagoId,
       proforma_id: params.id,
+      despacho_id: tipo === 'flete' ? despachoIdRaw : null,
       tipo,
       monto,
       comision_bancaria,

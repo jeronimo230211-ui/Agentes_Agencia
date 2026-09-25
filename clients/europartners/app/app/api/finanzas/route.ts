@@ -19,6 +19,22 @@ interface ProformaRow {
   cliente_id: string
   total_fob_usd: number | null
   total_cif_usd: number | null
+  notas_internas: string | null
+}
+
+interface DespachoResumen {
+  proforma_id: string
+  naviera: string | null
+  booking_no: string | null
+  fecha_llegada_estimada: string | null
+  fecha_llegada_real: string | null
+  // shipping_fee_usd: monto de referencia que carga operaciones a mano en el
+  // despacho (schema_v2.sql) — se expone acá solo como referencia junto al
+  // historial real de pagos de flete (tabla `pagos`, tipo='flete', ver
+  // migración 024_pago_flete_despacho.sql), que se lee aparte con
+  // HistorialPagos en el drawer.
+  id: string
+  shipping_fee_usd: number | null
 }
 
 interface DeudaVivoRow {
@@ -55,7 +71,9 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('proformas')
-    .select('id, numero, fecha, estado, estado_pago, cliente_id, total_fob_usd, total_cif_usd')
+    // notas_internas: mismo campo que ya usa cotizador/[id] y el flujo de
+    // aprobación — se expone acá como "Observaciones" de solo lectura.
+    .select('id, numero, fecha, estado, estado_pago, cliente_id, total_fob_usd, total_cif_usd, notas_internas')
     .order('fecha', { ascending: false })
     .limit(1000)
 
@@ -84,6 +102,32 @@ export async function GET(req: NextRequest) {
     .in('proforma_id', ids)
   const deudaPorId = new Map(((deudaRows || []) as DeudaVivoRow[]).map(d => [d.proforma_id, d]))
 
+  // Despacho (naviera/booking/ETA/llegada real) — join simple por
+  // proforma_id, mismo patrón que ya usa `proforma_lineas` en otros endpoints.
+  // Una proforma puede no tener despacho todavía (el drawer muestra "—").
+  const { data: despachosRows } = await supabase
+    .from('despachos')
+    .select('id, proforma_id, naviera, booking_no, fecha_llegada_estimada, fecha_llegada_real, shipping_fee_usd')
+    .in('proforma_id', ids)
+  const despachoPorProforma = new Map(
+    ((despachosRows || []) as DespachoResumen[]).map(d => [d.proforma_id, d])
+  )
+
+  // Fecha de factura final — no existe una columna dedicada en `proformas`;
+  // se deriva del evento estado_hacia='facturada' en proforma_eventos (ver
+  // POST /api/aprobacion-cliente, que lo inserta cuando el cliente aprueba).
+  // Si una proforma llegó a facturarse más de una vez, se toma la primera fecha.
+  const { data: eventosFacturada } = await supabase
+    .from('proforma_eventos')
+    .select('proforma_id, created_at')
+    .eq('estado_hacia', 'facturada')
+    .in('proforma_id', ids)
+    .order('created_at', { ascending: true })
+  const fechaFacturaPorProforma = new Map<string, string>()
+  for (const e of (eventosFacturada || []) as { proforma_id: string; created_at: string }[]) {
+    if (!fechaFacturaPorProforma.has(e.proforma_id)) fechaFacturaPorProforma.set(e.proforma_id, e.created_at)
+  }
+
   // Costo real (para Ganancia) — solo proformas facturadas al cliente, mismo
   // criterio de "facturación" que usa /api/dashboard/stats (estado enviada
   // o facturada). Se sacan de proforma_lineas.subtotal_costo_usd, que ya se
@@ -111,20 +155,34 @@ export async function GET(req: NextRequest) {
     // aunque no haya nada que cobrar, así que se distingue acá para no
     // mezclar "pendiente de cobro real" con "todavía no aplica".
     const estado_deuda: EstadoDeuda = facturado <= 0 ? 'sin_deuda' : p.estado_pago
+    const cliente = clientePorId.get(p.cliente_id) || null
+    const _totalFobUsd = p.total_fob_usd || 0
+    const _costoReal = costoPorProforma.get(p.id) || 0
+    const _esFacturacion = p.estado === 'enviada' || p.estado === 'facturada'
 
     return {
       id: p.id,
       numero: p.numero,
       fecha: p.fecha,
       estado: p.estado,
-      cliente: clientePorId.get(p.cliente_id) || null,
+      cliente,
+      // País ya viajaba anidado en `cliente.pais` (se usa para el filtro),
+      // se agrega también plano para que la tabla lo pueda mostrar por fila
+      // sin tener que desanidar en el frontend.
+      pais: cliente?.pais ?? null,
       facturado,
       deuda_cliente_usd,
       deuda_china_usd,
       estado_deuda,
-      _esFacturacion: p.estado === 'enviada' || p.estado === 'facturada',
-      _totalFobUsd: p.total_fob_usd || 0,
-      _costoReal: costoPorProforma.get(p.id) || 0,
+      // Ganancia por fila (mismo criterio que el indicador agregado de abajo:
+      // solo tiene sentido para proformas ya facturadas al cliente).
+      ganancia: _esFacturacion ? (_totalFobUsd - _costoReal) : null,
+      notas_internas: p.notas_internas || null,
+      despacho: despachoPorProforma.get(p.id) || null,
+      fecha_factura: fechaFacturaPorProforma.get(p.id) || null,
+      _esFacturacion,
+      _totalFobUsd,
+      _costoReal,
     }
   })
 
@@ -160,10 +218,15 @@ export async function GET(req: NextRequest) {
     fecha: f.fecha,
     estado: f.estado,
     cliente: f.cliente,
+    pais: f.pais,
     facturado: f.facturado,
+    ganancia: f.ganancia,
     deuda_cliente_usd: f.deuda_cliente_usd,
     deuda_china_usd: f.deuda_china_usd,
     estado_deuda: f.estado_deuda,
+    notas_internas: f.notas_internas,
+    despacho: f.despacho,
+    fecha_factura: f.fecha_factura,
   }))
 
   return NextResponse.json({

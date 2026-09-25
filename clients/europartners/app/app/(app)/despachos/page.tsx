@@ -2,10 +2,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Ship, Plus, X, Upload, CheckCircle2, Clock, PackageCheck,
-  ChevronRight, AlertTriangle, Search,
+  ChevronRight, AlertTriangle, Search, Wallet,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
+import HistorialPagos from '@/components/HistorialPagos'
 
 interface ClienteMini { id: string; nombre: string; slug?: string }
 interface ProformaMini {
@@ -367,6 +368,8 @@ function DetalleDespacho({
   onDocumento: (id: string, tipo: string, archivo: File) => void
 }) {
   const ESTADOS: Despacho['estado'][] = ['preparando', 'en_transito', 'en_puerto', 'entregado']
+  const [mostrarModalFlete, setMostrarModalFlete] = useState(false)
+  const [pagosFleteRefreshKey, setPagosFleteRefreshKey] = useState(0)
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -420,6 +423,202 @@ function DetalleDespacho({
               <DocumentoRow label="Picking Info" url={despacho.archivo_picking_url} puedeEditar={puedeEditar} onUpload={f => onDocumento(despacho.id, 'picking', f)} />
             </div>
           </div>
+
+          {/* Pago de flete — lo que el CLIENTE paga por el shipping de este
+              despacho (migración 024_pago_flete_despacho.sql). Distinto de
+              "Shipping fee USD" de arriba, que es solo el monto de
+              referencia que carga operaciones a mano — acá queda el
+              historial real de cobros con comprobante, mismo patrón que
+              "Registrar pago" del cotizador (tabla `pagos`, tipo='flete',
+              despacho_id=este despacho). No cuenta hacia estado_pago de la
+              proforma (eso sigue siendo solo la factura/mercancía). */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Wallet size={15} className="text-gray-400" />
+                <h3 className="font-medium text-gray-800 text-sm">Pago de flete</h3>
+              </div>
+              {puedeEditar && despacho.proforma?.id && (
+                <button
+                  onClick={() => setMostrarModalFlete(true)}
+                  className="flex items-center gap-1.5 text-xs text-[#1E3A5F] font-medium hover:bg-blue-50 px-2.5 py-1.5 rounded-lg"
+                >
+                  <Plus size={14} />
+                  Registrar pago de flete
+                </button>
+              )}
+            </div>
+            {despacho.proforma?.id ? (
+              <HistorialPagos
+                proformaId={despacho.proforma.id}
+                refreshKey={pagosFleteRefreshKey}
+                tipos={['flete']}
+                vacioTexto="Todavía no hay pagos de flete registrados para este despacho."
+              />
+            ) : (
+              <p className="text-sm text-gray-400">No se pudo resolver la proforma de este despacho.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {mostrarModalFlete && despacho.proforma?.id && (
+        <RegistrarPagoFleteModal
+          proformaId={despacho.proforma.id}
+          despachoId={despacho.id}
+          onClose={() => setMostrarModalFlete(false)}
+          onGuardado={() => { setMostrarModalFlete(false); setPagosFleteRefreshKey(k => k + 1) }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Mismo patrón visual/funcional que RegistrarPagoModal del cotizador
+// (app/(app)/cotizador/[id]/page.tsx) — se separa en vez de reusar ese
+// componente porque acá el tipo de pago está fijo ('flete', sin selector) y
+// va ligado a un despacho puntual, no solo a la proforma.
+function RegistrarPagoFleteModal({
+  proformaId, despachoId, onClose, onGuardado,
+}: {
+  proformaId: string
+  despachoId: string
+  onClose: () => void
+  onGuardado: () => void
+}) {
+  const [monto, setMonto] = useState('')
+  const [comision, setComision] = useState('')
+  const [referencia, setReferencia] = useState('')
+  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
+  const [nota, setNota] = useState('')
+  const [archivo, setArchivo] = useState<File | null>(null)
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function guardar() {
+    if (!monto || Number(monto) <= 0) {
+      setError('Ingresa un monto válido')
+      return
+    }
+    setGuardando(true)
+    setError('')
+
+    const formData = new FormData()
+    formData.append('tipo', 'flete')
+    formData.append('despacho_id', despachoId)
+    formData.append('monto', monto)
+    if (comision) formData.append('comision_bancaria', comision)
+    if (referencia.trim()) formData.append('referencia', referencia.trim())
+    formData.append('fecha', fecha)
+    if (nota.trim()) formData.append('nota', nota.trim())
+    if (archivo) formData.append('comprobante', archivo)
+
+    const res = await fetch(`/api/proformas/${proformaId}/pagos`, { method: 'POST', body: formData })
+    if (res.ok) {
+      onGuardado()
+    } else {
+      const j = await res.json()
+      setError(j.error || 'Error al registrar el pago')
+    }
+    setGuardando(false)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '90vh' }}>
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
+          <h3 className="font-bold text-[#1E3A5F]">Registrar pago de flete</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-500">Monto (USD)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={monto}
+                onChange={e => setMonto(e.target.value)}
+                placeholder="0.00"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500">Comisión bancaria</label>
+              <input
+                type="number"
+                step="0.01"
+                value={comision}
+                onChange={e => setComision(e.target.value)}
+                placeholder="0.00"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Referencia</label>
+            <input
+              type="text"
+              value={referencia}
+              onChange={e => setReferencia(e.target.value)}
+              placeholder="No. de transferencia, wire, etc."
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Fecha</label>
+            <input
+              type="date"
+              value={fecha}
+              onChange={e => setFecha(e.target.value)}
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Nota</label>
+            <textarea
+              value={nota}
+              onChange={e => setNota(e.target.value)}
+              placeholder="Observaciones (opcional)"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-500">Comprobante (opcional)</label>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={e => setArchivo(e.target.files?.[0] || null)}
+              className="w-full mt-1 text-sm text-gray-500"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-2.5 text-xs">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 flex-none">
+          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700">
+            Cancelar
+          </button>
+          <button
+            onClick={guardar}
+            disabled={guardando}
+            className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
+            style={{ background: '#1E3A5F' }}
+          >
+            {guardando ? 'Guardando...' : 'Registrar pago'}
+          </button>
         </div>
       </div>
     </div>

@@ -3,6 +3,16 @@ export type Incoterm = 'FOB' | 'CFR' | 'CIF'
 export type Insurance = 'COLLECT' | 'PREPAID'
 export const INCOTERM_SUGERENCIAS: Incoterm[] = ['FOB', 'CFR', 'CIF']
 export const INSURANCE_SUGERENCIAS: Insurance[] = ['COLLECT', 'PREPAID']
+
+// Regla de negocio confirmada por Marta (2026-09-22): el Incoterm determina
+// el default de Freight e Insurance. Editable después en el cotizador para
+// excepciones puntuales, pero al elegir el Incoterm ambos deben "saltar" a
+// este valor.
+export const INCOTERM_FREIGHT_INSURANCE_DEFAULTS: Record<Incoterm, { freight: Insurance; insurance: Insurance }> = {
+  FOB: { freight: 'COLLECT', insurance: 'COLLECT' },
+  CFR: { freight: 'PREPAID', insurance: 'COLLECT' },
+  CIF: { freight: 'PREPAID', insurance: 'PREPAID' },
+}
 export type ModoPricing = 'set' | 'componente'
 export type TipoPrecio = 'mayorista' | 'detallista'
 export type EstadoProforma = 'borrador' | 'en_revision' | 'aprobada' | 'rechazada' | 'enviada' | 'facturada' | 'cambios_solicitados' | 'anulada'
@@ -178,6 +188,16 @@ export interface Proforma {
   pdf_url?: string
   importado_de_excel: boolean
   created_at: string
+  // Registro Maestro Vivo — campos agregados en migración 021_tabla_pagos.sql
+  // que hasta ahora no tenían UI (ver comentario en esa migración sobre
+  // total_china_usd: es el único monto real de lo que factura el proveedor
+  // chino por ESTE embarque, no hay forma de derivarlo de otra tabla).
+  total_china_usd?: number | null
+  acuerdo_pago?: string | null
+  perdida_usd?: number | null
+  motivo_perdida?: string | null
+  nota_credito_usd?: number | null
+  motivo_nota_credito?: string | null
   // Joined
   cliente?: Cliente
   lineas?: ProformaLinea[]
@@ -317,11 +337,17 @@ export type EstadoPago = 'pendiente' | 'parcial' | 'pagado'
 // `proformas` (monto_abono_requerido/monto_abono_recibido/fecha_abono/
 // comprobante_url, que quedan muertas). `estado_pago` en `proformas` ahora se
 // recalcula solo vía trigger a partir de la suma de pagos tipo='cliente'.
-export type TipoPago = 'cliente' | 'china'
+//
+// 'flete' (migración 024_pago_flete_despacho.sql) es el pago que el CLIENTE
+// hace por el flete/shipping de su embarque — ligado a `despacho_id`, NO
+// cuenta hacia `proformas.estado_pago` (el trigger solo suma tipo='cliente').
+// Distinto de 'china', que es lo que Europartners le paga al proveedor.
+export type TipoPago = 'cliente' | 'china' | 'flete'
 
 export interface Pago {
   id: string
   proforma_id: string
+  despacho_id?: string | null
   tipo: TipoPago
   monto: number
   comision_bancaria: number
