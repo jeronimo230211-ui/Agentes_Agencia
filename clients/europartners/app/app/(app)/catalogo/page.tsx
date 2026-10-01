@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Search, Filter, RefreshCw, Package, Plus, Eye } from 'lucide-react'
+import { Search, Filter, RefreshCw, Package, Plus, Eye, EyeOff } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import NuevoProductoModal from '@/components/NuevoProductoModal'
@@ -12,6 +12,7 @@ import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 interface Categoria {
   id: string
   nombre: string
+  activo: boolean
 }
 
 interface Dimensiones {
@@ -50,11 +51,14 @@ interface Producto {
 
 function ProductCard({ p, onClick }: { p: Producto; onClick: () => void }) {
   const [imgError, setImgError] = useState(false)
+  const oculto = p.estado === 'oculto'
 
   return (
     <div
       onClick={onClick}
-      className="group bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 overflow-hidden flex flex-col cursor-pointer"
+      className={`group bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col cursor-pointer ${
+        oculto ? 'border-amber-200 opacity-70' : 'border-gray-100 hover:border-gray-200'
+      }`}
     >
       {/* Imagen */}
       <div className="relative bg-gray-50 h-40 flex items-center justify-center overflow-hidden">
@@ -67,6 +71,11 @@ function ProductCard({ p, onClick }: { p: Producto; onClick: () => void }) {
           />
         ) : (
           <Package size={32} className="text-gray-300" />
+        )}
+        {oculto && (
+          <span className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+            <EyeOff size={10} /> Oculto
+          </span>
         )}
         <div className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
           <Eye size={13} className="text-[#1E3A5F]" />
@@ -97,6 +106,7 @@ export default function CatalogoPage() {
   const [cargando, setCargando]     = useState(true)
   const [busqueda, setBusqueda]     = useState('')
   const [categoriaId, setCategoriaId] = useState('')
+  const [mostrarOcultos, setMostrarOcultos] = useState(false)
   const [mostrarNuevo, setMostrarNuevo] = useState(false)
   const [productoEditando, setProductoEditando] = useState<Producto | null>(null)
   const [productoDetalle, setProductoDetalle] = useState<Producto | null>(null)
@@ -125,7 +135,7 @@ export default function CatalogoPage() {
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => cargar(), busqueda ? 300 : 0)
     return () => clearTimeout(timerRef.current)
-  }, [busqueda, categoriaId])
+  }, [busqueda, categoriaId, mostrarOcultos])
 
   async function cargar() {
     setCargando(true)
@@ -138,10 +148,27 @@ export default function CatalogoPage() {
     const params = new URLSearchParams({ limit: '1000' })
     if (busqueda.trim())  params.set('q', busqueda.trim())
     if (categoriaId)      params.set('categoria_id', categoriaId)
+    // Sin esto el GET solo trae estado='activo' — un producto apagado
+    // desaparecería también de este panel y no habría forma de reactivarlo.
+    if (mostrarOcultos)   params.set('incluir_ocultos', '1')
     const res = await fetch(`/api/productos?${params}`)
     const { data } = await res.json()
     setProductos(data || [])
     setCargando(false)
+  }
+
+  async function toggleCategoria(cat: Categoria) {
+    const nuevoActivo = !cat.activo
+    setCategorias(prev => prev.map(c => c.id === cat.id ? { ...c, activo: nuevoActivo } : c))
+    const res = await fetch(`/api/categorias/${cat.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activo: nuevoActivo }),
+    })
+    if (!res.ok) {
+      // revertir si falló
+      setCategorias(prev => prev.map(c => c.id === cat.id ? { ...c, activo: cat.activo } : c))
+    }
   }
 
   return (
@@ -167,6 +194,7 @@ export default function CatalogoPage() {
           onClose={() => setProductoDetalle(null)}
           onEditar={puedeEditar ? () => { setProductoEditando(productoDetalle); setProductoDetalle(null) } : undefined}
           onFijarPrecioEspecial={puedeEditar ? () => setProductoParaPrecioEspecial(productoDetalle) : undefined}
+          onVisibilidadCambiada={() => { setProductoDetalle(null); cargar() }}
           puedeEditar={puedeEditar}
           refrescarPrecios={refrescarPrecios}
         />
@@ -232,17 +260,43 @@ export default function CatalogoPage() {
             Todas
           </button>
           {categorias.map(cat => (
-            <button
+            <span
               key={cat.id}
-              onClick={() => setCategoriaId(prev => prev === cat.id ? '' : cat.id)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                categoriaId === cat.id ? 'bg-[#1E3A5F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              className={`flex items-center gap-1 text-xs rounded-full font-medium transition-colors pl-3 pr-1.5 py-1.5 ${
+                categoriaId === cat.id
+                  ? 'bg-[#1E3A5F] text-white'
+                  : cat.activo
+                    ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-amber-50 text-amber-600 border border-amber-200'
               }`}
             >
-              {cat.nombre}
-            </button>
+              <button onClick={() => setCategoriaId(prev => prev === cat.id ? '' : cat.id)}>
+                {cat.nombre}{!cat.activo && ' (oculta)'}
+              </button>
+              {puedeEditar && (
+                <button
+                  onClick={() => toggleCategoria(cat)}
+                  title={cat.activo ? 'Ocultar categoría del catálogo público' : 'Mostrar categoría en el catálogo público'}
+                  className="opacity-60 hover:opacity-100 p-0.5"
+                >
+                  {cat.activo ? <Eye size={11} /> : <EyeOff size={11} />}
+                </button>
+              )}
+            </span>
           ))}
         </div>
+
+        {puedeEditar && (
+          <label className="flex items-center gap-1.5 text-xs text-gray-500 font-medium cursor-pointer select-none ml-auto">
+            <input
+              type="checkbox"
+              checked={mostrarOcultos}
+              onChange={e => setMostrarOcultos(e.target.checked)}
+              className="rounded accent-[#1E3A5F]"
+            />
+            Mostrar ocultos
+          </label>
+        )}
       </div>
 
       {/* Grid de cards */}

@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const q = searchParams.get('q') || ''
   const categoria_id = searchParams.get('categoria_id')
+  const incluirOcultos = searchParams.get('incluir_ocultos') === '1'
   const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 1000)
   const offset = parseInt(searchParams.get('offset') || '0')
 
@@ -27,7 +28,6 @@ export async function GET(req: NextRequest) {
       variantes:producto_variantes(*),
       componentes:producto_componentes(*)
     `)
-    .eq('estado', 'activo')
     .order('categoria_id', { ascending: true })
     .order('codigo', { ascending: true })
     .range(offset, offset + limit - 1)
@@ -38,6 +38,15 @@ export async function GET(req: NextRequest) {
 
   if (categoria_id) {
     query = query.eq('categoria_id', categoria_id)
+  }
+
+  // Por default solo se listan productos activos (comportamiento de siempre,
+  // del que depende el cotizador interno). El panel de catálogo puede pedir
+  // incluir_ocultos=1 para ver también los apagados (ver migración 026) y
+  // poder reactivarlos — si no, un producto apagado desaparecería también
+  // del panel interno y no habría forma de encontrarlo para encenderlo de nuevo.
+  if (!incluirOcultos) {
+    query = query.eq('estado', 'activo')
   }
 
   const { data, error } = await query

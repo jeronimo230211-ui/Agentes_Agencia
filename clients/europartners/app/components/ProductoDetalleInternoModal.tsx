@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { X, Package, Pencil, Tag, Plus, Loader2, Sparkles, CheckCircle2 } from 'lucide-react'
+import { X, Package, Pencil, Tag, Plus, Loader2, Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 
 interface Dimensiones { largo_mm?: number; ancho_mm?: number; alto_mm?: number }
@@ -28,6 +28,7 @@ export interface ProductoDetalleInterno {
   cbm_unitario: number | null
   moq: number | null
   notas: string | null
+  estado: string
   categoria: { id: string; nombre: string } | null
   tiene_historial: boolean
   veces_vendido: number | null
@@ -42,6 +43,7 @@ export default function ProductoDetalleInternoModal({
   onClose,
   onEditar,
   onFijarPrecioEspecial,
+  onVisibilidadCambiada,
   puedeEditar,
   refrescarPrecios,
 }: {
@@ -49,17 +51,31 @@ export default function ProductoDetalleInternoModal({
   onClose: () => void
   onEditar?: () => void
   onFijarPrecioEspecial?: () => void
+  onVisibilidadCambiada?: () => void
   puedeEditar?: boolean
   refrescarPrecios?: number
 }) {
   const [estadoFicha, setEstadoFicha] = useState(producto.ficha_tecnica_estado)
   const [aprobando, setAprobando] = useState(false)
+  const [cambiandoVisibilidad, setCambiandoVisibilidad] = useState(false)
+  const oculto = producto.estado === 'oculto'
 
   async function aprobarFicha() {
     setAprobando(true)
     const res = await fetch(`/api/productos/${producto.id}/aprobar-ficha`, { method: 'POST' })
     if (res.ok) setEstadoFicha('aprobada')
     setAprobando(false)
+  }
+
+  async function toggleVisibilidad() {
+    setCambiandoVisibilidad(true)
+    const res = await fetch(`/api/productos/${producto.id}/visibilidad`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: oculto ? 'activo' : 'oculto' }),
+    })
+    setCambiandoVisibilidad(false)
+    if (res.ok) onVisibilidadCambiada?.()
   }
   const dim = producto.dimensiones
   const dimTexto = dim && (dim.largo_mm || dim.ancho_mm || dim.alto_mm)
@@ -289,15 +305,37 @@ export default function ProductoDetalleInternoModal({
         </div>
 
         {/* Footer */}
-        {onEditar && (
-          <div className="p-5 border-t border-gray-100 flex-none">
-            <button
-              onClick={onEditar}
-              className="w-full py-3 rounded-lg font-bold text-white text-sm flex items-center justify-center gap-2"
-              style={{ background: '#1E3A5F' }}
-            >
-              <Pencil size={14} /> Editar producto
-            </button>
+        {(onEditar || puedeEditar) && (
+          <div className="p-5 border-t border-gray-100 flex-none flex gap-2">
+            {puedeEditar && (
+              <button
+                onClick={toggleVisibilidad}
+                disabled={cambiandoVisibilidad}
+                className={`flex-1 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 border disabled:opacity-60 ${
+                  oculto
+                    ? 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                    : 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                }`}
+              >
+                {cambiandoVisibilidad ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : oculto ? (
+                  <Eye size={14} />
+                ) : (
+                  <EyeOff size={14} />
+                )}
+                {oculto ? 'Mostrar en catálogo' : 'Ocultar del catálogo'}
+              </button>
+            )}
+            {onEditar && (
+              <button
+                onClick={onEditar}
+                className="flex-1 py-3 rounded-lg font-bold text-white text-sm flex items-center justify-center gap-2"
+                style={{ background: '#1E3A5F' }}
+              >
+                <Pencil size={14} /> Editar producto
+              </button>
+            )}
           </div>
         )}
       </div>

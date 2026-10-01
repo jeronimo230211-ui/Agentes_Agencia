@@ -16,6 +16,7 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
   const { data: categorias } = await adminClient
     .from('categorias_producto')
     .select('id, nombre, orden')
+    .eq('activo', true)
     .order('orden', { ascending: true })
 
   const { data: productosRaw } = await adminClient
@@ -27,7 +28,18 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
 
   const overrides = clienteId ? await getPreciosEspeciales(adminClient, clienteId) : new Map()
 
-  const productos = (productosRaw || []).map(p => {
+  // Apagar una categoría (ver migración 026) debe ocultar también sus
+  // productos del catálogo público — no alcanza con quitar la categoría de
+  // la lista de arriba: SolicitudForm.tsx muestra "All" products sin volver
+  // a cruzar contra `categorias`, así que un producto con categoria_id de
+  // una categoría apagada seguiría apareciendo si no se filtra aquí mismo.
+  // Los productos sin categoría (categoria_id null) no se ven afectados.
+  const categoriasActivasIds = new Set((categorias || []).map(c => c.id))
+  const productosVisibles = (productosRaw || []).filter(
+    p => p.categoria_id === null || categoriasActivasIds.has(p.categoria_id)
+  )
+
+  const productos = productosVisibles.map(p => {
     const { precio_mayorista, precio_detallista, dimensiones, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado, ...resto } = p
     const override = overrides.get(p.id)
     // La ficha técnica generada por IA (ver migración 014) solo se expone al
