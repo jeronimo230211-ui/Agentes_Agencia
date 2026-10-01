@@ -104,6 +104,22 @@ Fixes encontrados de paso:
 - La consulta de citas ocupadas cortaba en la hora exacta de `toDate`, pero el motor evalúa ese último día completo → podía ofrecer como libres horas ya tomadas del último día. La lista de espera además revisaba 2 días en vez de 1.
 - Los turnos se le pasaban al modelo en ISO UTC pero `agendar_cita` espera hora local — ahora `fecha_hora` viene ya en hora local.
 
+## Correcciones de Alex — ronda 2 (2026-09-30)
+
+Objetivo de Alex: **el menor número de mensajes posible** por cita/cancelación/consulta.
+- Tocar "Otro día" responde al instante con un texto fijo, sin pasar por el modelo (`OTHER_DAY_PROMPT`): "Indíqueme qué día y a qué hora le gustaría reservar su turno. Por ejemplo: *viernes 3 pm*".
+- Toda lista que incluye "Otro día" lleva la nota "✍️ ¿Otro día? Escríbame directamente el día y la hora que prefiere" (`OTHER_DAY_HINT`), así el cliente se puede saltar el toque.
+- Regla de "mínimos mensajes" en el prompt: sin confirmaciones extra; si el cliente escribe día + hora y está libre (y ya se sabe servicio + nombre), agenda de una. Probado: "A las 4 entonces" → agendada en un mensaje.
+
+## Ronda 3 — tono y flujo sacados de chats reales (2026-09-30)
+
+Análisis completo en `docs/ANALISIS_CHATS_ALEX.md` (3 chats, ~70 citas reales).
+- Tono de Alex en el prompt: "Buenos días [nombre]...", "Si dale hoy a las 6 👍🏽💈", una línea, sin muletillas paisas inventadas. Saludo según hora del día (`timeOfDayGreeting`).
+- Cliente frecuente: se usa su servicio de siempre sin preguntar (ningún cliente real dice el servicio). Cliente nuevo: sí se pregunta.
+- `ver_disponibilidad` acepta `hora`: responde `hora_pedida_libre` + `mas_cercanas` ordenadas por cercanía. **Bug arreglado:** la consulta por día tenía tope de 9 turnos, así que los de la noche (los que más le piden a Alex) quedaban fuera y el agente decía "ocupado" cuando estaban libres.
+- Confirmación incluye la política: "Si no puede venir, avíseme mínimo 2 horas antes 🙏". Sin hablar de cobros.
+- Decisiones de Jerónimo: se mantienen las 2h para agendar (el "¿puedes llegar ya?" es esporádico) y para cancelar; la regla se refuerza con el aviso al agendar + un recordatorio automático (pendiente de construir).
+
 ## Variables de entorno requeridas (cuando se despliegue)
 
 ```

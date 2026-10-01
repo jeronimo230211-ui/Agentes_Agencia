@@ -34,3 +34,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# chats reales de clientes (datos personales) — nunca subir
+/docs/chats/

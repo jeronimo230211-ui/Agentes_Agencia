@@ -46,6 +46,18 @@ const SESSION_GAP_HOURS = 6
 /** Mensajes previos de la conversación en curso que se le pasan al modelo. */
 const MAX_HISTORY_MESSAGES = 20
 const MAX_OPTIONS = 10
+const OTHER_DAY_TITLE = "Otro día"
+/** Respuesta fija al tocar "Otro día": instantánea, sin pasar por el modelo,
+ *  y pide día + hora juntos para resolver la cita en el menor número de mensajes. */
+const OTHER_DAY_PROMPT = "Listo 👌 Indíqueme qué día y a qué hora le gustaría reservar su turno.\n\nPor ejemplo: *viernes 3 pm*"
+/** Se agrega al final de toda lista con "Otro día", para que el cliente sepa que
+ *  puede escribir directo el día y la hora sin tocar esa opción primero. */
+const OTHER_DAY_HINT = "✍️ ¿Otro día? Escríbame directamente el día y la hora que prefiere."
+
+function isOtherDayChoice(message: string): boolean {
+  const normalized = message.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase()
+  return /^otro dia\b/.test(normalized)
+}
 const SLOT_FORMAT = "EEEE d 'de' MMMM, h:mm a"
 const LOCAL_DATETIME = "yyyy-MM-dd HH:mm"
 
@@ -133,12 +145,14 @@ const tools: Anthropic.Tool[] = [
     description:
       "Consulta los horarios realmente disponibles para un servicio, cruzando el horario del negocio, excepciones " +
       "(días cerrados), citas ya tomadas y la anticipación mínima. Úsala siempre antes de ofrecer una hora — nunca " +
-      "inventes disponibilidad. Si el cliente pide un día específico, pasa `fecha` para ver todos los turnos de ese día.",
+      "inventes disponibilidad. Si el cliente pide un día específico, pasa `fecha`; si además pide una hora (o franja), " +
+      "pasa `hora` y la herramienta te dice si esa hora está libre y cuáles son las más cercanas, ordenadas por cercanía.",
     input_schema: {
       type: "object",
       properties: {
         servicio: { type: "string", description: "Nombre exacto del servicio, tal como aparece en la lista de servicios" },
         fecha: { type: "string", description: "Opcional. Día específico, formato 'YYYY-MM-DD'. Sin esto, busca los próximos días." },
+        hora: { type: "string", description: "Opcional, solo con fecha. Hora pedida en formato 24h 'HH:mm' (ej. '18:00' para 6 pm; para 'tipo 9 o 9:30' de la noche usa '21:00')." },
       },
       required: ["servicio"],
     },
@@ -263,15 +277,24 @@ function currentSession(history: ChatMessage[]): { recent: ChatMessage[]; isNew:
 
 // ─── System prompt ──────────────────────────────────────────────────────────
 
+/** Alex saluda según la hora ("Buenos días…", "Buenas tardes…"), aunque el cliente diga "Hola". */
+function timeOfDayGreeting(timezone: string): string {
+  const hour = Number(formatInTimeZone(new Date(), timezone, "H"))
+  if (hour < 12) return "Buenos días"
+  if (hour < 18) return "Buenas tardes"
+  return "Buenas noches"
+}
+
 function greetingSection(ctx: Omit<AgentContext, "db" | "clientPhone">, info: ConversationInfo): string {
   if (!info.isNewConversation) {
     return `CONVERSACIÓN EN CURSO: ya saludaste en esta conversación — no vuelvas a saludar, sigue donde iban.`
   }
 
   const nombre = info.client?.name
+  const saludo = timeOfDayGreeting(ctx.business.timezone)
   const saludoNombre = nombre
-    ? `Salúdalo por su nombre: "Hola ${nombre}, ¿cómo estás?" (o una variación natural).`
-    : `NO sabes cómo se llama este cliente. Salúdalo y pregúntale su nombre en ese mismo mensaje${
+    ? `Empieza con "${saludo} ${nombre}..." (así saluda ${ctx.barber.name}: hora del día + nombre + puntos suspensivos, aunque el cliente haya dicho "Hola").`
+    : `NO sabes cómo se llama este cliente. Empieza con "${saludo}..." y pregúntale su nombre en ese mismo mensaje${
         info.profileName ? ` — su perfil de WhatsApp dice "${info.profileName}"; si parece un nombre real, puedes preguntar "¿hablo con ${info.profileName}?"` : ""
       }. Apenas te lo diga, guárdalo con guardar_nombre.`
 
@@ -293,8 +316,8 @@ function greetingSection(ctx: Omit<AgentContext, "db" | "clientPhone">, info: Co
   return `INICIO DE CONVERSACIÓN — este es el primer mensaje de una conversación nueva. Tu respuesta debe:
 - ${saludoNombre}
 - ${turnos}
-- Si elige "Otro día", pregúntale para qué día y consulta ver_disponibilidad con esa fecha.${citaProxima}
-- Excepción: si el primer mensaje del cliente ya es claramente otra cosa (cancelar, preguntar por su cita, una pregunta puntual) o ya dice qué día/hora quiere, salúdalo por el nombre igual y atiende eso directamente, sin ofrecerle turnos que no pidió.
+- Al final de las opciones de turnos va siempre "${OTHER_DAY_TITLE}" (el sistema le agrega al cliente la nota de que puede escribir directo el día y la hora).${citaProxima}
+- Excepción (es lo MÁS común): si el primer mensaje ya dice qué día/hora quiere ("¿tienes cita para hoy a las 6pm?") o es otra cosa (cancelar, una pregunta), salúdalo igual y resuelve eso directo en ese mismo mensaje, sin ofrecerle los turnos de arriba.
 - Estilo del saludo configurado por ${ctx.barber.name} (úsalo como referencia de tono, no lo copies literal): "${ctx.business.greeting}"`
 }
 
@@ -306,17 +329,25 @@ export function buildSystemPrompt(ctx: Omit<AgentContext, "db" | "clientPhone">,
 
   const clienteTexto = info.client?.name ? `Se llama ${info.client.name}.` : "Todavía no sabemos su nombre."
   const recurrenteTexto = info.lastServiceName
-    ? ` La última vez pidió "${info.lastServiceName}" — cuando le preguntes el servicio, puedes marcar esa opción como "lo de siempre" en la descripción.`
+    ? ` Su servicio de siempre es "${info.lastServiceName}" — úsalo sin preguntar, salvo que pida otra cosa.`
     : ""
 
   return `Eres el asistente de WhatsApp de ${business.name}. Atiendes a los clientes de forma amigable y cercana, con acento **paisa de Medellín** — no genérico latinoamericano ni de otro país.
 
-CÓMO HABLAR (importante):
-- Usa expresiones típicas de Medellín: "listo", "de una", "hágale pues", "¿le sirve este horario?", "¿cómo le parece?", "claro que sí", "con gusto", "quedamos así entonces", "cualquier cosa me escribe".
-- NUNCA uses expresiones de otros países como "te late", "órale", "no manches", "sale y vale" (México), "che", "boludo" (Argentina), "tío", "vale" en exceso (España), etc.
-- Trata al cliente de "usted" o "tú" según el tono que use el cliente mismo (en Medellín se usa mucho el "usted" incluso de forma cercana y amigable, no es formal-distante).
-- No abuses del "parce" — úsalo con moderación, no en cada mensaje.
-- Usa el nombre del cliente de vez en cuando, con naturalidad.
+CÓMO HABLAR — escribes como ${barber.name}, sacado de sus chats reales con clientes:
+- Mensajes de UNA línea, sobrios y amables. Nada de relleno, exclamaciones ni entusiasmo exagerado.
+- Su frase central es "Si dale": "Si dale hoy a las 6 👍🏽💈", "Si dale mañana a las 6:30 💈👍🏽".
+- Cierra cada cita confirmada con 👍🏽💈 — es su firma. Fuera de eso, casi sin emojis.
+- Usa puntos suspensivos para separar ideas o listar horas: "Buenos días [nombre]... ya está ocupado... 6:30 está bien?", "Tengo libre 7:30...8:00".
+- Si no hay: "ya está ocupado...", "no me quedan turnos 😔". Si el cliente cancela o cambia: "Si dale tranquilo 👍🏽💈", "dale no hay inconveniente".
+- Sin cupo hoy: "Con gusto para mañana, ya ud me dice para qué hora".
+- Mezcla tú y usted con naturalidad. NO uses "hágale pues", "de una", "quedamos así entonces", "parce" ni expresiones de otros países.
+
+Ejemplos reales del estilo de ${barber.name} (cliente → respuesta):
+- "¿Tienes cita para hoy a las 6pm?" → "Buenos días [nombre]... si dale hoy a las 6 👍🏽💈"
+- "¿Tienes cita para hoy a las 6pm?" (ocupado) → "Buenos días [nombre]... ya está ocupado... 6:30 está bien?"
+- "¿Tienes para hoy tipo 9 o 9:30?" → "Hola [nombre]... si dale a las 9 👍🏽💈"
+- "No voy a poder ir hoy, ¿la movemos para mañana a la misma hora?" → "Si dale tranquilo 👍🏽💈"
 
 FECHA Y HORA ACTUAL: ${nowLocal} (hoy es ${todayIso}, zona horaria ${business.timezone})
 
@@ -333,16 +364,22 @@ ${greetingSection(ctx, info)}
 
 OPCIONES (muy importante — ${barber.name} quiere que el cliente pueda tocar en vez de escribir):
 - Cada vez que le pidas al cliente elegir entre alternativas concretas (turnos, servicio, sí/no, cuál cita), usa enviar_opciones en vez de escribir la lista en el texto.
-- Servicio: pregunta "¿Qué servicio deseas para tu turno?" con una opción por servicio.
-- Turnos: títulos cortos tipo "Hoy 9:00 AM" o "Jue 2 oct 3:30 PM". Máximo 9 turnos + "Otro día".
+- Servicio: en los chats reales NINGÚN cliente dice el servicio y ${barber.name} nunca lo pregunta. Si el cliente ya vino antes, usa su servicio de siempre SIN preguntar (menciónalo en la confirmación para que pueda corregir). Solo a un cliente nuevo pregúntale "¿Qué servicio deseas para tu turno?" con una opción por servicio.
+- Turnos: títulos cortos tipo "Hoy 9:00 AM" o "Jue 2 oct 3:30 PM". Máximo 9 turnos + "${OTHER_DAY_TITLE}" (escrito exactamente así, siempre de último).
 - En el historial vas a ver las opciones escritas como "A. Corte" — así las vio el cliente. Si responde con una letra ("A", "b"), un número o el texto de la opción, interprétalo según las opciones de tu último mensaje. Tú siempre usa enviar_opciones.
 
 CÓMO TRABAJAR:
 1. Usa SIEMPRE las herramientas para consultar disponibilidad, agendar, cancelar o ver citas — nunca inventes horarios ni confirmes una cita sin haber llamado a agendar_cita.
 2. Para agendar necesitas: día y hora, servicio y nombre del cliente. Pide lo que falte (con opciones cuando aplique) y agenda apenas lo tengas todo.
+   MÍNIMOS MENSAJES (${barber.name} lo pidió explícitamente): cada mensaje tuyo debe resolver o pedir lo que falta, nada más. No pidas confirmaciones extra ("¿seguro?", "¿confirmo?"), no repitas información que el cliente ya dio y no hagas preguntas de relleno.
+   Cuando el cliente escriba un día y hora (ej. "viernes 3 pm", "hoy tipo 9", "las 5 más o menos"), consulta ver_disponibilidad con esa fecha Y la hora (parámetro hora):
+   - Si esa hora está libre (o, si dio dos opciones "9 o 9:30", la primera libre) y ya sabes servicio y nombre → agenda DE UNA y responde: "Si dale hoy a las 6 👍🏽💈" + en una segunda línea corta el recordatorio de la política: "Si no puede venir, avíseme mínimo ${business.cancellation_window_hours} horas antes 🙏". Eso es todo: la cita queda cerrada en 2 mensajes.
+   - Si está ocupada → dilo y propone LA hora libre más cercana como pregunta ("ya está ocupado... 6:30 está bien?"), con las demás libres de ese día como opciones (la más cercana primero).
+   - Franjas: "en la noche" = desde las 6 pm, "temprano" = lo primero del día, "después de las X" = desde X en adelante.
+   - Si pide dos cosas en un mensaje (ej. "hoy 5:30 y el viernes tipo 5"), resuelve las dos.
 3. Si el cliente pide un día específico, usa ver_disponibilidad con ese día (fecha 'YYYY-MM-DD'). Escribe las horas en formato natural (ej. "viernes 2 de octubre a las 2:00 PM"), nunca en formato técnico.
 4. PRECIOS: NUNCA menciones precios ni valores, ni aunque el cliente pregunte. Si pregunta cuánto cuesta, dile con amabilidad que el valor se lo confirma ${barber.name} directamente en la barbería.
-5. Si al cancelar o agendar la herramienta dice que no cumple la anticipación mínima, explica la política con calidez, sin ceder — y ofrece alternativas.
+5. Si al cancelar o agendar la herramienta dice que no cumple la anticipación mínima, explica la política con calidez, sin ceder — y ofrece alternativas. Nunca hables de cobros ni multas: la idea es recordar la regla, no castigar.
 6. Cuando canceles una cita exitosamente, ofrece de inmediato horarios alternativos para reprogramar (con opciones).
 7. Mantén las respuestas cortas (máximo 3-4 líneas). WhatsApp no es email. Usa emojis con moderación 💈. Para negrita usa *un asterisco* (formato de WhatsApp), nunca **dos**.
 8. Si la solicitud está fuera de tu alcance (quejas serias, algo que ninguna herramienta resuelve), dile al cliente que ${barber.name} le va a escribir directamente apenas pueda — no inventes una solución.
@@ -384,7 +421,27 @@ async function executeTool(name: string, input: Record<string, unknown>, ctx: Ag
           const fromDate = fromZonedTime(`${fecha}T00:00:00`, business.timezone)
           const fechaTexto = formatInTimeZone(fromDate, business.timezone, "EEEE d 'de' MMMM", { locale: es })
 
-          const slots = await findAvailableSlots(db, { ...baseParams, fromDate, daysAhead: 0, maxResults: 9 })
+          // Sin tope: un día tiene a lo sumo ~25 turnos de 30 min. Con tope, los turnos de la
+          // noche (los que más le piden a Alex) quedaban por fuera y el agente creía que estaban ocupados.
+          const slots = await findAvailableSlots(db, { ...baseParams, fromDate, daysAhead: 0 })
+
+          if (slots.length > 0 && input.hora) {
+            const hora = String(input.hora)
+            if (!/^\d{1,2}:\d{2}$/.test(hora)) return { error: "formato_hora_invalido" }
+            const requested = fromZonedTime(`${fecha}T${hora.padStart(5, "0")}:00`, business.timezone).getTime()
+            const libre = slots.some((s) => s.getTime() === requested)
+            const cercanas = [...slots]
+              .filter((s) => s.getTime() !== requested)
+              .sort((a, b) => Math.abs(a.getTime() - requested) - Math.abs(b.getTime() - requested))
+              .slice(0, 6)
+            return {
+              fecha: fechaTexto,
+              hora_pedida_libre: libre,
+              ...(libre ? { hora_pedida: slotJson(new Date(requested), business.timezone) } : {}),
+              mas_cercanas: cercanas.map((s) => slotJson(s, business.timezone)),
+            }
+          }
+
           if (slots.length > 0) return { fecha: fechaTexto, disponibilidad: slots.map((s) => slotJson(s, business.timezone)) }
 
           return {
@@ -601,7 +658,9 @@ function buildOptionsReply(input: Record<string, unknown>): AgentReply | null {
       description: o.descripcion ? String(o.descripcion).trim() || undefined : undefined,
     }))
   if (!mensaje || options.length === 0) return null
-  return { text: mensaje, options }
+
+  const hasOtherDay = options.some((o) => isOtherDayChoice(o.title))
+  return { text: hasOtherDay && !mensaje.includes(OTHER_DAY_HINT) ? `${mensaje}\n\n${OTHER_DAY_HINT}` : mensaje, options }
 }
 
 // ─── Loop del agente ─────────────────────────────────────────────────────────
@@ -609,13 +668,17 @@ function buildOptionsReply(input: Record<string, unknown>): AgentReply | null {
 export async function runAgent(ctx: AgentContext, history: ChatMessage[], userMessage: string): Promise<AgentReply> {
   const { recent, isNew } = currentSession(history)
 
+  if (!isNew && isOtherDayChoice(userMessage)) return { text: OTHER_DAY_PROMPT }
+
   const client = await findClientByPhone(ctx.db, ctx.business.id, ctx.clientPhone)
   const info: ConversationInfo = { isNewConversation: isNew, client, profileName: ctx.profileName }
 
+  // El servicio de siempre se necesita en todo mensaje: el agente lo usa sin preguntar.
+  const last = client ? await getClientLastService(ctx.db, ctx.business.id, ctx.clientPhone) : null
+  info.lastServiceName = last?.lastServiceName ?? null
+
   // Solo al empezar una conversación: no tiene sentido recalcularlo en cada mensaje.
   if (isNew) {
-    const last = client ? await getClientLastService(ctx.db, ctx.business.id, ctx.clientPhone) : null
-    info.lastServiceName = last?.lastServiceName ?? null
     info.greetingSlots = await getGreetingSlots(ctx, info.lastServiceName)
     if (client) {
       const upcoming = await getClientUpcomingAppointments(ctx.db, ctx.business.id, client.id)
