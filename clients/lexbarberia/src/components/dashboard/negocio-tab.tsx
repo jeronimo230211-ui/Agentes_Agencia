@@ -25,6 +25,7 @@ export function NegocioTab() {
   const [greeting, setGreeting] = useState("")
   const [cancellationHours, setCancellationHours] = useState("2")
   const [bufferMinutes, setBufferMinutes] = useState("0")
+  const [reminderHours, setReminderHours] = useState("3")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
@@ -37,6 +38,7 @@ export function NegocioTab() {
     setGreeting(j.business?.greeting || "")
     setCancellationHours(String(j.business?.cancellation_window_hours ?? 2))
     setBufferMinutes(String(j.business?.buffer_minutes ?? 0))
+    setReminderHours(String(j.business?.reminder_hours_before?.[0] ?? 3))
   }
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export function NegocioTab() {
         greeting,
         cancellation_window_hours: Number(cancellationHours),
         buffer_minutes: Number(bufferMinutes),
+        reminder_hours_before: [Number(reminderHours)],
       }),
     })
     setSaving(false)
@@ -108,6 +111,16 @@ export function NegocioTab() {
           <div className="space-y-1">
             <Label className="text-xs">Buffer entre citas (min)</Label>
             <Input type="number" value={bufferMinutes} onChange={(e) => setBufferMinutes(e.target.value)} />
+          </div>
+          <div className="space-y-1 col-span-2">
+            <Label className="text-xs">Recordatorio de cita (horas antes)</Label>
+            <Input type="number" min={1} value={reminderHours} onChange={(e) => setReminderHours(e.target.value)} className="max-w-[8rem]" />
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Debe ser mayor que la anticipación mínima, para que el cliente alcance a cancelar a tiempo si no puede ir.
+              {Number(reminderHours) <= Number(cancellationHours) && (
+                <span className="text-destructive"> Ahora mismo el recordatorio llegaría cuando ya no se puede cancelar.</span>
+              )}
+            </p>
           </div>
         </div>
         <Button onClick={save} disabled={saving} className="w-full">

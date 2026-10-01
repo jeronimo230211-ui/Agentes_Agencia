@@ -8,7 +8,13 @@ export async function GET() {
 
   const { data: barber } = await db.from("barbers").select("*").eq("business_id", business.id).eq("active", true).order("created_at").limit(1).single()
 
-  return NextResponse.json({ business, barber })
+  // Nunca mandar tokens al navegador: el dashboard solo necesita saber si hay conexión.
+  const safeBusiness = {
+    ...business,
+    whatsapp_provider_config: {},
+    google_calendar_tokens: business.google_calendar_tokens?.refresh_token ? { refresh_token: "connected" } : null,
+  }
+  return NextResponse.json({ business: safeBusiness, barber })
 }
 
 export async function PUT(request: NextRequest) {
@@ -17,12 +23,12 @@ export async function PUT(request: NextRequest) {
 
   const db = createServiceClient()
   const updates: Record<string, unknown> = {}
-  for (const key of ["address", "greeting", "cancellation_window_hours", "buffer_minutes"]) {
+  for (const key of ["address", "greeting", "cancellation_window_hours", "buffer_minutes", "reminder_hours_before"]) {
     if (body[key] !== undefined) updates[key] = body[key]
   }
   if (body.disconnect_google) updates.google_calendar_tokens = null
 
   const { data, error } = await db.from("business").update(updates).eq("id", body.id).select("*").single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ business: data })
+  return NextResponse.json({ ok: Boolean(data) })
 }

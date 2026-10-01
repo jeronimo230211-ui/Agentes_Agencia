@@ -160,6 +160,41 @@ async function sendTwilio(cfg: ProviderCfg, to: string, body: string) {
   })
 }
 
+/** Envía una plantilla aprobada por Meta. Es la única forma de escribirle
+ *  primero a un cliente si pasaron más de 24h desde su último mensaje (ej. el
+ *  recordatorio de cita). A diferencia de sendWhatsAppMessage, lanza el error:
+ *  quien llama necesita saber si se envió para registrarlo. */
+export async function sendMetaTemplate(
+  cfg: ProviderCfg,
+  to: string,
+  template: { name: string; language: string; bodyParams: string[]; buttonPayloads?: string[] }
+): Promise<void> {
+  const components: Record<string, unknown>[] = [
+    { type: "body", parameters: template.bodyParams.map((text) => ({ type: "text", text })) },
+    ...(template.buttonPayloads ?? []).map((payload, index) => ({
+      type: "button",
+      sub_type: "quick_reply",
+      index: String(index),
+      parameters: [{ type: "payload", payload }],
+    })),
+  ]
+
+  const res = await fetch(`https://graph.facebook.com/v19.0/${cfg.phone_number_id}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.access_token}` },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to,
+      type: "template",
+      template: { name: template.name, language: { code: template.language }, components },
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(`Meta template error ${res.status}: ${JSON.stringify(err)}`)
+  }
+}
+
 /** Descarga un archivo de audio de WhatsApp (Meta Cloud API) usando el
  *  mismo access_token del negocio. Meta requiere dos pasos: primero pedir
  *  la URL temporal del archivo, luego descargarlo con el mismo token. */
@@ -192,6 +227,8 @@ export type ParsedMessage =
       messageId?: string
       /** Nombre del perfil de WhatsApp del cliente (puede ser un apodo). */
       profileName?: string
+      /** Payload del botón de una plantilla (ej. "rem:no:<id de la cita>"). */
+      buttonPayload?: string
     }
   | {
       kind: "audio"
@@ -221,6 +258,7 @@ interface MetaMessage {
     button_reply?: { id: string; title: string }
     list_reply?: { id: string; title: string; description?: string }
   }
+  button?: { text: string; payload?: string }
 }
 
 export function parseMeta(payload: Record<string, unknown>): ParsedMessage | null {
@@ -231,7 +269,7 @@ export function parseMeta(payload: Record<string, unknown>): ParsedMessage | nul
       }[]
     )?.[0]
     const value = entry?.changes?.[0]?.value
-    const msg = value?.messages?.find((m) => m.type === "text" || m.type === "audio" || m.type === "interactive")
+    const msg = value?.messages?.find((m) => ["text", "audio", "interactive", "button"].includes(m.type))
     if (!msg) return null
     const profileName = value?.contacts?.find((c) => c.wa_id === msg.from)?.profile?.name || value?.contacts?.[0]?.profile?.name
     if (msg.type === "audio" && msg.audio?.id) return { kind: "audio", from: msg.from, mediaId: msg.audio.id, messageId: msg.id }
@@ -244,6 +282,11 @@ export function parseMeta(payload: Record<string, unknown>): ParsedMessage | nul
       const description = msg.interactive?.list_reply?.description
       const body = description ? `${choice.title} (${description})` : choice.title
       return { kind: "text", from: msg.from, body, messageId: msg.id, profileName }
+    }
+    if (msg.type === "button" && msg.button?.text) {
+      // Botón de respuesta rápida de una PLANTILLA (ej. el recordatorio de cita):
+      // llega con tipo "button" y un payload que pusimos al enviarla.
+      return { kind: "text", from: msg.from, body: msg.button.text, messageId: msg.id, profileName, buttonPayload: msg.button.payload }
     }
     return null
   } catch {

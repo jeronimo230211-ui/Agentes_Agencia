@@ -120,6 +120,16 @@ Análisis completo en `docs/ANALISIS_CHATS_ALEX.md` (3 chats, ~70 citas reales).
 - Confirmación incluye la política: "Si no puede venir, avíseme mínimo 2 horas antes 🙏". Sin hablar de cobros.
 - Decisiones de Jerónimo: se mantienen las 2h para agendar (el "¿puedes llegar ya?" es esporádico) y para cancelar; la regla se refuerza con el aviso al agendar + un recordatorio automático (pendiente de construir).
 
+## Recordatorios automáticos (2026-09-30)
+
+- **Qué hace:** 3h antes de cada cita (editable en Ajustes → Negocio, `business.reminder_hours_before[0]`) le llega al cliente la plantilla `recordatorio_cita`: "Hola {nombre}, le recuerdo su cita hoy a las 6:00 pm en Lex Barbería 💈 Si no puede venir, por favor avíseme antes de las 4:00 pm…" con botones **Ahí estaré** (marca `confirmed_at`) y **No puedo ir** (cancela, borra del Calendar y avisa a la lista de espera). Los botones se resuelven con lógica fija en `src/lib/reminders.ts`, sin el modelo.
+- **Por qué 3h y no 2h:** la ventana de cancelación es 2h; un recordatorio justo a las 2h llegaría cuando ya no se puede cancelar.
+- **Reloj:** Supabase `pg_cron` + `pg_net` llaman `POST /api/cron/reminders` cada 15 min (Vercel Hobby solo permite crons diarios). Protegido con `CRON_SECRET` (header `Authorization: Bearer …`). Migración `db/migrations/004_reminders.sql` (con placeholder del secreto — nunca commitear el valor real).
+- **Idempotente:** cada cita recibe máximo un recordatorio (`notifications_log`, tipo `reminder_2h` reusado porque el check de la BD solo admite esos tipos). Los fallos también se registran para no reintentar contra un error permanente.
+- No se envía si la cita se agendó ya dentro de la ventana (acaba de recibir la confirmación).
+- **Plantilla en Meta:** creada vía API el 2026-09-30 (id `1419686246191173`, categoría UTILITY, idioma `es`). Meta no acepta emojis en botones.
+- **Seguridad (de paso):** `GET /api/dashboard/business` ya no le manda al navegador el token de WhatsApp ni los de Google.
+
 ## Variables de entorno requeridas (cuando se despliegue)
 
 ```
@@ -129,4 +139,5 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_KEY
 GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET
+CRON_SECRET
 ```

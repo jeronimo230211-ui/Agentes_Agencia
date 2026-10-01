@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server"
 import { createServiceClient } from "@/lib/supabase"
 import { runAgent } from "@/lib/agent"
-import { parse360Dialog, parseMeta, parseTwilio, renderReplyAsText, sendAgentReply, sendWhatsAppMessage, type ParsedMessage } from "@/lib/whatsapp"
+import { handleReminderButton } from "@/lib/reminders"
+import { parse360Dialog, parseMeta, parseTwilio, renderReplyAsText, sendAgentReply, sendWhatsAppMessage, type AgentReply, type ParsedMessage } from "@/lib/whatsapp"
 import type { Barber, Business, ChatMessage, Conversation, Service } from "@/types/scheduling"
 
 // LexBarbería es de un solo negocio (no multi-tenant como GymBot IA), así
@@ -96,18 +97,25 @@ export async function POST(request: NextRequest) {
 
   const history: ChatMessage[] = (existingConversation as Conversation | null)?.messages || []
 
-  const reply = await runAgent(
-    {
-      db,
-      business: business as Business,
-      barber: barber as Barber,
-      services: (services || []) as Service[],
-      clientPhone: fromNumber,
-      profileName: parsed.profileName,
-    },
-    history,
-    userText
-  )
+  // Botones del recordatorio automático: se resuelven con lógica fija, sin el modelo.
+  const reminderReply = parsed.buttonPayload
+    ? await handleReminderButton(db, business as Business, barber as Barber, fromNumber, parsed.buttonPayload)
+    : null
+
+  const reply: AgentReply = reminderReply
+    ? { text: reminderReply }
+    : await runAgent(
+        {
+          db,
+          business: business as Business,
+          barber: barber as Barber,
+          services: (services || []) as Service[],
+          clientPhone: fromNumber,
+          profileName: parsed.profileName,
+        },
+        history,
+        userText
+      )
 
   const now = new Date().toISOString()
   const newHistory: ChatMessage[] = [

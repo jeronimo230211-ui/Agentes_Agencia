@@ -269,9 +269,13 @@ function currentSession(history: ChatMessage[]): { recent: ChatMessage[]; isNew:
   const isNew = !last || Date.now() - new Date(last.ts).getTime() > SESSION_GAP_HOURS * 60 * 60 * 1000
   if (isNew) return { recent: [], isNew: true }
 
-  let recent = history.slice(-MAX_HISTORY_MESSAGES)
-  // La API exige que la conversación empiece con un mensaje del usuario.
-  while (recent.length > 0 && recent[0].role !== "user") recent = recent.slice(1)
+  const recent = history.slice(-MAX_HISTORY_MESSAGES)
+  // La conversación debe empezar con un mensaje del usuario. Si empieza con uno del
+  // asistente (ej. el recordatorio automático), se antepone una nota en vez de
+  // descartarlo — si no, el agente no sabría a qué responde el cliente.
+  if (recent[0]?.role === "assistant") {
+    recent.unshift({ role: "user", content: "[Inicio: el sistema le envió al cliente el siguiente mensaje automático]", ts: recent[0].ts })
+  }
   return { recent, isNew: false }
 }
 
