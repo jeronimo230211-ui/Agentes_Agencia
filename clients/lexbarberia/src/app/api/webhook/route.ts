@@ -102,20 +102,30 @@ export async function POST(request: NextRequest) {
     ? await handleReminderButton(db, business as Business, barber as Barber, fromNumber, parsed.buttonPayload)
     : null
 
-  const reply: AgentReply = reminderReply
-    ? { text: reminderReply }
-    : await runAgent(
-        {
-          db,
-          business: business as Business,
-          barber: barber as Barber,
-          services: (services || []) as Service[],
-          clientPhone: fromNumber,
-          profileName: parsed.profileName,
-        },
-        history,
-        userText
-      )
+  let reply: AgentReply
+  try {
+    reply = reminderReply
+      ? { text: reminderReply }
+      : await runAgent(
+          {
+            db,
+            business: business as Business,
+            barber: barber as Barber,
+            services: (services || []) as Service[],
+            clientPhone: fromNumber,
+            profileName: parsed.profileName,
+          },
+          history,
+          userText
+        )
+  } catch (err) {
+    // Si el agente falla (ej. la cuenta de Anthropic sin saldo, 2026-10-03), el
+    // cliente quedaba en silencio total: el ID del mensaje ya estaba marcado como
+    // procesado, así que los reintentos de Meta se descartaban. Ahora al menos
+    // recibe una respuesta honesta.
+    console.error("[webhook] El agente falló:", err)
+    reply = { text: "Disculpe, en este momento no puedo responder por un problema técnico 🙏 Por favor intente de nuevo en un rato." }
+  }
 
   const now = new Date().toISOString()
   const newHistory: ChatMessage[] = [
