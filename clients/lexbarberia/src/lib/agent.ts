@@ -230,7 +230,7 @@ export interface ConversationInfo {
   client: Client | null
   profileName?: string | null
   lastServiceName?: string | null
-  upcoming?: { texto: string; servicio: string }[]
+  upcoming?: { texto: string; fecha_hora: string; servicio: string }[]
   greetingSlots?: GreetingSlots | null
 }
 
@@ -300,7 +300,7 @@ function greetingSection(ctx: Omit<AgentContext, "db" | "clientPhone">, info: Co
     ? `Empieza con "${saludo} ${nombre}..." (así saluda ${ctx.barber.name}: hora del día + nombre + puntos suspensivos, aunque el cliente haya dicho "Hola").`
     : `NO sabes cómo se llama este cliente. Empieza con "${saludo}..." y pregúntale su nombre en ese mismo mensaje${
         info.profileName ? ` — su perfil de WhatsApp dice "${info.profileName}"; si parece un nombre real, puedes preguntar "¿hablo con ${info.profileName}?"` : ""
-      }. Apenas te lo diga, guárdalo con guardar_nombre.`
+      }. Apenas te lo diga, guárdalo con guardar_nombre. Si le preguntaste "¿hablo con X?" y siguió la conversación sin corregirte, asume que se llama X y guárdalo con guardar_nombre — NO le vuelvas a preguntar el nombre.`
 
   const gs = info.greetingSlots
   let turnos: string
@@ -313,9 +313,7 @@ function greetingSection(ctx: Omit<AgentContext, "db" | "clientPhone">, info: Co
       : `Hoy ya no quedan turnos. El más cercano (calculado para "${gs.serviceName}"):\n${lista}\nInmediatamente después del saludo dile algo como "Para hoy ya no me quedan turnos, el más cercano es el …" y ofrécelo como opción, más una opción "Otro día".`
   }
 
-  const citaProxima = info.upcoming?.length
-    ? `\n- Este cliente ya tiene cita: ${info.upcoming.map((u) => `${u.servicio} el ${u.texto}`).join("; ")}. Recuérdasela en una línea después del saludo.`
-    : ""
+  const citaProxima = info.upcoming?.length ? `\n- Este cliente ya tiene cita (ver CITAS AGENDADAS). Recuérdasela en una línea después del saludo.` : ""
 
   return `INICIO DE CONVERSACIÓN — este es el primer mensaje de una conversación nueva. Tu respuesta debe:
 - ${saludoNombre}
@@ -331,7 +329,13 @@ export function buildSystemPrompt(ctx: Omit<AgentContext, "db" | "clientPhone">,
   const todayIso = formatInTimeZone(new Date(), business.timezone, "yyyy-MM-dd")
   const serviciosTexto = services.map((s) => `- ${s.name} (${s.duration_minutes} min)`).join("\n")
 
-  const clienteTexto = info.client?.name ? `Se llama ${info.client.name}.` : "Todavía no sabemos su nombre."
+  // El nombre del perfil va en TODOS los mensajes, no solo en el saludo: si no, en el
+  // segundo mensaje el agente olvida que preguntó "¿hablo con X?" y vuelve a pedir el nombre.
+  const clienteTexto = info.client?.name
+    ? `Se llama ${info.client.name}.`
+    : info.profileName
+      ? `Todavía no tenemos su nombre guardado. Su perfil de WhatsApp dice "${info.profileName}": si le preguntaste "¿hablo con ${info.profileName}?" y no te corrigió, ES su nombre — guárdalo con guardar_nombre y úsalo, NUNCA le preguntes el nombre.`
+      : "Todavía no sabemos su nombre."
   const recurrenteTexto = info.lastServiceName
     ? ` Su servicio de siempre es "${info.lastServiceName}" — úsalo sin preguntar, salvo que pida otra cosa.`
     : ""
@@ -364,17 +368,22 @@ ${serviciosTexto}
 
 CLIENTE: ${clienteTexto}${recurrenteTexto}
 
+CITAS AGENDADAS DE ESTE CLIENTE (fuente de verdad, sacada de la base de datos en este momento):
+${info.upcoming?.length ? info.upcoming.map((u) => `- ${u.servicio}: ${u.texto} (fecha_hora "${u.fecha_hora}") — YA CONFIRMADA`).join("\n") : "- Ninguna."}
+Si una cita aparece aquí, ya quedó agendada: no la vuelvas a agendar ni digas que ese turno está "ocupado" — está ocupado por el mismo cliente.
+
 ${greetingSection(ctx, info)}
 
 OPCIONES (muy importante — ${barber.name} quiere que el cliente pueda tocar en vez de escribir):
 - Cada vez que le pidas al cliente elegir entre alternativas concretas (turnos, servicio, sí/no, cuál cita), usa enviar_opciones en vez de escribir la lista en el texto.
-- Servicio: en los chats reales NINGÚN cliente dice el servicio y ${barber.name} nunca lo pregunta. Si el cliente ya vino antes, usa su servicio de siempre SIN preguntar (menciónalo en la confirmación para que pueda corregir). Solo a un cliente nuevo pregúntale "¿Qué servicio deseas para tu turno?" con una opción por servicio.
+- Servicio: en los chats reales NINGÚN cliente dice el servicio y ${barber.name} nunca lo pregunta. Si el cliente ya vino antes, usa su servicio de siempre SIN preguntar (menciónalo en la confirmación para que pueda corregir). Solo a un cliente nuevo pregúntale "¿Qué servicio deseas para tu turno?" con una opción por servicio, SIN descripción (solo el nombre: así WhatsApp los muestra como botones directos de un toque).
 - Turnos: títulos cortos tipo "Hoy 9:00 AM" o "Jue 2 oct 3:30 PM". Máximo 9 turnos + "${OTHER_DAY_TITLE}" (escrito exactamente así, siempre de último).
 - En el historial vas a ver las opciones escritas como "A. Corte" — así las vio el cliente. Si responde con una letra ("A", "b"), un número o el texto de la opción, interprétalo según las opciones de tu último mensaje. Tú siempre usa enviar_opciones.
 
 CÓMO TRABAJAR:
 1. Usa SIEMPRE las herramientas para consultar disponibilidad, agendar, cancelar o ver citas — nunca inventes horarios ni confirmes una cita sin haber llamado a agendar_cita.
-2. Para agendar necesitas: día y hora, servicio y nombre del cliente. Pide lo que falte (con opciones cuando aplique) y agenda apenas lo tengas todo.
+2. Para agendar necesitas: día y hora, servicio y nombre del cliente. Pide TODO lo que falte en UN solo mensaje (ej. "¿Qué servicio desea y a nombre de quién lo agendo?" con las opciones de servicio) y agenda apenas lo tengas todo.
+   CIERRE: si el cliente solo agradece, se despide o confirma algo que ya quedó ("gracias", "listo", "ok", "nos vemos"), responde en una línea ("Con gusto [nombre] 👍🏽💈") y NO llames ninguna herramienta.
    MÍNIMOS MENSAJES (${barber.name} lo pidió explícitamente): cada mensaje tuyo debe resolver o pedir lo que falta, nada más. No pidas confirmaciones extra ("¿seguro?", "¿confirmo?"), no repitas información que el cliente ya dio y no hagas preguntas de relleno.
    Cuando el cliente escriba un día y hora (ej. "viernes 3 pm", "hoy tipo 9", "las 5 más o menos"), consulta ver_disponibilidad con esa fecha Y la hora (parámetro hora):
    - Si esa hora está libre (o, si dio dos opciones "9 o 9:30", la primera libre) y ya sabes servicio y nombre → agenda DE UNA y responde: "Si dale hoy a las 6 👍🏽💈" + en una segunda línea corta el recordatorio de la política: "Si no puede venir, avíseme mínimo ${business.cancellation_window_hours} horas antes 🙏". Eso es todo: la cita queda cerrada en 2 mensajes.
@@ -487,6 +496,23 @@ async function executeTool(name: string, input: Record<string, unknown>, ctx: Ag
           return { error: "formato_fecha_invalido" }
         }
         if (Number.isNaN(startsAt.getTime())) return { error: "formato_fecha_invalido" }
+
+        // Si el cliente ya tiene una cita confirmada a esa misma hora, el turno no está
+        // "ocupado": es suyo. Se responde como confirmada en vez de error.
+        const existingClient = await findClientByPhone(db, business.id, clientPhone)
+        if (existingClient) {
+          const own = (await getClientUpcomingAppointments(db, business.id, existingClient.id)).find(
+            (a) => new Date(a.starts_at).getTime() === startsAt.getTime()
+          )
+          if (own) {
+            return {
+              ya_estaba_agendada: true,
+              servicio: own.services?.name,
+              fecha_hora_texto: formatSlot(startsAt, business.timezone),
+              mensaje: "Esta cita YA estaba agendada para este cliente — no se creó otra. No le digas que está ocupado; si solo estaba agradeciendo, responde corto.",
+            }
+          }
+        }
 
         // Validar la hora contra el motor de disponibilidad en vez de confiar en
         // lo que escribió el modelo: anticipación mínima, horario, grilla de 30
@@ -681,13 +707,21 @@ export async function runAgent(ctx: AgentContext, history: ChatMessage[], userMe
   const last = client ? await getClientLastService(ctx.db, ctx.business.id, ctx.clientPhone) : null
   info.lastServiceName = last?.lastServiceName ?? null
 
+  // Las citas del cliente van en CADA mensaje: el historial solo guarda textos, no
+  // las acciones del agente, así que sin esto el modelo no sabe si ya agendó (caso
+  // real 2026-10-05: tras "Gracias" intentó agendar otra vez y dijo "ocupado").
+  if (client) {
+    const upcoming = await getClientUpcomingAppointments(ctx.db, ctx.business.id, client.id)
+    info.upcoming = upcoming.map((a) => ({
+      texto: formatSlot(new Date(a.starts_at), ctx.business.timezone),
+      fecha_hora: formatInTimeZone(new Date(a.starts_at), ctx.business.timezone, LOCAL_DATETIME),
+      servicio: a.services?.name || "",
+    }))
+  }
+
   // Solo al empezar una conversación: no tiene sentido recalcularlo en cada mensaje.
   if (isNew) {
     info.greetingSlots = await getGreetingSlots(ctx, info.lastServiceName)
-    if (client) {
-      const upcoming = await getClientUpcomingAppointments(ctx.db, ctx.business.id, client.id)
-      info.upcoming = upcoming.map((a) => ({ texto: formatSlot(new Date(a.starts_at), ctx.business.timezone), servicio: a.services?.name || "" }))
-    }
   }
 
   const system = buildSystemPrompt(ctx, info)

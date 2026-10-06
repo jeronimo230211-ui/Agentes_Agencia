@@ -130,6 +130,13 @@ Análisis completo en `docs/ANALISIS_CHATS_ALEX.md` (3 chats, ~70 citas reales).
 - **Plantilla en Meta:** creada vía API el 2026-09-30 (id `1419686246191173`, categoría UTILITY, idioma `es`). Meta no acepta emojis en botones.
 - **Seguridad (de paso):** `GET /api/dashboard/business` ya no le manda al navegador el token de WhatsApp ni los de Google.
 
+## Fix 2026-10-05 — conversación de prueba real de Alex (Diego)
+
+- **Bug:** tras agendar, el cliente dijo "Gracias" y el agente respondió "ya está ocupado ese turno… ¿1:30?". Causa: el historial solo guarda textos, no las acciones del agente; el modelo no sabía que ya había agendado, reintentó `agendar_cita` y el turno estaba "ocupado" por el mismo cliente. La cita no se duplicó.
+- **Fix en 3 capas:** (1) el prompt recibe en CADA mensaje las citas reales del cliente desde la BD ("CITAS AGENDADAS… fuente de verdad"); (2) `agendar_cita` es idempotente: si el cliente ya tiene esa cita, responde `ya_estaba_agendada` en vez de error; (3) regla de cierre: "gracias/listo/ok" → "Con gusto [nombre] 👍🏽💈" sin herramientas.
+- **Nombre del perfil:** si se preguntó "¿hablo con X?" y el cliente no corrigió, se asume y se guarda. La pista del perfil ahora va en todos los mensajes (antes solo en el saludo y se olvidaba en el segundo mensaje).
+- Opciones de servicio sin descripción → WhatsApp las muestra como botones directos, no como lista.
+
 ## Variables de entorno requeridas (cuando se despliegue)
 
 ```
