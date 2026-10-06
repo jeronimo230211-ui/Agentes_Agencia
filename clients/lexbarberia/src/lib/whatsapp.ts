@@ -236,6 +236,13 @@ export type ParsedMessage =
       mediaId: string
       messageId?: string
     }
+  | {
+      /** Imagen, video, documento, ubicación o contacto: no se procesan, pero el
+       *  cliente recibe un aviso en vez de silencio. */
+      kind: "unsupported"
+      from: string
+      messageId?: string
+    }
 
 export function parse360Dialog(payload: Record<string, unknown>): ParsedMessage | null {
   const messages =
@@ -246,6 +253,9 @@ export function parse360Dialog(payload: Record<string, unknown>): ParsedMessage 
   if (msg.type === "text" && msg.text?.body) return { kind: "text", from: msg.from, body: msg.text.body, messageId: msg.id }
   return null
 }
+
+const SUPPORTED_META_TYPES = ["text", "audio", "interactive", "button"]
+const UNSUPPORTED_META_TYPES = ["image", "video", "document", "location", "contacts"]
 
 interface MetaMessage {
   id?: string
@@ -269,8 +279,11 @@ export function parseMeta(payload: Record<string, unknown>): ParsedMessage | nul
       }[]
     )?.[0]
     const value = entry?.changes?.[0]?.value
-    const msg = value?.messages?.find((m) => ["text", "audio", "interactive", "button"].includes(m.type))
+    // Reacciones y stickers se ignoran a propósito (suelen ser un "👍" de cierre:
+    // responderles sería ruido). Los demás tipos sin soporte reciben un aviso.
+    const msg = value?.messages?.find((m) => [...SUPPORTED_META_TYPES, ...UNSUPPORTED_META_TYPES].includes(m.type))
     if (!msg) return null
+    if (UNSUPPORTED_META_TYPES.includes(msg.type)) return { kind: "unsupported", from: msg.from, messageId: msg.id }
     const profileName = value?.contacts?.find((c) => c.wa_id === msg.from)?.profile?.name || value?.contacts?.[0]?.profile?.name
     if (msg.type === "audio" && msg.audio?.id) return { kind: "audio", from: msg.from, mediaId: msg.audio.id, messageId: msg.id }
     if (msg.type === "text" && msg.text?.body) return { kind: "text", from: msg.from, body: msg.text.body, messageId: msg.id, profileName }

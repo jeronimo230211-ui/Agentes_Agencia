@@ -8,7 +8,7 @@ import { es } from "date-fns/locale"
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 import type { createServiceClient } from "./supabase"
 import { sendWhatsAppMessage } from "./whatsapp"
-import { computeAvailableSlots, generateRecurringOccurrences, isCancellationAllowed, type BusyInterval } from "./scheduling"
+import { computeAvailableSlots, generateRecurringOccurrences, getEffectiveRanges, isCancellationAllowed, type BusyInterval } from "./scheduling"
 import type {
   Appointment,
   Barber,
@@ -17,6 +17,7 @@ import type {
   Client,
   RecurringBooking,
   ScheduleException,
+  TimeRange,
   Service,
   WaitlistEntry,
 } from "@/types/scheduling"
@@ -87,6 +88,17 @@ export async function findAvailableSlots(db: Db, params: FindSlotsParams): Promi
     maxResults: params.maxResults,
     maxResultsPerDay: params.maxResultsPerDay,
   })
+}
+
+/** Rangos de atención de un día concreto ("YYYY-MM-DD"), ya resolviendo
+ *  excepciones (cerrado u horario especial). Sirve para distinguir una hora
+ *  "ocupada" de una "fuera de horario". */
+export async function getDayRanges(db: Db, barberId: string, dateStr: string): Promise<TimeRange[]> {
+  const [{ data: weeklyHours }, { data: exceptions }] = await Promise.all([
+    db.from("business_hours").select("*").eq("barber_id", barberId),
+    db.from("schedule_exceptions").select("*").eq("barber_id", barberId).eq("date", dateStr),
+  ])
+  return getEffectiveRanges(dateStr, (weeklyHours || []) as BusinessHours[], (exceptions || []) as ScheduleException[])
 }
 
 /** true si `startsAt` es un inicio realmente ofrecible para ese servicio:

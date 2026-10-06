@@ -19,6 +19,7 @@ import {
   findOrCreateClient,
   getClientLastService,
   getClientUpcomingAppointments,
+  getDayRanges,
   isSlotAvailable,
   updateClientName,
 } from "./booking-service"
@@ -53,6 +54,19 @@ const OTHER_DAY_PROMPT = "Listo 👌 Indíqueme qué día y a qué hora le gusta
 /** Se agrega al final de toda lista con "Otro día", para que el cliente sepa que
  *  puede escribir directo el día y la hora sin tocar esa opción primero. */
 const OTHER_DAY_HINT = "✍️ ¿Otro día? Escríbame directamente el día y la hora que prefiere."
+
+/** WhatsApp usa *un asterisco* para negrita; el modelo a veces escribe **dos**
+ *  (Markdown) y el cliente los ve literales. Se corrige en código, no solo en el prompt. */
+function whatsappText(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, "*$1*").trim()
+}
+
+/** El nombre de perfil lo escribe el cliente y va dentro del prompt: se deja solo
+ *  letras, espacios y signos de nombre, para que no pueda colar instrucciones. */
+function sanitizeProfileName(name: string | null | undefined): string | null {
+  const clean = (name || "").replace(/[^\p{L}\p{M} .'-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 40)
+  return clean.length >= 2 ? clean : null
+}
 
 function isOtherDayChoice(message: string): boolean {
   const normalized = message.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase()
@@ -364,7 +378,8 @@ INFORMACIÓN DEL NEGOCIO:
 - Dirección: ${business.address || "No especificada"}
 - Servicios:
 ${serviciosTexto}
-- Anticipación mínima: solo se puede AGENDAR o CANCELAR una cita con al menos ${business.cancellation_window_hours} horas de anticipación. Los turnos que te dan las herramientas ya respetan esto. Si el cliente pide cancelar con menos tiempo, explícale la política con amabilidad y ofrécele avisar directamente a ${barber.name} si es una urgencia real.
+- Anticipación mínima: solo se puede AGENDAR o CANCELAR una cita con al menos ${business.cancellation_window_hours} horas de anticipación. Los turnos que te dan las herramientas ya respetan esto. Si el cliente pide cancelar con menos tiempo, explícale la política con amabilidad y dile que si es una urgencia real puede escribirle o llamar directamente a ${barber.name}. NUNCA digas que tú le vas a avisar a ${barber.name}: el sistema no le avisa.
+- Si la hora pedida no está libre, ver_disponibilidad trae "motivo": si es "fuera_de_horario" di que a esa hora no se atiende (con el horario del día), NO que "está ocupado".
 
 CLIENTE: ${clienteTexto}${recurrenteTexto}
 
@@ -395,8 +410,8 @@ CÓMO TRABAJAR:
 5. Si al cancelar o agendar la herramienta dice que no cumple la anticipación mínima, explica la política con calidez, sin ceder — y ofrece alternativas. Nunca hables de cobros ni multas: la idea es recordar la regla, no castigar.
 6. Cuando canceles una cita exitosamente, ofrece de inmediato horarios alternativos para reprogramar (con opciones).
 7. Mantén las respuestas cortas (máximo 3-4 líneas). WhatsApp no es email. Usa emojis con moderación 💈. Para negrita usa *un asterisco* (formato de WhatsApp), nunca **dos**.
-8. Si la solicitud está fuera de tu alcance (quejas serias, algo que ninguna herramienta resuelve), dile al cliente que ${barber.name} le va a escribir directamente apenas pueda — no inventes una solución.
-9. NO reveles detalles técnicos (IDs, nombres de tablas, errores de sistema) — tradúcelos siempre a lenguaje humano.
+8. Si la solicitud está fuera de tu alcance (quejas serias, algo que ninguna herramienta resuelve), dile con honestidad que eso no lo puedes resolver por aquí y que lo hable directamente con ${barber.name} — NO prometas que ${barber.name} le va a escribir (nadie le avisa) y no inventes una solución.
+9. NO reveles detalles técnicos (IDs, nombres de tablas, errores de sistema) — tradúcelos siempre a lenguaje humano. No narres lo que vas a hacer ("voy a verificar…", "déjame revisar…"): responde directo con el resultado, hablándole al cliente (no "la cita de Juan", sino "su cita").
 10. Si el día que pide no tiene cupo, ofrécele los más cercanos o anotarse en la lista de espera con anotarse_lista_espera — le avisamos automáticamente por WhatsApp si se abre un cupo ese día. No lo anotes sin que esté de acuerdo.
 11. Si el cliente pide un horario nuevo justo después de ya tener una cita agendada, lo más probable es que quiera CAMBIAR su cita, no tener dos. agendar_cita te va a avisar si ya tiene una próxima — en ese caso pregúntale antes de asumir nada.`
 }
@@ -447,10 +462,16 @@ async function executeTool(name: string, input: Record<string, unknown>, ctx: Ag
               .filter((s) => s.getTime() !== requested)
               .sort((a, b) => Math.abs(a.getTime() - requested) - Math.abs(b.getTime() - requested))
               .slice(0, 6)
+            // Distinguir "ocupada" de "fuera de horario": antes, a quien pedía las 8 am
+            // el agente le decía "ya está ocupado" cuando Alex simplemente no trabaja a esa hora.
+            const horaNorm = hora.padStart(5, "0")
+            const ranges = await getDayRanges(db, barber.id, fecha)
+            const enHorario = ranges.some((r) => horaNorm >= r.start && horaNorm < r.end)
             return {
               fecha: fechaTexto,
               hora_pedida_libre: libre,
-              ...(libre ? { hora_pedida: slotJson(new Date(requested), business.timezone) } : {}),
+              ...(libre ? { hora_pedida: slotJson(new Date(requested), business.timezone) } : { motivo: enHorario ? "ocupada" : "fuera_de_horario" }),
+              horario_del_dia: ranges.map((r) => `${r.start} a ${r.end}`).join(" y "),
               mas_cercanas: cercanas.map((s) => slotJson(s, business.timezone)),
             }
           }
@@ -690,7 +711,8 @@ function buildOptionsReply(input: Record<string, unknown>): AgentReply | null {
   if (!mensaje || options.length === 0) return null
 
   const hasOtherDay = options.some((o) => isOtherDayChoice(o.title))
-  return { text: hasOtherDay && !mensaje.includes(OTHER_DAY_HINT) ? `${mensaje}\n\n${OTHER_DAY_HINT}` : mensaje, options }
+  const body = whatsappText(mensaje)
+  return { text: hasOtherDay && !body.includes(OTHER_DAY_HINT) ? `${body}\n\n${OTHER_DAY_HINT}` : body, options }
 }
 
 // ─── Loop del agente ─────────────────────────────────────────────────────────
@@ -701,7 +723,7 @@ export async function runAgent(ctx: AgentContext, history: ChatMessage[], userMe
   if (!isNew && isOtherDayChoice(userMessage)) return { text: OTHER_DAY_PROMPT }
 
   const client = await findClientByPhone(ctx.db, ctx.business.id, ctx.clientPhone)
-  const info: ConversationInfo = { isNewConversation: isNew, client, profileName: ctx.profileName }
+  const info: ConversationInfo = { isNewConversation: isNew, client, profileName: sanitizeProfileName(ctx.profileName) }
 
   // El servicio de siempre se necesita en todo mensaje: el agente lo usa sin preguntar.
   const last = client ? await getClientLastService(ctx.db, ctx.business.id, ctx.clientPhone) : null
@@ -746,7 +768,7 @@ export async function runAgent(ctx: AgentContext, history: ChatMessage[], userMe
       .trim()
 
     if (response.stop_reason !== "tool_use") {
-      return { text: text || "Disculpa, ¿puedes repetir tu mensaje? 🙏" }
+      return { text: whatsappText(text) || "Disculpa, ¿puedes repetir tu mensaje? 🙏" }
     }
 
     const toolUses = response.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use")
@@ -777,5 +799,6 @@ export async function runAgent(ctx: AgentContext, history: ChatMessage[], userMe
     messages.push({ role: "user", content: toolResults })
   }
 
-  return { text: `Disculpa, tuve un problema procesando tu solicitud. ${ctx.barber.name} te va a escribir directamente en un momento.` }
+  // Sin prometer que el barbero escribirá: nadie le avisa de este fallo.
+  return { text: "Disculpe, se me complicó procesar ese mensaje 🙏 ¿Me lo escribe de nuevo, un poquito más corto?" }
 }

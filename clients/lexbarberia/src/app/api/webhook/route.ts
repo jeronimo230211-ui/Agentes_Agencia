@@ -1,14 +1,19 @@
-import { NextRequest } from "next/server"
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto"
+import { NextRequest, after } from "next/server"
 import { createServiceClient } from "@/lib/supabase"
-import { runAgent } from "@/lib/agent"
-import { handleReminderButton } from "@/lib/reminders"
-import { parse360Dialog, parseMeta, parseTwilio, renderReplyAsText, sendAgentReply, sendWhatsAppMessage, type AgentReply, type ParsedMessage } from "@/lib/whatsapp"
-import type { Barber, Business, ChatMessage, Conversation, Service } from "@/types/scheduling"
+import { enqueueInbound, processInbound } from "@/lib/inbound-queue"
+import { parse360Dialog, parseMeta, parseTwilio, sendWhatsAppMessage, type ParsedMessage } from "@/lib/whatsapp"
 
 // LexBarbería es de un solo negocio (no multi-tenant como GymBot IA), así
 // que el webhook no necesita resolver "a qué cliente pertenece este
 // mensaje" — siempre es el mismo negocio. Si esto se productiza para
 // varios negocios más adelante, aquí es donde se agregaría ese lookup.
+
+// El procesamiento (espera de 2,5 s + Claude + envío) corre después de responder.
+export const maxDuration = 60
+
+const AUDIO_REPLY = "Por ahora no puedo escuchar notas de voz 🙏 ¿Me lo escribe por aquí, porfa?"
+const UNSUPPORTED_REPLY = "Por aquí solo puedo leer mensajes de texto 🙏 ¿Me escribe lo que necesita?"
 
 // Meta exige verificación por GET del webhook.
 export async function GET(request: NextRequest) {
@@ -29,124 +34,82 @@ export async function GET(request: NextRequest) {
   return new Response("Forbidden", { status: 403 })
 }
 
+/** Meta firma cada webhook con el App Secret (X-Hub-Signature-256). Sin esta
+ *  verificación, cualquiera que conozca la URL podría hacerse pasar por un
+ *  cliente (cualquier número "from") y agendar o cancelar sus citas. */
+function isValidMetaSignature(rawBody: string, header: string | null): boolean {
+  const secret = process.env.META_APP_SECRET
+  if (!secret) {
+    console.warn("[webhook] META_APP_SECRET no está configurado: no se está verificando la firma de Meta")
+    return true
+  }
+  if (!header?.startsWith("sha256=")) return false
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex")
+  const received = header.slice("sha256=".length)
+  return expected.length === received.length && timingSafeEqual(Buffer.from(expected), Buffer.from(received))
+}
+
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get("content-type") || ""
+  const isTwilio = Boolean(request.headers.get("x-twilio-signature"))
+  const rawBody = await request.text()
 
   let parsed: ParsedMessage | null
-
-  if (contentType.includes("application/json") && !request.headers.get("x-twilio-signature")) {
+  if (contentType.includes("application/json") && !isTwilio) {
     let payload: Record<string, unknown>
     try {
-      payload = await request.json()
+      payload = JSON.parse(rawBody)
     } catch {
       return new Response("OK", { status: 200 })
     }
-    parsed = payload.object === "whatsapp_business_account" ? parseMeta(payload) : parse360Dialog(payload)
+    if (payload.object === "whatsapp_business_account") {
+      if (!isValidMetaSignature(rawBody, request.headers.get("x-hub-signature-256"))) {
+        return new Response("Invalid signature", { status: 401 })
+      }
+      parsed = parseMeta(payload)
+    } else {
+      parsed = parse360Dialog(payload)
+    }
   } else {
-    parsed = parseTwilio(await request.text())
+    parsed = parseTwilio(rawBody)
   }
 
-  if (!parsed?.from) return new Response("OK", { status: 200 })
+  const ok = () =>
+    isTwilio ? new Response("<Response></Response>", { status: 200, headers: { "Content-Type": "text/xml" } }) : new Response("OK", { status: 200 })
+
+  // Eventos de estado (entregado/leído), reacciones y stickers: nada que responder.
+  if (!parsed?.from) return ok()
   const fromNumber = parsed.from
-  const messageId = parsed.messageId
 
   const db = createServiceClient()
-
-  // WhatsApp/Meta reintenta la entrega si no respondemos rápido, lo que puede
-  // hacer que el mismo mensaje llegue dos veces — sin esto, el agente
-  // respondería duplicado y podría hasta agendar dos veces la misma cita.
-  if (messageId) {
-    const { error: insertError } = await db.from("processed_webhook_messages").insert({ id: messageId })
-    if (insertError) {
-      // 23505 = ya existe (mensaje duplicado, reintento de Meta) — se descarta en silencio.
-      if (insertError.code === "23505") return new Response("OK", { status: 200 })
-      // Si la tabla todavía no existe (migración pendiente) u otro error, seguimos
-      // procesando igual — mejor un duplicado ocasional que dejar de responder.
-    }
-  }
-
   const { data: business } = await db.from("business").select("*").eq("active", true).single()
-  if (!business) return new Response("OK", { status: 200 })
+  if (!business) return ok()
 
-  // Las notas de voz todavía no se transcriben (propuesta pendiente con Alex) —
-  // antes el cliente quedaba sin respuesta; al menos se le pide que escriba.
-  if (parsed.kind === "audio") {
-    if (business.whatsapp_provider) {
-      await sendWhatsAppMessage(
-        business.whatsapp_provider,
-        business.whatsapp_provider_config,
-        fromNumber,
-        "Por ahora no puedo escuchar notas de voz 🙏 ¿Me lo escribe por aquí, porfa?"
-      )
+  // Audios (transcripción pendiente de aprobar con Alex) y tipos sin soporte:
+  // respuesta fija en vez de silencio. Se deduplican igual que los textos.
+  if (parsed.kind === "audio" || parsed.kind === "unsupported") {
+    if (parsed.messageId) {
+      const { error } = await db.from("processed_webhook_messages").insert({ id: parsed.messageId })
+      if (error?.code === "23505") return ok()
     }
-    return new Response("OK", { status: 200 })
-  }
-  const userText = parsed.body
-
-  const { data: barber } = await db.from("barbers").select("*").eq("business_id", business.id).eq("active", true).order("created_at").limit(1).single()
-  if (!barber) return new Response("OK", { status: 200 })
-
-  const { data: services } = await db.from("services").select("*").eq("business_id", business.id).eq("active", true).order("sort_order")
-
-  const { data: existingConversation } = await db
-    .from("conversations")
-    .select("*")
-    .eq("business_id", business.id)
-    .eq("client_phone", fromNumber)
-    .single()
-
-  const history: ChatMessage[] = (existingConversation as Conversation | null)?.messages || []
-
-  // Botones del recordatorio automático: se resuelven con lógica fija, sin el modelo.
-  const reminderReply = parsed.buttonPayload
-    ? await handleReminderButton(db, business as Business, barber as Barber, fromNumber, parsed.buttonPayload)
-    : null
-
-  let reply: AgentReply
-  try {
-    reply = reminderReply
-      ? { text: reminderReply }
-      : await runAgent(
-          {
-            db,
-            business: business as Business,
-            barber: barber as Barber,
-            services: (services || []) as Service[],
-            clientPhone: fromNumber,
-            profileName: parsed.profileName,
-          },
-          history,
-          userText
-        )
-  } catch (err) {
-    // Si el agente falla (ej. la cuenta de Anthropic sin saldo, 2026-10-03), el
-    // cliente quedaba en silencio total: el ID del mensaje ya estaba marcado como
-    // procesado, así que los reintentos de Meta se descartaban. Ahora al menos
-    // recibe una respuesta honesta.
-    console.error("[webhook] El agente falló:", err)
-    reply = { text: "Disculpe, en este momento no puedo responder por un problema técnico 🙏 Por favor intente de nuevo en un rato." }
+    if (business.whatsapp_provider) {
+      await sendWhatsAppMessage(business.whatsapp_provider, business.whatsapp_provider_config, fromNumber, parsed.kind === "audio" ? AUDIO_REPLY : UNSUPPORTED_REPLY)
+    }
+    return ok()
   }
 
-  const now = new Date().toISOString()
-  const newHistory: ChatMessage[] = [
-    ...history,
-    { role: "user", content: userText, ts: now },
-    { role: "assistant", content: renderReplyAsText(reply), ts: now },
-  ]
+  const messageId = parsed.messageId || randomUUID()
+  const status = await enqueueInbound(db, {
+    id: messageId,
+    businessId: business.id,
+    phone: fromNumber,
+    body: parsed.body,
+    profileName: parsed.profileName,
+    buttonPayload: parsed.buttonPayload,
+  })
+  if (status === "duplicate") return ok() // reintento de Meta: ya está en la cola
 
-  if (existingConversation) {
-    await db.from("conversations").update({ messages: newHistory }).eq("id", existingConversation.id)
-  } else {
-    await db.from("conversations").insert({ business_id: business.id, client_phone: fromNumber, messages: newHistory })
-  }
-
-  if (business.whatsapp_provider) {
-    await sendAgentReply(business.whatsapp_provider, business.whatsapp_provider_config, fromNumber, reply)
-  }
-
-  if (request.headers.get("x-twilio-signature")) {
-    return new Response("<Response></Response>", { status: 200, headers: { "Content-Type": "text/xml" } })
-  }
-
-  return new Response("OK", { status: 200 })
+  // Se responde 200 de inmediato (Meta reintenta si tardamos) y el resto sigue en segundo plano.
+  after(() => processInbound(db, fromNumber, messageId))
+  return ok()
 }

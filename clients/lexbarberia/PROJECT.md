@@ -137,6 +137,17 @@ Análisis completo en `docs/ANALISIS_CHATS_ALEX.md` (3 chats, ~70 citas reales).
 - **Nombre del perfil:** si se preguntó "¿hablo con X?" y el cliente no corrigió, se asume y se guarda. La pista del perfil ahora va en todos los mensajes (antes solo en el saludo y se olvidaba en el segundo mensaje).
 - Opciones de servicio sin descripción → WhatsApp las muestra como botones directos, no como lista.
 
+## Auditoría de calidad (2026-10-05)
+
+Revisión de código independiente (agente QA) + batería de 14 escenarios contra Claude/Supabase reales con aserciones sobre la BD (14/14) + prueba de concurrencia. Correcciones:
+- **Crítica — `/api/chat` era público:** actuaba como cualquier teléfono (agendar/cancelar citas ajenas, gastar saldo). En producción ahora exige la sesión del dashboard.
+- **Crítica — webhook sin verificar firma de Meta:** cualquiera podía falsificar mensajes de cualquier número. Ahora verifica `X-Hub-Signature-256` con `META_APP_SECRET` (si la variable no está, deja pasar con advertencia en logs — configurarla).
+- **Alta — concurrencia:** mensajes seguidos del mismo cliente corrían en paralelo y se pisaban el historial (y podían agendar doble). Ahora: cola `inbound_messages` + candado por teléfono (`conversations.processing_until`, 90 s) + espera de 2,5 s que agrupa mensajes seguidos en UNA respuesta. El webhook responde 200 de inmediato y procesa con `after()`. Migración `005_inbound_queue.sql`. Código en `src/lib/inbound-queue.ts`.
+- **Alta — imagen/video/documento/ubicación/contacto** dejaban al cliente en silencio; ahora reciben "Por aquí solo puedo leer mensajes de texto". Reacciones y stickers se ignoran a propósito.
+- **Media — recordatorio duplicado** si dos ejecuciones se cruzaban: índice único `(appointment_id, type)` y se reserva el envío antes de mandarlo.
+- Mensajes honestos: el agente ya no promete "Alex te va a escribir" (nadie le avisa). "Fuera de horario" ya no se confunde con "ocupado". `**negrita**` se convierte a formato WhatsApp en código. Nombre de perfil saneado antes de entrar al prompt. Historial guardado recortado a 200 mensajes.
+- Pendiente conocido (bajo): `processed_webhook_messages` e `inbound_messages` crecen sin limpieza; el orden de mensajes que llegan en el mismo milisegundo no está garantizado.
+
 ## Variables de entorno requeridas (cuando se despliegue)
 
 ```
@@ -147,4 +158,5 @@ SUPABASE_SERVICE_KEY
 GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET
 CRON_SECRET
+META_APP_SECRET
 ```

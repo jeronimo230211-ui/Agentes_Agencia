@@ -91,14 +91,17 @@ export async function sendDueReminders(db: Db, business: Business): Promise<Remi
       continue
     }
 
-    const { data: alreadySent } = await db
+    // Se "reserva" el envío ANTES de mandarlo: el índice único (appointment_id, type)
+    // de la migración 005 hace que, si dos ejecuciones se cruzan, solo una gane.
+    // También queda registrado si falla: así no se reintenta cada 15 min contra un
+    // error permanente (plantilla no aprobada, número no permitido).
+    const { data: logRow, error: claimError } = await db
       .from("notifications_log")
+      .insert({ business_id: business.id, appointment_id: appt.id, client_id: appt.clients.id, type: REMINDER_LOG_TYPE, status: "sent" })
       .select("id")
-      .eq("appointment_id", appt.id)
-      .eq("type", REMINDER_LOG_TYPE)
-      .limit(1)
-    if (alreadySent && alreadySent.length > 0) {
-      result.skipped++
+      .single()
+    if (claimError || !logRow) {
+      result.skipped++ // 23505 = ya enviado (o reservado por otra ejecución)
       continue
     }
 
@@ -106,7 +109,6 @@ export async function sendDueReminders(db: Db, business: Business): Promise<Remi
     const when = appointmentWhen(startsAt, business.timezone)
     const deadline = shortTime(new Date(startsAt.getTime() - business.cancellation_window_hours * 60 * 60 * 1000), business.timezone)
 
-    let status: "sent" | "failed" = "sent"
     try {
       await sendMetaTemplate(business.whatsapp_provider_config, appt.clients.phone, {
         name: REMINDER_TEMPLATE,
@@ -123,19 +125,9 @@ export async function sendDueReminders(db: Db, business: Business): Promise<Remi
       result.sent++
     } catch (err) {
       console.error("[reminders] No se pudo enviar el recordatorio:", err)
-      status = "failed"
+      await db.from("notifications_log").update({ status: "failed" }).eq("id", logRow.id)
       result.failed++
     }
-
-    // También se registra el fallo: así no se reintenta cada 15 min contra un error
-    // permanente (plantilla no aprobada, número no permitido) y queda visible.
-    await db.from("notifications_log").insert({
-      business_id: business.id,
-      appointment_id: appt.id,
-      client_id: appt.clients.id,
-      type: REMINDER_LOG_TYPE,
-      status,
-    })
   }
 
   return result

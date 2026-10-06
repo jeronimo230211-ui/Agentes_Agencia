@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { AUTH_COOKIE_NAME, expectedSessionValue } from "@/lib/auth"
 import { createServiceClient } from "@/lib/supabase"
 import { runAgent } from "@/lib/agent"
 import { renderReplyAsText } from "@/lib/whatsapp"
@@ -11,6 +12,13 @@ import type { Barber, Business, ChatMessage, Conversation, Service } from "@/typ
 // POST { phone: string, message: string, profileName?: string } → { reply: string, options?: [...] }
 
 export async function POST(request: NextRequest) {
+  // Este endpoint actúa como CUALQUIER teléfono que se le pase: abierto en
+  // producción, cualquiera podría agendar o cancelar citas de otros clientes y
+  // gastar el saldo de Claude. En producción exige la sesión del dashboard.
+  if (process.env.NODE_ENV === "production" && request.cookies.get(AUTH_COOKIE_NAME)?.value !== expectedSessionValue()) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 })
+  }
+
   const body = await request.json().catch(() => null)
   const phone = body?.phone as string | undefined
   const message = body?.message as string | undefined
