@@ -134,7 +134,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   // Actualizar líneas si se enviaron
   if (lineas !== undefined) {
-    await supabase.from('proforma_lineas').delete().eq('proforma_id', params.id)
+    const { error: errorDelete } = await supabase.from('proforma_lineas').delete().eq('proforma_id', params.id)
+    if (errorDelete) {
+      console.error('[PUT /api/proformas/:id] delete proforma_lineas falló', { proforma_id: params.id, error: errorDelete })
+      return NextResponse.json({ error: `No se pudieron borrar las líneas anteriores: ${errorDelete.message}` }, { status: 500 })
+    }
 
     if (lineas.length > 0) {
       const lineasConId = lineas.map((l: Record<string, unknown>, i: number) => ({
@@ -142,7 +146,23 @@ export async function PUT(req: NextRequest, { params }: Params) {
         proforma_id: params.id,
         orden: i,
       }))
-      await supabase.from('proforma_lineas').insert(lineasConId)
+      // Antes este error se ignoraba por completo: si Postgres rechazaba el
+      // insert (constraint, tipo de dato, lo que sea), el endpoint igual
+      // respondía 200 "éxito" y la proforma quedaba con 0 líneas sin que
+      // nadie se enterara — pasó en producción el 2026-10-05 y de nuevo el
+      // 2026-10-06 con la proforma 3-0253. Ahora se revisa y se corta el
+      // guardado completo (nada de proforma a medio guardar con líneas
+      // fantasma) si el insert falla.
+      const { error: errorInsert } = await supabase.from('proforma_lineas').insert(lineasConId)
+      if (errorInsert) {
+        console.error('[PUT /api/proformas/:id] insert proforma_lineas falló', {
+          proforma_id: params.id,
+          cantidad_lineas: lineas.length,
+          primera_linea: lineasConId[0],
+          error: errorInsert,
+        })
+        return NextResponse.json({ error: `No se pudieron guardar las líneas: ${errorInsert.message}` }, { status: 500 })
+      }
     }
 
     // Recalcular totales
