@@ -777,7 +777,14 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         ...l,
         producto_id: producto.id,
         codigo_pdf: producto.codigo || '',
-        descripcion_pdf: textoProducto(producto.nombre, producto.descripcion),
+        // Solo el nombre corto — antes se pegaba nombre + ficha técnica
+        // completa (textoProducto) y la proforma quedaba ilegible (pedido
+        // de Jero/diseñadora 2026-10-05: DESCRIPTION corta como
+        // "Shower Enclosure E15A-4", la especificación completa queda en
+        // el catálogo, no en cada proforma). textoProducto() sigue
+        // usándose tal cual en la tabla del selector de arriba, donde sí
+        // ayuda ver la descripción completa para elegir el producto correcto.
+        descripcion_pdf: producto.nombre,
         precio_costo_usd: precioCosto,
         precio_cliente_usd: precioCliente,
         margen_pct: precioCliente !== undefined ? calcMargen(precioCosto, precioCliente) : undefined,
