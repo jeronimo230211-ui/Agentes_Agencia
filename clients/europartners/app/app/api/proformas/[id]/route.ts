@@ -91,6 +91,37 @@ export async function PUT(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: `No se puede editar una proforma en estado '${current.estado}'` }, { status: 400 })
   }
 
+  // Salvaguarda: un guardado que mande lineas:[] sobre una proforma que YA
+  // tenía líneas casi nunca es intencional (ej. un payload desactualizado de
+  // una pestaña vieja, o cualquier otro bug del lado del cliente) — pasó en
+  // producción el 2026-10-05 con la proforma 3-0253 (aprobada, 5 líneas,
+  // quedó en 0). Si de verdad se quiere vaciar una proforma a propósito, hay
+  // que mandar confirmar_vaciar:true explícito. No se valida antes de este
+  // punto porque necesita el conteo real de líneas existentes.
+  if (lineas !== undefined && lineas.length === 0 && !body.confirmar_vaciar) {
+    const { count: lineasExistentes } = await supabase
+      .from('proforma_lineas')
+      .select('id', { count: 'exact', head: true })
+      .eq('proforma_id', params.id)
+    if ((lineasExistentes || 0) > 0) {
+      return NextResponse.json({
+        error: `Esta proforma ya tiene ${lineasExistentes} línea(s) guardada(s) — este guardado las dejaría en 0. Si es intencional, confirmalo explícitamente.`,
+      }, { status: 409 })
+    }
+  }
+
+  // Si hay edición estándar (líneas o campos del formulario), invalidar el
+  // PDF cacheado para que /api/proformas/[id]/pdf lo regenere con los datos
+  // nuevos la próxima vez que se pida — antes de esto, una proforma
+  // 'aprobada' editada seguía sirviendo para siempre el PDF de cuando se
+  // aprobó (la caché se escribió pensando que 'aprobada' era un estado
+  // inmodificable, antes de permitir editarla — ver 6cf1f29). Bug real
+  // reportado por Deisy 2026-10-05: el PDF no reflejaba la edición.
+  if (hayEdicionEstandar) {
+    proformaData.pdf_url = null
+    proformaData.pdf_generado_at = null
+  }
+
   // Actualizar proforma (campos estándar + financieros en un solo update)
   const { data, error } = await supabase
     .from('proformas')
