@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { randomUUID } from 'crypto'
 
 type Params = { params: { id: string } }
 
@@ -156,8 +157,21 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
 
     if (lineas.length > 0) {
+      // id EXPLÍCITO en todas las filas, nunca solo en algunas. Causa real
+      // encontrada el 2026-10-07: cuando el array mezcla líneas que ya
+      // existían (vienen con id real desde el navegador) con líneas nuevas
+      // (sin id, pensado para que Postgres aplique el default
+      // gen_random_uuid()), PostgREST arma el insert en bloque con la unión
+      // de columnas de TODAS las filas — a la fila que no traía "id" le
+      // manda NULL explícito en vez de dejar que corra el default, y como
+      // id es NOT NULL, el insert completo de las 6 líneas se rechaza
+      // ("null value in column id violates not-null constraint"). Como el
+      // delete de arriba ya se había hecho, el resultado era perder TODAS
+      // las líneas, no solo la nueva — exactamente lo que le pasó a la
+      // proforma 3-0253 con Deisy.
       const lineasConId = lineas.map((l: Record<string, unknown>, i: number) => ({
         ...l,
+        id: l.id || randomUUID(),
         proforma_id: params.id,
         orden: i,
       }))
