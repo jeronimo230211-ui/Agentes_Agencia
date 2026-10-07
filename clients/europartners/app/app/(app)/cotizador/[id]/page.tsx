@@ -864,6 +864,10 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         lineas: lineasData,
+        // Control de concurrencia optimista (ver app/api/proformas/[id]/route.ts)
+        // — si otra pestaña/sesión guardó después de que esta cargó, el
+        // backend rechaza el guardado en vez de pisarlo en silencio.
+        actualizado_en_cliente: proforma.updated_at,
         tipo_precio: tipoPrecio,
         notas_internas: proforma.notas_internas,
         requiere_revision: proforma.requiere_revision,

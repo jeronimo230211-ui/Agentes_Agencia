@@ -189,6 +189,7 @@ export interface Proforma {
   pdf_url?: string
   importado_de_excel: boolean
   created_at: string
+  updated_at: string
   // Registro Maestro Vivo — campos agregados en migración 021_tabla_pagos.sql
   // que hasta ahora no tenían UI (ver comentario en esa migración sobre
   // total_china_usd: es el único monto real de lo que factura el proveedor

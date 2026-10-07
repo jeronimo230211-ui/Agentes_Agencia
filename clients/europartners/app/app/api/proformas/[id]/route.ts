@@ -59,7 +59,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const body = await req.json()
 
-  const { lineas, ...bodyData } = body
+  const { lineas, actualizado_en_cliente, ...bodyData } = body
 
   // Los campos financieros adicionales (ver CAMPOS_FINANCIEROS_ADICIONALES)
   // se separan del resto antes del chequeo de estado — se pueden cargar en
@@ -76,11 +76,26 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const { data: current } = await supabase
     .from('proformas')
-    .select('estado, cliente_id')
+    .select('estado, cliente_id, updated_at')
     .eq('id', params.id)
     .single()
 
   if (!current) return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
+
+  // Control de concurrencia optimista: si el formulario mandó la fecha de
+  // actualización que tenía cargada y ya no coincide con la actual, alguien
+  // más (u otra pestaña/sesión propia desactualizada) guardó cambios después
+  // de que este formulario cargó — guardar igual pisaría ese cambio en
+  // silencio. Pasó en producción el 2026-10-06 con la proforma 3-0253: una
+  // edición con líneas reales quedó sobrescrita por un guardado posterior
+  // con datos viejos, sin ningún error. actualizado_en_cliente es opcional
+  // (compatibilidad con llamadores que todavía no lo mandan, ej. guardarFinancieros).
+  if (hayEdicionEstandar && actualizado_en_cliente && current.updated_at &&
+      new Date(actualizado_en_cliente).getTime() !== new Date(current.updated_at).getTime()) {
+    return NextResponse.json({
+      error: 'Esta proforma fue modificada en otra sesión después de que la cargaste. Recargá la página para ver los cambios más recientes antes de guardar — si guardás ahora, perderías esa edición.',
+    }, { status: 409 })
+  }
 
   // Editable en borrador/rechazada/cambios_solicitados (flujo normal antes de
   // aprobar) y también en aprobada (permite corregir datos ya aprobados sin
