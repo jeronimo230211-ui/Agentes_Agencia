@@ -143,7 +143,9 @@ Subagents live at **user level** in `C:\Users\Jeronimo\.claude\agents\` so they 
 | `sales-copywriter.md` | Sales | Proposals, pitches, copy |
 | `marketing-specialist.md` | Marketing | Campaigns, content, lead gen |
 | `project-manager.md` | PM | Task planning, timelines |
-| `data-analyst.md` | Analyst | KPIs, Sheets structure, reporting |
+| `data-analyst.md` | Analyst | KPIs, reporting, real-usage audits |
+| `supabase-architect.md` | DB | Schema, migrations, RLS, backups, DB security |
+| `client-success.md` | Post-venta | Client feedback → classified changes, follow-ups, monthly report |
 | `catalog-image-designer.md` | Catalog | Product photo review / editing specs |
 | `gymbot-lead-scorer.md` | GymBot | Score & segment gym leads from CSV |
 | `gymbot-sdr.md` | GymBot | Cold outreach → book demo |

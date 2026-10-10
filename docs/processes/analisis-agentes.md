@@ -123,7 +123,7 @@ Son 16 agentes, 2 nuevos. Más que eso empieza a estorbar, porque Claude elige p
 1. ~~Reporte automático~~ ✅ hook `SubagentStart/Stop` + log local `~/.claude/agency-activity.jsonl` (10-oct). Pendiente: redesplegar Agency OS (borrado de Vercel)
 1b. ~~Skills de proceso~~ ✅ `/nuevo-cliente` y `/entrega-cliente` en `~/.claude/skills/` (10-oct)
 2. ~~Crear `conversational-agent-engineer` con lo aprendido en LexBarbería~~ ✅
-3. Actualizar el stack en `agency-developer` y `data-analyst`
+3. ~~Actualizar el stack en `agency-developer` y `data-analyst`~~ ✅ (10-oct). ~~Crear `supabase-architect` y `client-success`~~ ✅ (10-oct)
 4. Agregar la revisión de seguridad a QA y sacar las contraseñas de `AGENCY_CONTEXT.md`
 5. Crear `client-success`
 6. Generalizar `catalog-image-designer`
