@@ -145,6 +145,8 @@ Subagents live at **user level** in `C:\Users\Jeronimo\.claude\agents\` so they 
 | `project-manager.md` | PM | Task planning, timelines |
 | `data-analyst.md` | Analyst | KPIs, reporting, real-usage audits |
 | `supabase-architect.md` | DB | Schema, migrations, RLS, backups, DB security |
+| `solutions-architect.md` | Estimación | Hours, hard costs, price options with margin |
+| `data-pipeline-engineer.md` | Data | Excel/PDF migrations, bulk loads, content pipelines |
 | `client-success.md` | Post-venta | Client feedback → classified changes, follow-ups, monthly report |
 | `catalog-image-designer.md` | Catalog | Product photo review / editing specs |
 | `gymbot-lead-scorer.md` | GymBot | Score & segment gym leads from CSV |
