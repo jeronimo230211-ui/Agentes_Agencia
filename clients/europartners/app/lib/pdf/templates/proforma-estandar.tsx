@@ -32,14 +32,24 @@ const styles = StyleSheet.create({
     paddingBottom: 46, // deja lugar a la franja decorativa del fondo
     backgroundColor: '#ffffff',
   },
+  // Logo en su propia fila; los datos de contacto y el número de proforma
+  // van en una segunda fila, como dos columnas que arrancan en el mismo
+  // alignItems:'flex-start' — así quedan SIEMPRE a la misma altura sin
+  // importar cuántas líneas tenga cada lado (pedido de la diseñadora
+  // 2026-10-10: "el número debe estar alineado con los datos de contacto",
+  // antes el badge quedaba a la altura del logo, no de la dirección).
+  logoRow: { marginBottom: 10 },
+  logo: { width: 130, height: 73 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
   },
-  logo: { width: 130, height: 73, marginBottom: 8 },
-  contactLine: { fontSize: 8, color: '#374151', marginBottom: 2 },
+  contactCol: { gap: 3 },
+  contactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 5 },
+  contactIconBox: { width: 9, paddingTop: 1 },
+  contactLine: { fontSize: 8, color: '#374151' },
   headerRight: { alignItems: 'flex-end' },
   proformaTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', marginBottom: 6 },
   numeroBadge: {
@@ -50,15 +60,23 @@ const styles = StyleSheet.create({
   },
   numeroBadgeText: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: MORADO },
 
+  // flexGrow:0 a propósito — antes cada columna usaba flex:1/2/1 sobre todo
+  // el ancho de la página, y como el contenido de cada una es angosto
+  // (ej. "Date:" + una fecha) quedaba un espacio en blanco enorme dentro de
+  // la columna antes de llegar a la siguiente. Con columnas de su ancho
+  // natural + justifyContent:'space-between' en la fila, el espacio sobrante
+  // queda ENTRE las columnas, no desperdiciado dentro de cada una (pedido
+  // de la diseñadora 2026-10-10, punto 3).
   topRow: {
     flexDirection: 'row',
-    gap: 24,
+    justifyContent: 'space-between',
+    gap: 20, // mínimo garantizado — justifyContent solo no alcanzaba, las columnas quedaban pegadas
     marginBottom: 14,
   },
-  topCol: { flex: 1 },
+  topCol: { flexGrow: 0, gap: 4 },
   topLabel: { fontSize: 8, color: '#6b7280' },
-  topValue: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', marginBottom: 4 },
-  buyerTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: MORADO, marginBottom: 3 },
+  topValue: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#1E3A5F' },
+  buyerTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: MORADO, marginBottom: 1 },
 
   termsRow: { flexDirection: 'row', gap: 14, marginBottom: 14 },
   termsBox: {
@@ -122,9 +140,14 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', gap: 16, marginBottom: 2 },
   totalLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151' },
   totalValue: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', minWidth: 80, textAlign: 'right' },
+  // Antes usaba dorado (#D4A017), heredado sin querer de la plantilla vieja
+  // de Europartners — esta identidad nueva de la diseñadora es toda
+  // navy/morado, sin dorado en ningún otro lado del diseño (pedido
+  // 2026-10-10, punto 4: "el contenedor del precio total tiene los colores
+  // que no son").
   grandTotal: { backgroundColor: '#1E3A5F', borderRadius: 6, padding: '6 10', flexDirection: 'row', gap: 16, marginTop: 4 },
-  grandTotalLabel: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#D4A017' },
-  grandTotalValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#D4A017', minWidth: 80, textAlign: 'right' },
+  grandTotalLabel: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#ffffff' },
+  grandTotalValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#ffffff', minWidth: 80, textAlign: 'right' },
 
   bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 26 },
   termsText: { fontSize: 7, color: '#6b7280', maxWidth: 300, lineHeight: 1.4 },
@@ -165,6 +188,43 @@ function IconoLupa() {
   )
 }
 
+// Iconos de los datos de contacto debajo del logo (pedido de la diseñadora
+// 2026-10-10, punto 2 — faltaban por completo). Dibujados a mano con
+// primitivas Svg, igual que IconoLupa: react-pdf no trae ninguna fuente de
+// iconos, y cargar una librería de iconos solo para 3 glifos de 9px no vale
+// la pena.
+function IconoPin() {
+  return (
+    <Svg width={9} height={9} viewBox="0 0 24 24">
+      <Path
+        d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z"
+        fill={MORADO}
+      />
+      <Circle cx="12" cy="10" r="3.2" fill="white" />
+    </Svg>
+  )
+}
+
+function IconoSobre() {
+  return (
+    <Svg width={9} height={9} viewBox="0 0 24 24">
+      <Path d="M3 5h18v14H3z" stroke={MORADO} strokeWidth={2} fill="none" />
+      <Path d="M3 5l9 7 9-7" stroke={MORADO} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+function IconoTelefono() {
+  return (
+    <Svg width={9} height={9} viewBox="0 0 24 24">
+      <Path
+        d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 3.4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.2 1L6.6 10.8z"
+        fill={MORADO}
+      />
+    </Svg>
+  )
+}
+
 export function ProformaPDF({ proforma }: Props) {
   const cliente = proforma.cliente!
   const lineas = proforma.lineas || []
@@ -186,15 +246,30 @@ export function ProformaPDF({ proforma }: Props) {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* HEADER — logo real de la diseñadora (extraído de su plantilla,
-            ver lib/pdf/assets/logo.png) + dirección de contacto a la
-            izquierda; título y badge redondeado con el número a la derecha. */}
+            ver lib/pdf/assets/logo.png) en su propia fila. Debajo, los
+            datos de contacto (con ícono cada uno) y el título+badge del
+            número van en la MISMA fila, para que queden a la misma altura
+            sin importar el contenido de cada lado. */}
+        <View style={styles.logoRow}>
+          <Image src={LOGO_BUFFER} style={styles.logo} />
+        </View>
         <View style={styles.header}>
-          <View>
-            <Image src={LOGO_BUFFER} style={styles.logo} />
-            <Text style={styles.contactLine}>San Francisco Calle 78, PH The View</Text>
-            <Text style={styles.contactLine}>Apto 22A, Panama City, Panama</Text>
-            <Text style={styles.contactLine}>egispty@gmail.com</Text>
-            <Text style={styles.contactLine}>+507 6608-5639</Text>
+          <View style={styles.contactCol}>
+            <View style={styles.contactRow}>
+              <View style={styles.contactIconBox}><IconoPin /></View>
+              <View>
+                <Text style={styles.contactLine}>San Francisco Calle 78, PH The View</Text>
+                <Text style={styles.contactLine}>Apto 22A, Panama City, Panama</Text>
+              </View>
+            </View>
+            <View style={styles.contactRow}>
+              <View style={styles.contactIconBox}><IconoSobre /></View>
+              <Text style={styles.contactLine}>egispty@gmail.com</Text>
+            </View>
+            <View style={styles.contactRow}>
+              <View style={styles.contactIconBox}><IconoTelefono /></View>
+              <Text style={styles.contactLine}>+507 6608-5639</Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.proformaTitle}>{esFactura ? 'INVOICE' : 'PROFORMA INVOICE'}</Text>
