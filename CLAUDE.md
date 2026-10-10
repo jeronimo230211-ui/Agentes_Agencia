@@ -51,9 +51,9 @@ Agentes_Agencia/
 │   └── ...
 │
 ├── .claude/                   ← Claude Code configuration
-│   ├── agents/                ← Subagent definitions (9 roles) ← USE THESE
 │   ├── agent-memory/          ← Per-agent persistent memory
 │   └── settings.local.json    ← Pre-approved tool permissions
+│   (agents live in ~/.claude/agents — user level)
 │
 ├── landing/                   ← Nexora IA agency landing page
 ├── prospecting/               ← Lead generation pipeline (Apify + scripts)
@@ -129,21 +129,28 @@ project-name/
 
 ## SUBAGENT SYSTEM
 
-Nine role-specific subagents are defined in `.claude/agents/`. Use these for delegation:
+Subagents live at **user level** in `C:\Users\Jeronimo\.claude\agents\` so they work in every project (not in this repo — a project-level `.claude/agents/` copy would override them). `agents/` in this repo is legacy and is not loaded by Claude Code. Roster analysis → [`docs/processes/analisis-agentes.md`](./docs/processes/analisis-agentes.md)
 
 | File | Role | When to use |
 |---|---|---|
 | `agency-orchestrator.md` | Orchestrator | Discovery, planning, client workflow coordination |
 | `agency-developer.md` | Developer | Code, APIs, deployment |
-| `agency-ceo.md` | CEO | Strategic decisions, pricing, client negotiations |
+| `conversational-agent-engineer.md` | Bot engineer | WhatsApp AI bots: prompt, tools, webhook, tests (opus) |
+| `agency-ceo.md` | CEO | Strategic decisions, pricing, priorities, upsell |
 | `ui-ux-designer.md` | Designer | UI/UX, Figma specs, component design |
 | `qa-tester-agencia.md` | QA | Testing, bug reports |
+| `devops-ia-agency.md` | DevOps | Deploys, env vars, DNS, incidents |
 | `sales-copywriter.md` | Sales | Proposals, pitches, copy |
 | `marketing-specialist.md` | Marketing | Campaigns, content, lead gen |
 | `project-manager.md` | PM | Task planning, timelines |
 | `data-analyst.md` | Analyst | KPIs, Sheets structure, reporting |
+| `catalog-image-designer.md` | Catalog | Product photo review / editing specs |
+| `gymbot-lead-scorer.md` | GymBot | Score & segment gym leads from CSV |
+| `gymbot-sdr.md` | GymBot | Cold outreach → book demo |
+| `gymbot-closer.md` | GymBot | Demo → proposal → payment |
+| `gymbot-content.md` | GymBot | IG/TikTok inbound content |
 
-Each agent has persistent memory in `.claude/agent-memory/<role>/`. Always report status to Agency OS before and after tasks (see AGENCY OS section below).
+Each agent has persistent memory in `C:\Users\Jeronimo\.claude\agent-memory\<name>\` (`memory: user`). Always report status to Agency OS before and after tasks (see AGENCY OS section below).
 
 ---
 
@@ -179,6 +186,8 @@ Each agent has persistent memory in `.claude/agent-memory/<role>/`. Always repor
 ---
 
 ## PROJECT LIFECYCLE
+
+> **Usar las skills:** `/nuevo-cliente <cliente>` (discovery → propuesta → arquitectura → build, con aprobación entre fases) y `/entrega-cliente <slug>` (QA + seguridad + bot + DevOps en paralelo antes de entregar). Viven en `~/.claude/skills/` y funcionan en todos los proyectos. Cada cliente lleva un `PROJECT.md` como fuente de verdad (patrón de `clients/lexbarberia/`).
 
 ```
 1. DISCOVERY → identify 3 most painful friction points → define MVP
@@ -239,50 +248,16 @@ Next.js (Vercel)
 
 ---
 
-## AGENCY OS — REPORTAR ESTADO (OBLIGATORIO)
+## PANEL Y REGISTRO DE ACTIVIDAD (AUTOMÁTICO, LOCAL)
 
-Cada agente **debe** reportar su estado a Agency OS usando el script `scripts/report-status.sh`.
-Esto actualiza el panel en tiempo real para que Jerónimo vea qué está haciendo cada agente.
+Agency OS (Vercel) se retiró el 10-oct-2026. Ahora todo es local, sin servicios externos:
 
-### Cuándo reportar
+- **Hook** `SubagentStart` / `SubagentStop` (`~/.claude/settings.json`) → `~/.claude/hooks/agent-status.js`. Se ejecuta solo cada vez que un agente empieza o termina, en cualquier proyecto.
+- **Registro:** `~/.claude/agency-activity.jsonl` (agente, proyecto, sesión, hora, resumen). Lo lee `agency-ceo`.
+- **Panel:** `C:\Users\Jeronimo\.claude\agency-dashboard.html`. Se regenera en cada evento y se refresca solo en el navegador. Muestra quién trabaja ahora, actividad por proyecto y agentes sin uso.
+- **Manual de operación** (quién hace qué, cuándo delegar, qué requiere aprobación): `C:\Users\Jeronimo\.claude\CLAUDE.md`. Se carga en todos los proyectos.
 
-| Momento | estado | Ejemplo de --desc |
-|---|---|---|
-| Al iniciar una tarea | `trabajando` | "Inició desarrollo del módulo X" |
-| Al completar una tarea | `listo` | "Completó módulo X" |
-| Al necesitar aprobación | `esperando_aprobacion` | "Solicita aprobación para deploy a producción" |
-| Al quedar sin tareas | `disponible` | "Sin tareas asignadas, listo para nueva tarea" |
-
-### Cómo reportar
-
-Usa el Bash tool para ejecutar el script. Ejemplo:
-
-```bash
-bash scripts/report-status.sh \
-  --agente    "developer" \
-  --nombre    "Developer" \
-  --estado    "trabajando" \
-  --tarea     "Construyendo módulo de autenticación" \
-  --proyecto  "Agency OS" \
-  --desc      "Inició desarrollo del módulo de autenticación"
-```
-
-### IDs de agentes (usar exactamente estos)
-
-| Agente | --agente | --nombre |
-|---|---|---|
-| Orquestador | `orchestrator` | `Orchestrator` |
-| Desarrollador | `developer` | `Developer` |
-| Diseñador | `designer` | `Designer` |
-| QA | `qa` | `QA` |
-| Analista | `data-analyst` | `Data Analyst` |
-| Ventas | `sales` | `Sales` |
-| Marketing | `marketing` | `Marketing` |
-| PM | `project-manager` | `Project Manager` |
-| DevOps | `devops` | `DevOps` |
-| CEO | `agency-ceo` | `Agency CEO` |
-
-**Regla:** Reporta ANTES de iniciar la tarea y DESPUÉS de completarla. Nunca omitas este paso.
+Los agentes no reportan a mano. `scripts/report-status.sh` y `scripts/watch-tasks.sh` quedan obsoletos.
 
 ---
 

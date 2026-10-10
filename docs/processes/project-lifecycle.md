@@ -1,5 +1,7 @@
 # Project Lifecycle — Standard Process
 
+> ⚠️ Desactualizado (stack Sheets/Make). El proceso vigente está en las skills `/nuevo-cliente` y `/entrega-cliente` (`~/.claude/skills/`).
+
 Every client project follows this 6-stage flow.
 
 ---
