@@ -148,6 +148,10 @@ Revisión de código independiente (agente QA) + batería de 14 escenarios contr
 - Mensajes honestos: el agente ya no promete "Alex te va a escribir" (nadie le avisa). "Fuera de horario" ya no se confunde con "ocupado". `**negrita**` se convierte a formato WhatsApp en código. Nombre de perfil saneado antes de entrar al prompt. Historial guardado recortado a 200 mensajes.
 - Pendiente conocido (bajo): `processed_webhook_messages` e `inbound_messages` crecen sin limpieza; el orden de mensajes que llegan en el mismo milisegundo no está garantizado.
 
+## Pendiente de seguridad (2026-10-10)
+
+- **RLS apagado en todas las tablas** (en `001_schema.sql` quedó comentado). Cualquiera con la anon key puede leer y escribir toda la base vía `/rest/v1`, incluidos teléfonos, citas y tokens de Google/WhatsApp en `business`. Hoy la anon key no está en el código del navegador, así que no hay exposición directa conocida. Fix listo: `db/migrations/006_enable_rls.sql` (sin impacto en la app, que usa la service key). **Jerónimo debe correrla en el SQL Editor de Supabase** y luego probar un WhatsApp y una cita desde el dashboard.
+
 ## Variables de entorno requeridas (cuando se despliegue)
 
 ```
