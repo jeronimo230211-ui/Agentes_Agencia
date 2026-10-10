@@ -126,7 +126,17 @@ export async function updateClientName(db: Db, businessId: string, phone: string
   return (updated as Client) || { ...client, name }
 }
 
-export async function findOrCreateClient(db: Db, businessId: string, phone: string, name?: string | null): Promise<Client> {
+/** Deja el teléfono en el formato en que WhatsApp lo envía (57 + 10 dígitos).
+ *  Caso real 2026-10-03: una cita creada desde el panel con "3122795696" (sin 57)
+ *  hizo fallar el recordatorio y duplicó al cliente cuando luego escribió por WhatsApp. */
+export function normalizePhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "")
+  if (digits.length === 10 && digits.startsWith("3")) return `57${digits}` // celular colombiano sin indicativo
+  return digits
+}
+
+export async function findOrCreateClient(db: Db, businessId: string, rawPhone: string, name?: string | null): Promise<Client> {
+  const phone = normalizePhone(rawPhone)
   const { data: existing } = await db.from("clients").select("*").eq("business_id", businessId).eq("phone", phone).single()
 
   if (existing) {
@@ -238,7 +248,7 @@ export async function cancelAppointment(
 }
 
 export async function findClientByPhone(db: Db, businessId: string, phone: string): Promise<Client | null> {
-  const { data } = await db.from("clients").select("*").eq("business_id", businessId).eq("phone", phone).single()
+  const { data } = await db.from("clients").select("*").eq("business_id", businessId).eq("phone", normalizePhone(phone)).single()
   return (data as Client) || null
 }
 
@@ -266,7 +276,7 @@ export async function getClientLastService(
   businessId: string,
   phone: string
 ): Promise<{ clientName: string | null; lastServiceName: string } | null> {
-  const { data: client } = await db.from("clients").select("id, name").eq("business_id", businessId).eq("phone", phone).single()
+  const { data: client } = await db.from("clients").select("id, name").eq("business_id", businessId).eq("phone", normalizePhone(phone)).single()
   if (!client) return null
 
   const { data: lastAppointment } = await db
