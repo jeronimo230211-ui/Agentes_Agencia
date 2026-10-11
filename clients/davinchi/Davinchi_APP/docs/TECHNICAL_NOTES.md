@@ -182,9 +182,9 @@ doLogin() → loadCatalog() → GET SHEETS_URL?action=getCatalogo → hoja CATAL
 
 ```javascript
 const VENDORS = [
-  {user:'admin', pass:'davinchi2025', name:'Administrador',        role:'CEO'},
-  {user:'jero',  pass:'jero2025',     name:'Jeronimo Alvarez',     role:'Vendedor'},
-  {user:'yiyo',  pass:'yiyo2025',     name:'Juan Gabriel Alvarez', role:'Vendedor'},
+  {user:'admin', pass:'[eliminada]', name:'Administrador',        role:'CEO'},
+  {user:'jero',  pass:'[eliminada]',     name:'Jeronimo Alvarez',     role:'Vendedor'},
+  {user:'yiyo',  pass:'[eliminada]',     name:'Juan Gabriel Alvarez', role:'Vendedor'},
 ];
 ```
 

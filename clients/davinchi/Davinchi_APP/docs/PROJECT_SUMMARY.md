@@ -79,9 +79,9 @@ Cliente abre app (index.html en Vercel)
 
 | Usuario | Rol | Acceso |
 |---|---|---|
-| admin / davinchi2025 | CEO - Administrador | Dashboard KPIs + todos los pedidos |
-| jero / jero2025 | Vendedor - Jeronimo Alvarez | Panel de pedidos |
-| yiyo / yiyo2025 | Vendedor - Juan Gabriel Alvarez | Panel de pedidos |
+| admin / [eliminada] | CEO - Administrador | Dashboard KPIs + todos los pedidos |
+| jero / [eliminada] | Vendedor - Jeronimo Alvarez | Panel de pedidos |
+| yiyo / [eliminada] | Vendedor - Juan Gabriel Alvarez | Panel de pedidos |
 
 **WhatsApp vendedores:**
 - Jeronimo Alvarez: +57 312 279 5696

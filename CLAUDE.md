@@ -16,6 +16,20 @@ Services & pricing → [`SERVICES_CATALOG.md`](./SERVICES_CATALOG.md)
 
 ---
 
+## ESTADO DE PROYECTOS (fuente de verdad, actualizado 11-oct-2026)
+
+| Proyecto | Carpeta | Estado |
+|---|---|---|
+| **Europartners** | `clients/europartners/` | 🟢 **Activo**, en producción |
+| **LexBarbería** | `clients/lexbarberia/` | 🟢 **Activo**, en producción (número de prueba de Meta) |
+| Davinchi | `clients/davinchi/` | ⚪ Inactivo: solo referencia de arquitectura (stack legacy). App fuera de línea |
+| Bracarli, Gloria, Redline | `clients/<nombre>/` | ⚪ Inactivos: nunca pasaron del scaffold |
+| GymBot IA | `saas/gymbot-ia/` | ⚪ Inactivo / pausado. Sigue publicado en `agentes-agencia.vercel.app` con APIs sin autenticación. Antes de reactivarlo hay que cerrar los hallazgos de seguridad (auth, RLS, aislamiento por gym) |
+
+**Regla para agentes y rutinas:** reportes, seguimiento, auditorías y prioridades se hacen **solo sobre proyectos activos**. Los inactivos no se reportan como "en riesgo" ni "sin movimiento". Los agentes `gymbot-*` quedan en pausa: úsalos solo si Jerónimo lo pide explícitamente. Si un proyecto cambia de estado, actualiza esta tabla.
+
+---
+
 ## TEAM STRUCTURE
 
 | Role | Who |
@@ -35,20 +49,17 @@ Agentes_Agencia/
 ├── AGENCY_CONTEXT.md          ← Full agency context (read this)
 ├── SERVICES_CATALOG.md        ← Services & pricing reference
 │
-├── clients/                   ← One subfolder per client project
-│   ├── davinchi/              ← Reference project (Field Sales OS, vanilla HTML/JS)
-│   ├── bracarli/              ← Next.js 16 client project
-│   ├── gloria/                ← Next.js 16 client project
-│   └── redline/               ← Next.js 16 client project
+├── clients/                   ← One subfolder per client project (ver ESTADO DE PROYECTOS)
+│   ├── europartners/          ← ACTIVO — app operativa (Next.js + Supabase)
+│   ├── lexbarberia/           ← ACTIVO — agenda + bot WhatsApp (Next.js + Supabase)
+│   ├── davinchi/              ← inactivo — referencia legacy (HTML/JS + Sheets)
+│   └── bracarli/ gloria/ redline/  ← inactivos
 │
 ├── saas/                      ← SaaS products (multi-tenant)
-│   └── gymbot-ia/             ← GymBot IA — WhatsApp AI for gyms (Next.js + Supabase)
+│   └── gymbot-ia/             ← inactivo/pausado — WhatsApp AI for gyms
 │
 ├── templates/                 ← White-label product templates
-│   └── field-sales-os/        ← Abstracted Davinchi → reusable product (WIP)
-│
-├── agents/                    ← System prompts per role (legacy)
-│   └── ...
+│   └── field-sales-os/        ← Abstracted Davinchi → reusable product (stub)
 │
 ├── .claude/                   ← Claude Code configuration
 │   ├── agent-memory/          ← Per-agent persistent memory
@@ -204,11 +215,11 @@ Each agent has persistent memory in `C:\Users\Jeronimo\.claude\agent-memory\<nam
 
 ---
 
-## REFERENCE PROJECT — DAVINCHI APP
+## REFERENCE PROJECT — DAVINCHI APP (inactivo)
 
-Our first completed project. Use as architecture reference for all future builds.
+Our first completed project. Proyecto inactivo: sirve solo como referencia del stack simple (HTML + Sheets + Make). Para apps nuevas la referencia es Europartners / LexBarbería.
 
-- **Live:** https://davinchi-app.vercel.app
+- **Live:** fuera de línea (davinchi-app.vercel.app → 404, oct-2026)
 - **Repo:** github.com/jeronimo230211-ui/Davinchi_App
 - **Local reference:** `clients/davinchi/`
 - **What it is:** Field Sales OS — digital order system with AI chat, vendor panel, CEO dashboard
@@ -233,9 +244,9 @@ index.html (Vercel)
 
 ---
 
-## REFERENCE PROJECT — GYMBOT IA (SaaS Architecture)
+## REFERENCE PROJECT — GYMBOT IA (SaaS Architecture, inactivo/pausado)
 
-Use as architecture reference for **multi-tenant SaaS products** (vs. Davinchi for client apps).
+Proyecto pausado. Su código tiene hallazgos de seguridad abiertos (APIs sin auth, RLS incompleto): no copiar sus rutas de API como referencia. Use as architecture reference for **multi-tenant SaaS products** (vs. Davinchi for client apps).
 
 - **Repo:** `saas/gymbot-ia/`
 - **What it is:** WhatsApp AI assistant for gyms — member queries, class schedules, attendance via WhatsApp
@@ -267,13 +278,12 @@ Los agentes no reportan a mano. `scripts/report-status.sh` y `scripts/watch-task
 
 ## CURRENT PRIORITIES
 
-1. Finalize Davinchi App (admin panel, WhatsApp integration, custom domain)
-2. Extract Davinchi → white-label template in `templates/field-sales-os/` (WIP — stub only)
-3. ~~Define agency name~~ ✅ **Nexora IA** — brand in `docs/brand/`
-4. ~~Build second client project~~ ✅ Three new clients: bracarli, gloria, redline
-5. ~~Create agent templates~~ ✅ 9 subagents in `.claude/agents/`
-6. Launch GymBot IA (`saas/gymbot-ia/`) — first SaaS product
-7. Activate prospecting pipeline (`prospecting/`) → convert leads to clients
+1. **Europartners:** desplegar el fix de seguridad (oct-2026), cerrar los hallazgos de la auditoría y crear su `PROJECT.md`
+2. **LexBarbería:** correr la migración 006 (RLS), pasar al número real de Alex y cerrar sus pendientes (horario, duración por servicio)
+3. Activar el pipeline de prospección (`prospecting/`) → clientes nuevos vía `/nuevo-cliente`
+
+Hecho: ~~nombre de la agencia~~ ✅ Nexora IA · ~~sistema de agentes~~ ✅ 20 agentes globales + panel + rutinas (oct-2026)
+Pausado: Davinchi (y su template), Bracarli, Gloria, Redline, GymBot IA
 
 ---
 
@@ -293,4 +303,4 @@ Los agentes no reportan a mano. `scripts/report-status.sh` y `scripts/watch-task
 
 ---
 
-*Last updated: June 2026 | Maintained by Jerónimo Álvarez + Claude Code*
+*Last updated: October 2026 | Maintained by Jerónimo Álvarez + Claude Code*

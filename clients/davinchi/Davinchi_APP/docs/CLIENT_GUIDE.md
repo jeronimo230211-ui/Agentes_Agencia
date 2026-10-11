@@ -45,8 +45,8 @@
 
 | Vendedor | Usuario | Contrasena |
 |---|---|---|
-| Jeronimo | jero | jero2025 |
-| Juan Gabriel | yiyo | yiyo2025 |
+| Jeronimo | jero | [eliminada] |
+| Juan Gabriel | yiyo | [eliminada] |
 
 ### Ver pedidos nuevos
 - El panel se actualiza solo cada 30 segundos
@@ -73,7 +73,7 @@
 ### Entrar al dashboard
 1. Abre https://davinchi-app.vercel.app
 2. Toca "Soy vendedor"
-3. Usuario: **admin** | Contrasena: **davinchi2025**
+3. Usuario: **admin** | Contrasena: **[eliminada]**
 
 ### Lo que ves en el dashboard
 

@@ -186,13 +186,7 @@ const CATALOG = [
 ```
 
 ### Users:
-```javascript
-const VENDORS = [
-  {user:'admin', pass:'davinchi2025', name:'Administrador', role:'CEO'},
-  {user:'jero',  pass:'jero2025',     name:'Jerónimo Álvarez', role:'Vendedor'},
-  {user:'yiyo',  pass:'yiyo2025',     name:'Juan Gabriel Álvarez', role:'Vendedor'},
-];
-```
+Roles: CEO (admin) and Vendedor. Credentials were hardcoded in the frontend (`VENDORS` array), which is an anti-pattern: never repeat it. New apps use server-side auth (see LexBarbería `proxy.ts` + cookie, or Supabase Auth). Credentials removed from this doc (oct-2026; project inactive).
 
 ### Make.com automation:
 - Org ID: 7066630 | Team ID: 2066652
