@@ -51,35 +51,16 @@ export async function GET(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
   }
 
-  // Verificar si ya hay PDF cacheado en Storage
-  if (proforma.pdf_url && proforma.estado === 'aprobada') {
-    return NextResponse.redirect(proforma.pdf_url)
-  }
-
-  // Generar PDF
+  // Siempre se genera en el momento — este endpoint ANTES cacheaba el PDF
+  // en Storage la primera vez que se veía una proforma 'aprobada' y servía
+  // esa copia para siempre. Pensado para un estado que entonces era
+  // inmodificable, dejó de tener sentido el 2026-09-24 al permitir editar
+  // proformas ya aprobadas: cada cambio de plantilla o cada edición de
+  // Deisy quedaba invisible hasta que algo disparara una invalidación
+  // manual (varios bugs reales en producción por esto, 2026-10-05/06/13).
+  // react-pdf tarda un par de segundos, el tráfico de este botón es bajo
+  // — no vale la pena la complejidad de mantener la caché sincronizada.
   const pdfBuffer = await generarPDFProforma(proforma)
-
-  // Cachear en Supabase Storage si está aprobada
-  if (proforma.estado === 'aprobada') {
-    const fileName = `proformas-pdf/${proforma.id}.pdf`
-    const { data: upload } = await adminClient.storage
-      .from('documentos')
-      .upload(fileName, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      })
-
-    if (upload) {
-      const { data: urlData } = adminClient.storage
-        .from('documentos')
-        .getPublicUrl(fileName)
-
-      await adminClient
-        .from('proformas')
-        .update({ pdf_url: urlData.publicUrl, pdf_generado_at: new Date().toISOString() })
-        .eq('id', params.id)
-    }
-  }
 
   return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {

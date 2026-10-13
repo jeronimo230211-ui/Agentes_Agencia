@@ -126,18 +126,6 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
   }
 
-  // Si hay edición estándar (líneas o campos del formulario), invalidar el
-  // PDF cacheado para que /api/proformas/[id]/pdf lo regenere con los datos
-  // nuevos la próxima vez que se pida — antes de esto, una proforma
-  // 'aprobada' editada seguía sirviendo para siempre el PDF de cuando se
-  // aprobó (la caché se escribió pensando que 'aprobada' era un estado
-  // inmodificable, antes de permitir editarla — ver 6cf1f29). Bug real
-  // reportado por Deisy 2026-10-05: el PDF no reflejaba la edición.
-  if (hayEdicionEstandar) {
-    proformaData.pdf_url = null
-    proformaData.pdf_generado_at = null
-  }
-
   // Actualizar proforma (campos estándar + financieros en un solo update)
   const { data, error } = await supabase
     .from('proformas')
