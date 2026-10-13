@@ -12,33 +12,44 @@ import { formatUSD } from '@/lib/precio'
 // valores EXACTOS (no aproximados a ojo) de tipografía, colores de
 // texto y de fondo, leyendo los spans y las formas del PDF con
 // PyMuPDF en vez de adivinar mirando la imagen renderizada.
+// Las fuentes se leen y se pasan como data URL en base64, NO como ruta de
+// archivo — a diferencia de <Image>, el src de Font.register en esta
+// versión de react-pdf SOLO acepta un string (ruta, URL http, o data URL);
+// pasar un Buffer da error de tipos, y pasar una ruta hace que
+// @react-pdf/font recién intente abrir el archivo de forma perezosa, en el
+// momento de renderizar, no al registrar. En el filesystem de solo lectura
+// de una función serverless de Vercel esa lectura tardía falla en silencio
+// y el error que sale a superficie es engañoso ("Font family not
+// registered"), no el ENOENT real. Con la data URL, react-pdf no toca el
+// filesystem en absoluto durante el render. Bug real en producción 2026-10-13.
 const FUENTES_DIR = path.join(process.cwd(), 'lib/pdf/fonts')
+function leerFuente(nombre: string) {
+  const buffer = fs.readFileSync(path.join(FUENTES_DIR, nombre))
+  return `data:font/woff;base64,${buffer.toString('base64')}`
+}
 Font.register({
   family: 'Work Sans',
   fonts: [
-    { src: path.join(FUENTES_DIR, 'WorkSans-Regular.woff'), fontWeight: 400 },
-    { src: path.join(FUENTES_DIR, 'WorkSans-Medium.woff'), fontWeight: 500 },
-    { src: path.join(FUENTES_DIR, 'WorkSans-SemiBold.woff'), fontWeight: 600 },
-    { src: path.join(FUENTES_DIR, 'WorkSans-Bold.woff'), fontWeight: 700 },
+    { src: leerFuente('WorkSans-Regular.woff'), fontWeight: 400 },
+    { src: leerFuente('WorkSans-Medium.woff'), fontWeight: 500 },
+    { src: leerFuente('WorkSans-SemiBold.woff'), fontWeight: 600 },
+    { src: leerFuente('WorkSans-Bold.woff'), fontWeight: 700 },
   ],
 })
 Font.register({
   family: 'Poppins',
   fonts: [
-    { src: path.join(FUENTES_DIR, 'Poppins-Medium.woff'), fontWeight: 500 },
-    { src: path.join(FUENTES_DIR, 'Poppins-SemiBold.woff'), fontWeight: 600 },
+    { src: leerFuente('Poppins-Medium.woff'), fontWeight: 500 },
+    { src: leerFuente('Poppins-SemiBold.woff'), fontWeight: 600 },
   ],
 })
 Font.register({
   family: 'Questrial',
-  fonts: [{ src: path.join(FUENTES_DIR, 'Questrial-Regular.woff'), fontWeight: 400 }],
+  fonts: [{ src: leerFuente('Questrial-Regular.woff'), fontWeight: 400 }],
 })
 
-// Se leen como Buffer (no como ruta de archivo) porque @react-pdf/renderer
-// intenta resolver un string como URL si no es un Buffer/objeto de datos
-// — con una ruta de Windows ("Only absolute URLs are supported") o en el
-// filesystem de solo lectura de Vercel, pasar la ruta cruda no es
-// confiable. Se leen una sola vez al cargar el módulo, no en cada request.
+// Se leen como Buffer (no como ruta de archivo) por el mismo motivo que
+// las fuentes de arriba.
 const LOGO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/logo.png'))
 const FOOTER_DECO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/footer-decoracion.png'))
 
