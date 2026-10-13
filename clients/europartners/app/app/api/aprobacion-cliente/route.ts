@@ -25,10 +25,13 @@ export async function GET(req: NextRequest) {
 
   const { data: proforma } = await adminClient
     .from('proformas')
+    // Lista explícita: ruta pública, NUNCA select('*') — la fila trae costo,
+    // margen, total_china_usd, tokens y notas internas. Solo lo que pinta
+    // app/aprobacion-cliente/[token]/page.tsx.
     .select(`
-      *,
-      cliente:clientes(*),
-      lineas:proforma_lineas(*)
+      numero, fecha, incoterm, estado, total_fob_usd, total_cif_usd,
+      cliente:clientes(nombre),
+      lineas:proforma_lineas(id, orden, descripcion_pdf, codigo_pdf, cantidad, precio_cliente_usd)
     `)
     .eq('id', tokenData.proforma_id)
     .order('orden', { referencedTable: 'proforma_lineas', ascending: true })
