@@ -1,17 +1,39 @@
-import { Document, Page, Text, View, StyleSheet, Image, Link, Svg, Circle, Line, Path } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image, Link, Svg, Circle, Line, Path, Rect, Font } from '@react-pdf/renderer'
 import fs from 'fs'
 import path from 'path'
 import type { Proforma } from '@/types/europartners'
 import { formatUSD } from '@/lib/precio'
 
 // Rediseño 2026-10-05 a partir de la plantilla de la diseñadora
-// (europartners-proforma-invoice.pdf) — pedido de Jero: imágenes más
-// grandes y clickeables (abren la foto completa al hacer click, un PDF no
-// tiene zoom real), descripciones cortas (ver fix en cotizador/[id] que
-// ahora guarda solo el nombre del producto, no la ficha técnica completa),
-// y el layout nuevo de la diseñadora (franja decorativa, bloques lila de
-// shipping/payment terms, badge redondeado del número de proforma).
-//
+// (europartners-proforma-invoice.pdf), con ajustes de layout del
+// 2026-10-10 (su feedback de 5 puntos) y calibración final del
+// 2026-10-13 contra el PDF exportado directo de su archivo de Canva
+// (https://www.canva.com/design/DAHWn-juin4) — de ahí se sacaron los
+// valores EXACTOS (no aproximados a ojo) de tipografía, colores de
+// texto y de fondo, leyendo los spans y las formas del PDF con
+// PyMuPDF en vez de adivinar mirando la imagen renderizada.
+const FUENTES_DIR = path.join(process.cwd(), 'lib/pdf/fonts')
+Font.register({
+  family: 'Work Sans',
+  fonts: [
+    { src: path.join(FUENTES_DIR, 'WorkSans-Regular.woff'), fontWeight: 400 },
+    { src: path.join(FUENTES_DIR, 'WorkSans-Medium.woff'), fontWeight: 500 },
+    { src: path.join(FUENTES_DIR, 'WorkSans-SemiBold.woff'), fontWeight: 600 },
+    { src: path.join(FUENTES_DIR, 'WorkSans-Bold.woff'), fontWeight: 700 },
+  ],
+})
+Font.register({
+  family: 'Poppins',
+  fonts: [
+    { src: path.join(FUENTES_DIR, 'Poppins-Medium.woff'), fontWeight: 500 },
+    { src: path.join(FUENTES_DIR, 'Poppins-SemiBold.woff'), fontWeight: 600 },
+  ],
+})
+Font.register({
+  family: 'Questrial',
+  fonts: [{ src: path.join(FUENTES_DIR, 'Questrial-Regular.woff'), fontWeight: 400 }],
+})
+
 // Se leen como Buffer (no como ruta de archivo) porque @react-pdf/renderer
 // intenta resolver un string como URL si no es un Buffer/objeto de datos
 // — con una ruta de Windows ("Only absolute URLs are supported") o en el
@@ -20,24 +42,26 @@ import { formatUSD } from '@/lib/precio'
 const LOGO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/logo.png'))
 const FOOTER_DECO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/footer-decoracion.png'))
 
-const MORADO = '#5B4FE0'
-const MORADO_CLARO = '#EEECFC'
+// Colores EXACTOS leídos del PDF de Canva (page.get_text("dict") para texto,
+// page.get_drawings() para los fondos de las cajas) — no son aproximaciones.
+const NAVY = '#000d66'
+const LILA = '#ccc8fa'
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Helvetica',
+    fontFamily: 'Work Sans',
     fontSize: 9,
     paddingTop: 28,
     paddingHorizontal: 30,
     paddingBottom: 46, // deja lugar a la franja decorativa del fondo
     backgroundColor: '#ffffff',
+    color: '#000000',
   },
   // Logo en su propia fila; los datos de contacto y el número de proforma
   // van en una segunda fila, como dos columnas que arrancan en el mismo
   // alignItems:'flex-start' — así quedan SIEMPRE a la misma altura sin
   // importar cuántas líneas tenga cada lado (pedido de la diseñadora
-  // 2026-10-10: "el número debe estar alineado con los datos de contacto",
-  // antes el badge quedaba a la altura del logo, no de la dirección).
+  // 2026-10-10: "el número debe estar alineado con los datos de contacto").
   logoRow: { marginBottom: 10 },
   logo: { width: 130, height: 73 },
   header: {
@@ -49,54 +73,50 @@ const styles = StyleSheet.create({
   contactCol: { gap: 3 },
   contactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 5 },
   contactIconBox: { width: 9, paddingTop: 1 },
-  contactLine: { fontSize: 8, color: '#374151' },
+  contactLine: { fontSize: 8, color: '#000000' },
   headerRight: { alignItems: 'flex-end' },
-  proformaTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', marginBottom: 6 },
+  proformaTitle: { fontSize: 10, fontFamily: 'Work Sans', fontWeight: 500, color: NAVY, marginBottom: 6 },
   numeroBadge: {
-    backgroundColor: MORADO_CLARO,
+    backgroundColor: LILA,
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 14,
   },
-  numeroBadgeText: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: MORADO },
+  numeroBadgeText: { fontSize: 11, fontFamily: 'Work Sans', fontWeight: 700, color: NAVY },
 
-  // flexGrow:0 a propósito — antes cada columna usaba flex:1/2/1 sobre todo
-  // el ancho de la página, y como el contenido de cada una es angosto
-  // (ej. "Date:" + una fecha) quedaba un espacio en blanco enorme dentro de
-  // la columna antes de llegar a la siguiente. Con columnas de su ancho
-  // natural + justifyContent:'space-between' en la fila, el espacio sobrante
-  // queda ENTRE las columnas, no desperdiciado dentro de cada una (pedido
-  // de la diseñadora 2026-10-10, punto 3).
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 20, // mínimo garantizado — justifyContent solo no alcanzaba, las columnas quedaban pegadas
-    marginBottom: 14,
-  },
-  topCol: { flexGrow: 0, gap: 4 },
-  topLabel: { fontSize: 8, color: '#6b7280' },
-  topValue: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#1E3A5F' },
-  buyerTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: MORADO, marginBottom: 1 },
+  // Fila Date / Buyer Data — en la plantilla real NO son 3 columnas
+  // repartidas a todo el ancho (eso dejaba espacios enormes, feedback
+  // 2026-10-10 punto 3): es el bloque Date a la izquierda, y "Buyer Data"
+  // como UNA sola caja a la derecha con una grilla interna 2x2 (razón
+  // social+mail arriba, ubicación+teléfono abajo).
+  topRow: { flexDirection: 'row', gap: 28, marginBottom: 14 },
+  dateBlock: { gap: 3 },
+  dateIconRow: { marginBottom: 2 },
+  plainLine: { fontSize: 9, color: '#000000', fontFamily: 'Work Sans', fontWeight: 400 },
+  buyerBlock: { flex: 1 },
+  buyerTitle: { fontSize: 10, fontFamily: 'Work Sans', fontWeight: 700, color: NAVY, marginBottom: 4 },
+  buyerGrid: { flexDirection: 'row', gap: 28 },
+  buyerCol: { gap: 3 },
 
   termsRow: { flexDirection: 'row', gap: 14, marginBottom: 14 },
   termsBox: {
     flex: 1,
-    backgroundColor: MORADO_CLARO,
+    backgroundColor: LILA,
     borderRadius: 8,
     padding: 10,
   },
-  termsTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: MORADO, marginBottom: 4 },
-  termsLine: { fontSize: 8, color: '#374151', marginBottom: 1 },
+  termsTitle: { fontSize: 10, fontFamily: 'Work Sans', fontWeight: 700, color: NAVY, marginBottom: 4 },
+  termsLine: { fontSize: 8, color: '#000000', fontFamily: 'Work Sans', fontWeight: 400, marginBottom: 1 },
 
   table: { marginTop: 2 },
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E3A5F',
+    backgroundColor: NAVY,
     borderRadius: 6,
     padding: '6 8',
   },
-  tableHeaderText: { color: 'white', fontFamily: 'Helvetica-Bold', fontSize: 8 },
+  tableHeaderText: { color: 'white', fontFamily: 'Work Sans', fontWeight: 600, fontSize: 8 },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -110,10 +130,14 @@ const styles = StyleSheet.create({
   colCode: { width: '16%' },
   colPrice: { width: '13%', textAlign: 'right' },
   colTotal: { width: '13%', textAlign: 'right' },
-  descText: { fontSize: 8.5, color: '#1f2937' },
+  // El cuerpo de la tabla usa Poppins (no Work Sans) en el PDF real —
+  // confirmado leyendo los spans de cada celda, no es un detalle menor:
+  // Poppins tiene números con proporciones distintas, se nota si se deja
+  // Work Sans ahí.
+  descText: { fontSize: 8.5, color: NAVY, fontFamily: 'Poppins', fontWeight: 500 },
   codeText: { fontSize: 8, fontFamily: 'Courier', color: '#4b5563' },
-  priceText: { fontSize: 8.5, color: '#374151' },
-  totalText: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#1E3A5F' },
+  priceText: { fontSize: 8.5, color: NAVY, fontFamily: 'Poppins', fontWeight: 500 },
+  totalText: { fontSize: 8.5, fontFamily: 'Poppins', fontWeight: 600, color: NAVY },
 
   productImgBox: {
     position: 'relative',
@@ -131,29 +155,26 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: MORADO,
+    backgroundColor: NAVY,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   totalsSection: { marginTop: 10, alignItems: 'flex-end' },
   totalRow: { flexDirection: 'row', gap: 16, marginBottom: 2 },
-  totalLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#374151' },
-  totalValue: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', minWidth: 80, textAlign: 'right' },
-  // Antes usaba dorado (#D4A017), heredado sin querer de la plantilla vieja
-  // de Europartners — esta identidad nueva de la diseñadora es toda
-  // navy/morado, sin dorado en ningún otro lado del diseño (pedido
-  // 2026-10-10, punto 4: "el contenedor del precio total tiene los colores
-  // que no son").
-  grandTotal: { backgroundColor: '#1E3A5F', borderRadius: 6, padding: '6 10', flexDirection: 'row', gap: 16, marginTop: 4 },
-  grandTotalLabel: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#ffffff' },
-  grandTotalValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#ffffff', minWidth: 80, textAlign: 'right' },
+  totalLabel: { fontSize: 8, fontFamily: 'Poppins', fontWeight: 500, color: NAVY },
+  totalValue: { fontSize: 9, fontFamily: 'Poppins', fontWeight: 500, color: NAVY, minWidth: 80, textAlign: 'right' },
+  grandTotal: { backgroundColor: NAVY, borderRadius: 6, padding: '6 10', flexDirection: 'row', gap: 16, marginTop: 4 },
+  grandTotalLabel: { fontSize: 9, fontFamily: 'Poppins', fontWeight: 600, color: '#ffffff' },
+  grandTotalValue: { fontSize: 10, fontFamily: 'Poppins', fontWeight: 600, color: '#ffffff', minWidth: 80, textAlign: 'right' },
 
   bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 26 },
-  termsText: { fontSize: 7, color: '#6b7280', maxWidth: 300, lineHeight: 1.4 },
+  // "TERM AND CONDITIONS" es la única palabra del documento en Questrial.
+  termsHeading: { fontSize: 9, fontFamily: 'Questrial', color: NAVY, marginBottom: 2 },
+  termsText: { fontSize: 8.5, color: NAVY, fontFamily: 'Work Sans', fontWeight: 500, maxWidth: 300, lineHeight: 1.4 },
   signatureBlock: { alignItems: 'center' },
-  signatureLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#1E3A5F', marginTop: 2 },
-  signatureSubLabel: { fontSize: 7, color: '#6b7280' },
+  signatureLabel: { fontSize: 9, fontFamily: 'Work Sans', fontWeight: 600, color: NAVY, marginTop: 2 },
+  signatureSubLabel: { fontSize: 7, color: '#6b7280', fontFamily: 'Work Sans' },
 
   footerDeco: { position: 'absolute', bottom: 0, left: 0, width: '100%', height: 28 },
 })
@@ -177,8 +198,10 @@ function ciudadDesdeCliente(cliente: NonNullable<Proforma['cliente']>): string {
   return candidata.toLowerCase() === cliente.pais.toLowerCase() ? '' : candidata
 }
 
-// Icono de lupa dibujado a mano (react-pdf no soporta fuentes de iconos) —
-// señala que la foto es clickeable, ver zoomBadge más abajo.
+// Iconos dibujados a mano con primitivas Svg — react-pdf no trae ninguna
+// fuente de iconos, y cargar una librería solo para 4 glifos de 9px no
+// vale la pena. Color negro puro: confirmado contra el PDF de Canva que
+// los iconos de contacto son #000000, no el navy del resto del texto.
 function IconoLupa() {
   return (
     <Svg width={8} height={8} viewBox="0 0 24 24">
@@ -188,18 +211,10 @@ function IconoLupa() {
   )
 }
 
-// Iconos de los datos de contacto debajo del logo (pedido de la diseñadora
-// 2026-10-10, punto 2 — faltaban por completo). Dibujados a mano con
-// primitivas Svg, igual que IconoLupa: react-pdf no trae ninguna fuente de
-// iconos, y cargar una librería de iconos solo para 3 glifos de 9px no vale
-// la pena.
 function IconoPin() {
   return (
     <Svg width={9} height={9} viewBox="0 0 24 24">
-      <Path
-        d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z"
-        fill={MORADO}
-      />
+      <Path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" fill="#000000" />
       <Circle cx="12" cy="10" r="3.2" fill="white" />
     </Svg>
   )
@@ -208,8 +223,8 @@ function IconoPin() {
 function IconoSobre() {
   return (
     <Svg width={9} height={9} viewBox="0 0 24 24">
-      <Path d="M3 5h18v14H3z" stroke={MORADO} strokeWidth={2} fill="none" />
-      <Path d="M3 5l9 7 9-7" stroke={MORADO} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M3 5h18v14H3z" stroke="#000000" strokeWidth={2} fill="none" />
+      <Path d="M3 5l9 7 9-7" stroke="#000000" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   )
 }
@@ -219,8 +234,21 @@ function IconoTelefono() {
     <Svg width={9} height={9} viewBox="0 0 24 24">
       <Path
         d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 3.4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.2 1L6.6 10.8z"
-        fill={MORADO}
+        fill="#000000"
       />
+    </Svg>
+  )
+}
+
+// Faltaba en el rediseño del 2026-10-05 — la plantilla real tiene un
+// icono de calendario junto a "Date:" que no se había copiado.
+function IconoCalendario() {
+  return (
+    <Svg width={10} height={10} viewBox="0 0 24 24">
+      <Rect x="3" y="4.5" width="18" height="16" rx="2" stroke="#000000" strokeWidth={1.8} fill="none" />
+      <Line x1="3" y1="9.5" x2="21" y2="9.5" stroke="#000000" strokeWidth={1.8} />
+      <Line x1="7.5" y1="2.5" x2="7.5" y2="6.5" stroke="#000000" strokeWidth={1.8} strokeLinecap="round" />
+      <Line x1="16.5" y1="2.5" x2="16.5" y2="6.5" stroke="#000000" strokeWidth={1.8} strokeLinecap="round" />
     </Svg>
   )
 }
@@ -245,11 +273,10 @@ export function ProformaPDF({ proforma }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* HEADER — logo real de la diseñadora (extraído de su plantilla,
-            ver lib/pdf/assets/logo.png) en su propia fila. Debajo, los
-            datos de contacto (con ícono cada uno) y el título+badge del
-            número van en la MISMA fila, para que queden a la misma altura
-            sin importar el contenido de cada lado. */}
+        {/* HEADER — logo real de la diseñadora en su propia fila. Debajo,
+            los datos de contacto (con ícono cada uno) y el título+badge
+            del número van en la MISMA fila, para que queden a la misma
+            altura sin importar el contenido de cada lado. */}
         <View style={styles.logoRow}>
           <Image src={LOGO_BUFFER} style={styles.logo} />
         </View>
@@ -279,30 +306,32 @@ export function ProformaPDF({ proforma }: Props) {
           </View>
         </View>
 
-        {/* DATE / VALID UNTIL — BUYER DATA (razón social, ubicación, mail, teléfono) */}
+        {/* DATE (con ícono de calendario) — BUYER DATA como una sola caja
+            con grilla interna 2x2. Así es en el PDF real, no 3 columnas
+            repartidas a todo el ancho (eso era el punto 3 del feedback
+            de la diseñadora). */}
         <View style={styles.topRow}>
-          <View style={styles.topCol}>
-            <Text style={styles.topLabel}>Date:</Text>
-            <Text style={styles.topValue}>{fecha}</Text>
+          <View style={styles.dateBlock}>
+            <View style={[styles.contactRow, styles.dateIconRow]}>
+              <View style={styles.contactIconBox}><IconoCalendario /></View>
+            </View>
+            <Text style={styles.plainLine}>Date: {fecha}</Text>
             {!esFactura && fechaVencimiento && (
-              <>
-                <Text style={styles.topLabel}>Valid until:</Text>
-                <Text style={styles.topValue}>{fechaVencimiento}</Text>
-              </>
+              <Text style={styles.plainLine}>Valid until: {fechaVencimiento}</Text>
             )}
           </View>
-          <View style={[styles.topCol, { flex: 2 }]}>
-            <Text style={styles.buyerTitle}>BUYER DATA</Text>
-            <Text style={styles.topLabel}>Razón social:</Text>
-            <Text style={styles.topValue}>{cliente.nombre}</Text>
-            <Text style={styles.topLabel}>Ubicación:</Text>
-            <Text style={styles.topValue}>{direccionComprador}</Text>
-          </View>
-          <View style={styles.topCol}>
-            <Text style={styles.topLabel}>Mail:</Text>
-            <Text style={styles.topValue}>{cliente.contacto_email || '—'}</Text>
-            <Text style={styles.topLabel}>Teléfono:</Text>
-            <Text style={styles.topValue}>{cliente.contacto_telefono || '—'}</Text>
+          <View style={styles.buyerBlock}>
+            <Text style={styles.buyerTitle}>Buyer Data</Text>
+            <View style={styles.buyerGrid}>
+              <View style={styles.buyerCol}>
+                <Text style={styles.plainLine}>Razón social: {cliente.nombre}</Text>
+                <Text style={styles.plainLine}>Ubicación: {direccionComprador}</Text>
+              </View>
+              <View style={styles.buyerCol}>
+                <Text style={styles.plainLine}>Mail: {cliente.contacto_email || '—'}</Text>
+                <Text style={styles.plainLine}>Teléfono: {cliente.contacto_telefono || '—'}</Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -385,9 +414,7 @@ export function ProformaPDF({ proforma }: Props) {
         {/* TERMS AND CONDITIONS + FIRMA */}
         <View style={styles.bottomRow}>
           <View>
-            <Text style={[styles.termsText, { fontFamily: 'Helvetica-Bold', color: '#1E3A5F', marginBottom: 2 }]}>
-              TERM AND CONDITIONS
-            </Text>
+            <Text style={styles.termsHeading}>TERM AND CONDITIONS</Text>
             <Text style={styles.termsText}>
               {!esFactura && 'This proforma invoice is valid for 15 days from the date of issue. '}
               All prices are in USD. Payment terms: 100% upon arrival notification.
@@ -397,7 +424,7 @@ export function ProformaPDF({ proforma }: Props) {
             <Svg width={90} height={36} viewBox="0 0 90 36">
               <Path
                 d="M6 24 C 14 6, 20 6, 24 18 S 34 30, 40 14 S 50 4, 56 20 S 68 30, 74 12 S 82 8, 86 18"
-                stroke="#1E3A5F"
+                stroke={NAVY}
                 strokeWidth={1.3}
                 fill="none"
               />
