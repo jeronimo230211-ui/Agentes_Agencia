@@ -49,8 +49,12 @@ Font.register({
 })
 
 // Se leen como Buffer (no como ruta de archivo) por el mismo motivo que
-// las fuentes de arriba.
+// las fuentes de arriba. logo.png y firma.png son los PNG oficiales que
+// bajó Jero directo de Canva el 2026-10-13 (antes se usaba el logo
+// extraído del PDF y una firma dibujada a mano con Svg/Path — esta es
+// la real), con el fondo blanco convertido a transparente.
 const LOGO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/logo.png'))
+const FIRMA_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/firma.png'))
 const FOOTER_DECO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/footer-decoracion.png'))
 
 // Colores EXACTOS leídos del PDF de Canva (page.get_text("dict") para texto,
@@ -95,19 +99,29 @@ const styles = StyleSheet.create({
   },
   numeroBadgeText: { fontSize: 11, fontFamily: 'Work Sans', fontWeight: 700, color: NAVY },
 
-  // Fila Date / Buyer Data — en la plantilla real NO son 3 columnas
-  // repartidas a todo el ancho (eso dejaba espacios enormes, feedback
-  // 2026-10-10 punto 3): es el bloque Date a la izquierda, y "Buyer Data"
-  // como UNA sola caja a la derecha con una grilla interna 2x2 (razón
-  // social+mail arriba, ubicación+teléfono abajo).
-  topRow: { flexDirection: 'row', gap: 28, marginBottom: 14 },
-  dateBlock: { gap: 3 },
+  // Fila Date / Buyer Data — mismo ancho de columna que Shipping/Payment
+  // Terms de abajo (flex:1 + flex:1, mismo gap que termsRow) para que
+  // "Buyer Data" quede alineado con "Payment Terms", no pegado a la fecha
+  // (feedback 2026-10-13: "el buyer data debe estar mas alineado a la
+  // derecha" — antes dateBlock tenía ancho automático, así que Buyer Data
+  // arrancaba apenas terminaba el texto de la fecha).
+  topRow: { flexDirection: 'row', gap: 14, marginBottom: 14 },
+  dateBlock: { flex: 1, gap: 3 },
   dateIconRow: { marginBottom: 2 },
   plainLine: { fontSize: 9, color: '#000000', fontFamily: 'Work Sans', fontWeight: 400 },
   buyerBlock: { flex: 1 },
   buyerTitle: { fontSize: 10, fontFamily: 'Work Sans', fontWeight: 700, color: NAVY, marginBottom: 4 },
-  buyerGrid: { flexDirection: 'row', gap: 28 },
-  buyerCol: { gap: 3 },
+  // Una sola columna apilada, no una grilla 2x2 — con el ancho angosto de
+  // esta caja (para que quede alineada con "Payment Terms"), datos reales
+  // largos (nombre del cliente, email) se pisaban entre sí en la grilla de
+  // dos columnas, que solo funcionaba con el texto corto de relleno del
+  // mockup de la diseñadora (feedback 2026-10-13).
+  buyerGrid: { gap: 3 },
+  // Línea navy que separa el header (logo+contacto+número) del resto —
+  // existe en el PDF real (stroke, 0.75pt, ancho completo) y se había
+  // pasado por alto porque solo se habían revisado los rellenos de las
+  // formas, no los bordes (feedback 2026-10-13, punto 1).
+  divisor: { borderBottomWidth: 0.75, borderBottomColor: NAVY, marginBottom: 14 },
 
   termsRow: { flexDirection: 'row', gap: 14, marginBottom: 14 },
   termsBox: {
@@ -183,7 +197,21 @@ const styles = StyleSheet.create({
   // "TERM AND CONDITIONS" es la única palabra del documento en Questrial.
   termsHeading: { fontSize: 9, fontFamily: 'Questrial', color: NAVY, marginBottom: 2 },
   termsText: { fontSize: 8.5, color: NAVY, fontFamily: 'Work Sans', fontWeight: 500, maxWidth: 300, lineHeight: 1.4 },
-  signatureBlock: { alignItems: 'center' },
+  // Recuadro con borde alrededor de la firma — existe en el PDF real
+  // (confirmado por una forma de ~70x61pt en esa posición) y faltaba por
+  // completo (feedback 2026-10-13: "la firma no esta igual").
+  signatureBlock: {
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  // 69.9x60.8pt es el tamaño real de la caja de firma en el PDF de Canva
+  // (confirmado con page.get_drawings()); firma.png es 94x82px, misma
+  // proporción aprox., se escala para no distorsionarla.
+  firmaImg: { width: 66, height: 57, objectFit: 'contain' },
   signatureLabel: { fontSize: 9, fontFamily: 'Work Sans', fontWeight: 600, color: NAVY, marginTop: 2 },
   signatureSubLabel: { fontSize: 7, color: '#6b7280', fontFamily: 'Work Sans' },
 
@@ -317,6 +345,8 @@ export function ProformaPDF({ proforma }: Props) {
           </View>
         </View>
 
+        <View style={styles.divisor} />
+
         {/* DATE (con ícono de calendario) — BUYER DATA como una sola caja
             con grilla interna 2x2. Así es en el PDF real, no 3 columnas
             repartidas a todo el ancho (eso era el punto 3 del feedback
@@ -334,14 +364,10 @@ export function ProformaPDF({ proforma }: Props) {
           <View style={styles.buyerBlock}>
             <Text style={styles.buyerTitle}>Buyer Data</Text>
             <View style={styles.buyerGrid}>
-              <View style={styles.buyerCol}>
-                <Text style={styles.plainLine}>Razón social: {cliente.nombre}</Text>
-                <Text style={styles.plainLine}>Ubicación: {direccionComprador}</Text>
-              </View>
-              <View style={styles.buyerCol}>
-                <Text style={styles.plainLine}>Mail: {cliente.contacto_email || '—'}</Text>
-                <Text style={styles.plainLine}>Teléfono: {cliente.contacto_telefono || '—'}</Text>
-              </View>
+              <Text style={styles.plainLine}>Razón social: {cliente.nombre}</Text>
+              <Text style={styles.plainLine}>Ubicación: {direccionComprador}</Text>
+              <Text style={styles.plainLine}>Mail: {cliente.contacto_email || '—'}</Text>
+              <Text style={styles.plainLine}>Teléfono: {cliente.contacto_telefono || '—'}</Text>
             </View>
           </View>
         </View>
@@ -432,14 +458,7 @@ export function ProformaPDF({ proforma }: Props) {
             </Text>
           </View>
           <View style={styles.signatureBlock}>
-            <Svg width={90} height={36} viewBox="0 0 90 36">
-              <Path
-                d="M6 24 C 14 6, 20 6, 24 18 S 34 30, 40 14 S 50 4, 56 20 S 68 30, 74 12 S 82 8, 86 18"
-                stroke={NAVY}
-                strokeWidth={1.3}
-                fill="none"
-              />
-            </Svg>
+            <Image src={FIRMA_BUFFER} style={styles.firmaImg} />
             <Text style={styles.signatureLabel}>Representante legal</Text>
             <Text style={styles.signatureSubLabel}>President</Text>
           </View>
