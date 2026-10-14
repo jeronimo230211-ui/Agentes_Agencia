@@ -169,14 +169,14 @@ export default function DespachosPage() {
       <div className="px-8 pt-7 pb-4 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold text-[#1E3A5F]">Despachos</h1>
+            <h1 className="text-2xl font-bold text-[#000d66]">Despachos</h1>
             <p className="text-gray-400 text-sm mt-0.5">Logística y tránsito del contenedor</p>
           </div>
           {puedeEditar && (
             <button
               onClick={() => { setShowNuevo(true); setBusquedaModal(''); setFiltroPagoModal(''); cargarProformasElegibles() }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm text-white"
-              style={{ background: '#D4A017', color: '#1E3A5F' }}
+              style={{ background: '#ccc8fa', color: '#000d66' }}
             >
               <Plus size={16} /> Nuevo despacho
             </button>
@@ -189,7 +189,7 @@ export default function DespachosPage() {
               key={value}
               onClick={() => setEstadoFiltro(value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoFiltro === value ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                estadoFiltro === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
               {label}
@@ -230,7 +230,7 @@ export default function DespachosPage() {
                       onClick={() => setSeleccionado(d)}
                     >
                       <td className="px-4 py-3">
-                        <span className="font-mono font-bold text-[#1E3A5F]">{d.proforma?.numero ?? '—'}</span>
+                        <span className="font-mono font-bold text-[#000d66]">{d.proforma?.numero ?? '—'}</span>
                         <span className="ml-2 text-xs text-gray-400">{d.proforma?.cliente?.nombre}</span>
                       </td>
                       <td className="px-4 py-3 text-gray-600 text-xs">
@@ -274,7 +274,7 @@ export default function DespachosPage() {
                     value={busquedaModal}
                     onChange={e => setBusquedaModal(e.target.value)}
                     placeholder="Buscar por # de proforma..."
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                    className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
                   />
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -287,7 +287,7 @@ export default function DespachosPage() {
                       key={value}
                       onClick={() => setFiltroPagoModal(value)}
                       className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                        filtroPagoModal === value ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                        filtroPagoModal === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                       }`}
                     >
                       {label}
@@ -321,7 +321,7 @@ export default function DespachosPage() {
                             onClick={() => crearDespacho(p.id)}
                             disabled={creando}
                             className="px-3 py-1.5 rounded-lg text-xs font-bold text-white disabled:opacity-40"
-                            style={{ background: '#1E3A5F' }}
+                            style={{ background: '#000d66' }}
                           >
                             Crear despacho
                           </button>
@@ -393,7 +393,7 @@ function DetalleDespacho({
                   disabled={!puedeEditar}
                   onClick={() => onCampo(despacho.id, 'estado', e)}
                   className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                    despacho.estado === e ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200'
+                    despacho.estado === e ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200'
                   }`}
                 >
                   {ESTADO_STYLE[e].label}
@@ -441,7 +441,7 @@ function DetalleDespacho({
               {puedeEditar && despacho.proforma?.id && (
                 <button
                   onClick={() => setMostrarModalFlete(true)}
-                  className="flex items-center gap-1.5 text-xs text-[#1E3A5F] font-medium hover:bg-blue-50 px-2.5 py-1.5 rounded-lg"
+                  className="flex items-center gap-1.5 text-xs text-[#000d66] font-medium hover:bg-blue-50 px-2.5 py-1.5 rounded-lg"
                 >
                   <Plus size={14} />
                   Registrar pago de flete
@@ -527,7 +527,7 @@ function RegistrarPagoFleteModal({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '90vh' }}>
         <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#1E3A5F]">Registrar pago de flete</h3>
+          <h3 className="font-bold text-[#000d66]">Registrar pago de flete</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
             <X size={18} className="text-gray-500" />
           </button>
@@ -543,7 +543,7 @@ function RegistrarPagoFleteModal({
                 value={monto}
                 onChange={e => setMonto(e.target.value)}
                 placeholder="0.00"
-                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               />
             </div>
             <div>
@@ -554,7 +554,7 @@ function RegistrarPagoFleteModal({
                 value={comision}
                 onChange={e => setComision(e.target.value)}
                 placeholder="0.00"
-                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               />
             </div>
           </div>
@@ -566,7 +566,7 @@ function RegistrarPagoFleteModal({
               value={referencia}
               onChange={e => setReferencia(e.target.value)}
               placeholder="No. de transferencia, wire, etc."
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
 
@@ -576,7 +576,7 @@ function RegistrarPagoFleteModal({
               type="date"
               value={fecha}
               onChange={e => setFecha(e.target.value)}
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
 
@@ -586,7 +586,7 @@ function RegistrarPagoFleteModal({
               value={nota}
               onChange={e => setNota(e.target.value)}
               placeholder="Observaciones (opcional)"
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
 
@@ -615,7 +615,7 @@ function RegistrarPagoFleteModal({
             onClick={guardar}
             disabled={guardando}
             className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-            style={{ background: '#1E3A5F' }}
+            style={{ background: '#000d66' }}
           >
             {guardando ? 'Guardando...' : 'Registrar pago'}
           </button>
@@ -636,7 +636,7 @@ function CampoTexto({ label, valor, disabled, onChange }: { label: string; valor
         disabled={disabled}
         onChange={e => setV(e.target.value)}
         onBlur={() => v !== (valor || '') && onChange(v)}
-        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20 disabled:bg-gray-50 disabled:text-gray-400"
+        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20 disabled:bg-gray-50 disabled:text-gray-400"
       />
     </div>
   )
@@ -651,7 +651,7 @@ function CampoFecha({ label, valor, disabled, onChange }: { label: string; valor
         defaultValue={valor || ''}
         disabled={disabled}
         onChange={e => onChange(e.target.value)}
-        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20 disabled:bg-gray-50 disabled:text-gray-400"
+        className="w-full mt-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20 disabled:bg-gray-50 disabled:text-gray-400"
       />
     </div>
   )

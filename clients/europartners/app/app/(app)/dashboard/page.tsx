@@ -99,7 +99,7 @@ export default function DashboardPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#1E3A5F]">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-[#000d66]">Dashboard</h1>
         <p className="text-gray-500 text-sm mt-1">Resumen de operaciones</p>
       </div>
 
@@ -140,10 +140,10 @@ export default function DashboardPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h2 className="font-bold text-gray-800 flex items-center gap-2">
-            <TrendingUp size={18} className="text-[#D4A017]" />
+            <TrendingUp size={18} className="text-[#000d66]" />
             Proformas recientes
           </h2>
-          <Link href="/cotizador" className="text-[#1E3A5F] text-sm font-medium hover:underline">
+          <Link href="/cotizador" className="text-[#000d66] text-sm font-medium hover:underline">
             Ver todas
           </Link>
         </div>
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                 kpis.recientes.map(p => (
                   <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="p-4">
-                      <Link href={`/cotizador/${p.id}`} className="font-mono text-[#1E3A5F] hover:underline font-medium">
+                      <Link href={`/cotizador/${p.id}`} className="font-mono text-[#000d66] hover:underline font-medium">
                         {p.numero}
                       </Link>
                     </td>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
       <div className="flex gap-3 mt-6 mb-10">
         <Link href="/proformas"
           className="px-5 py-2.5 rounded-lg font-medium text-sm text-white flex items-center gap-2"
-          style={{ background: '#1E3A5F' }}>
+          style={{ background: '#000d66' }}>
           <FileText size={16} />
           Nueva Proforma
         </Link>
@@ -206,7 +206,7 @@ export default function DashboardPage() {
 
       {/* ── Panel CEO ── */}
       <div className="border-t border-gray-100 pt-8">
-        <h2 className="text-lg font-bold text-[#1E3A5F] mb-4">Panel de la CEO</h2>
+        <h2 className="text-lg font-bold text-[#000d66] mb-4">Panel de la CEO</h2>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -234,7 +234,7 @@ export default function DashboardPage() {
         {/* Tiempos por etapa */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
           <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <Clock size={16} className="text-[#D4A017]" /> Tiempo promedio por etapa
+            <Clock size={16} className="text-[#000d66]" /> Tiempo promedio por etapa
           </h3>
           {!stats || stats.tiempos_por_etapa.length === 0 ? (
             <p className="text-sm text-gray-400">Aún no hay suficientes datos de transiciones</p>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
               {stats.tiempos_por_etapa.map(t => (
                 <div key={t.etapa} className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500">{t.etapa}</p>
-                  <p className="text-lg font-bold text-[#1E3A5F]">{fechaLabel(t.promedio_horas)}</p>
+                  <p className="text-lg font-bold text-[#000d66]">{fechaLabel(t.promedio_horas)}</p>
                   <p className="text-xs text-gray-400">{t.muestras} muestra{t.muestras !== 1 ? 's' : ''}</p>
                 </div>
               ))}

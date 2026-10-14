@@ -115,7 +115,7 @@ export default function ProductoDetalleInternoModal({
         {/* Header */}
         <div className="flex items-start justify-between gap-3 p-5 border-b border-gray-100 flex-none">
           <div>
-            <p className="font-mono text-xs font-bold text-[#1E3A5F]">{producto.codigo}</p>
+            <p className="font-mono text-xs font-bold text-[#000d66]">{producto.codigo}</p>
             <h2 className="text-lg font-bold text-gray-800 leading-tight mt-0.5">{producto.nombre}</h2>
             {producto.categoria && <p className="text-xs text-gray-400 mt-0.5">{producto.categoria.nombre}</p>}
           </div>
@@ -149,13 +149,13 @@ export default function ProductoDetalleInternoModal({
               </div>
               <div className="bg-gray-50 rounded-xl p-3">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Mayorista</p>
-                <p className="text-sm font-bold text-[#1E3A5F]">
+                <p className="text-sm font-bold text-[#000d66]">
                   {producto.precio_mayorista != null ? formatUSD(producto.precio_mayorista) : '—'}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-xl p-3">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Detallista</p>
-                <p className="text-sm font-bold text-[#1E3A5F]">
+                <p className="text-sm font-bold text-[#000d66]">
                   {producto.precio_detallista != null ? formatUSD(producto.precio_detallista) : '—'}
                 </p>
               </div>
@@ -172,7 +172,7 @@ export default function ProductoDetalleInternoModal({
               <div className="border border-gray-100 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
-                    <Sparkles size={12} className="text-[#1E3A5F]" /> Ficha técnica
+                    <Sparkles size={12} className="text-[#000d66]" /> Ficha técnica
                   </p>
                   <span
                     className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${
@@ -292,7 +292,7 @@ export default function ProductoDetalleInternoModal({
                     {puedeEditar && (
                       <button
                         onClick={onFijarPrecioEspecial}
-                        className="flex items-center gap-1.5 text-sm text-[#1E3A5F] font-medium hover:underline mt-1"
+                        className="flex items-center gap-1.5 text-sm text-[#000d66] font-medium hover:underline mt-1"
                       >
                         <Plus size={14} /> Fijar precio especial para otro cliente
                       </button>
@@ -331,7 +331,7 @@ export default function ProductoDetalleInternoModal({
               <button
                 onClick={onEditar}
                 className="flex-1 py-3 rounded-lg font-bold text-white text-sm flex items-center justify-center gap-2"
-                style={{ background: '#1E3A5F' }}
+                style={{ background: '#000d66' }}
               >
                 <Pencil size={14} /> Editar producto
               </button>

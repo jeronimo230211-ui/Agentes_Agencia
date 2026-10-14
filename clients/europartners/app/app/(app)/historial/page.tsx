@@ -123,7 +123,7 @@ export default function HistorialPage() {
               placeholder="Código o descripción..."
               value={filtro}
               onChange={e => setFiltro(e.target.value)}
-              className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20 bg-gray-50"
+              className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#000d66]/20 bg-gray-50"
               autoFocus
             />
           </div>
@@ -135,7 +135,7 @@ export default function HistorialPage() {
           <select
             value={clienteId}
             onChange={e => setClienteId(e.target.value)}
-            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
           >
             <option value="">Todos los clientes</option>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -153,7 +153,7 @@ export default function HistorialPage() {
                 onClick={() => setCatFiltro(null)}
                 className={`text-[11px] px-2 py-0.5 rounded-full border font-medium transition-colors ${
                   !categoriaFiltro
-                    ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                    ? 'bg-[#000d66] text-white border-[#000d66]'
                     : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                 }`}
               >
@@ -169,8 +169,8 @@ export default function HistorialPage() {
                   }}
                   className={`text-[11px] px-2 py-0.5 rounded-full border font-medium transition-colors ${
                     categoriaFiltro === id
-                      ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-[#1E3A5F] hover:text-[#1E3A5F]'
+                      ? 'bg-[#000d66] text-white border-[#000d66]'
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-[#000d66] hover:text-[#000d66]'
                   }`}
                 >
                   {nombre}
@@ -191,7 +191,7 @@ export default function HistorialPage() {
           {seleccionado && (
             <button
               onClick={() => setSeleccionado(null)}
-              className="text-[11px] font-medium text-[#1E3A5F] hover:underline"
+              className="text-[11px] font-medium text-[#000d66] hover:underline"
             >
               Todos
             </button>
@@ -211,12 +211,12 @@ export default function HistorialPage() {
                 onClick={() => setSeleccionado(r)}
                 className={`w-full text-left px-3 py-2.5 border-b border-gray-50 transition-colors ${
                   seleccionado?.codigo_pdf === r.codigo_pdf
-                    ? 'bg-[#1E3A5F]'
+                    ? 'bg-[#000d66]'
                     : 'hover:bg-gray-50'
                 }`}
               >
                 <p className={`font-mono text-xs font-semibold ${
-                  seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-blue-200' : 'text-[#1E3A5F]'
+                  seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-blue-200' : 'text-[#000d66]'
                 }`}>
                   {r.codigo_pdf}
                 </p>
@@ -256,7 +256,7 @@ export default function HistorialPage() {
               <div>
                 {seleccionado ? (
                   <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-xl font-bold text-[#1E3A5F] font-mono">{seleccionado.codigo_pdf}</h2>
+                    <h2 className="text-xl font-bold text-[#000d66] font-mono">{seleccionado.codigo_pdf}</h2>
                     {seleccionado.categoria_nombre && (
                       <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${catColor}`}>
                         {seleccionado.categoria_nombre}
@@ -264,7 +264,7 @@ export default function HistorialPage() {
                     )}
                   </div>
                 ) : (
-                  <h2 className="text-xl font-bold text-[#1E3A5F]">{clienteSeleccionado?.nombre}</h2>
+                  <h2 className="text-xl font-bold text-[#000d66]">{clienteSeleccionado?.nombre}</h2>
                 )}
                 <p className="text-gray-500 text-sm">
                   {seleccionado
@@ -274,7 +274,7 @@ export default function HistorialPage() {
               </div>
               {seleccionado && clienteSeleccionado && (
                 <span className="text-xs px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600">
-                  Filtrado por <span className="font-semibold text-[#1E3A5F]">{clienteSeleccionado.nombre}</span>
+                  Filtrado por <span className="font-semibold text-[#000d66]">{clienteSeleccionado.nombre}</span>
                 </span>
               )}
             </div>
@@ -292,7 +292,7 @@ export default function HistorialPage() {
                   <div className="grid grid-cols-4 gap-3 mb-5">
                     <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
                       <p className="text-xs text-gray-400 mb-1">Último precio</p>
-                      <p className="font-bold text-[#1E3A5F] text-base">
+                      <p className="font-bold text-[#000d66] text-base">
                         {filas[0].precio_cliente_usd ? formatUSD(filas[0].precio_cliente_usd) : '—'}
                       </p>
                       {tendencia !== null && (
@@ -360,7 +360,7 @@ export default function HistorialPage() {
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1E3A5F]">
+                          <td className="px-4 py-3 font-mono text-xs font-semibold text-[#000d66]">
                             {f.proforma_numero}
                           </td>
                           {seleccionado ? (
@@ -375,7 +375,7 @@ export default function HistorialPage() {
                           <td className="px-4 py-3 text-right text-xs text-gray-500">
                             {f.precio_costo_usd != null ? formatUSD(f.precio_costo_usd) : '—'}
                           </td>
-                          <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">
+                          <td className="px-4 py-3 text-right font-bold text-[#000d66]">
                             {f.precio_cliente_usd != null ? formatUSD(f.precio_cliente_usd) : '—'}
                           </td>
                           <td className={`px-4 py-3 text-right text-xs font-semibold ${

@@ -46,7 +46,7 @@ export default function PagoPage({ params }: { params: { token: string } }) {
   if (estado === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#1E3A5F]" size={40} />
+        <Loader2 className="animate-spin text-[#000d66]" size={40} />
       </div>
     )
   }
@@ -67,8 +67,8 @@ export default function PagoPage({ params }: { params: { token: string } }) {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-md mx-auto pt-8 pb-8 space-y-5">
         <div className="rounded-xl overflow-hidden shadow-lg">
-          <div className="bg-[#1E3A5F] text-white p-5">
-            <h1 className="text-xl font-bold text-[#D4A017]">Europartners</h1>
+          <div className="bg-[#000d66] text-white p-5">
+            <h1 className="text-xl font-bold text-[#000d66]">Europartners</h1>
             <p className="text-sm opacity-75">Proforma {proforma.numero}</p>
           </div>
         </div>
@@ -161,7 +161,7 @@ function SeccionFactura({
         placeholder="0.00"
         value={monto}
         onChange={e => setMonto(e.target.value)}
-        className="w-full mt-1.5 mb-4 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+        className="w-full mt-1.5 mb-4 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
       />
 
       <label className="text-xs font-semibold text-gray-500 uppercase">Bank payment proof</label>
@@ -191,7 +191,7 @@ function SeccionFactura({
         onClick={enviar}
         disabled={!archivo || !monto || estado === 'sending'}
         className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
-        style={{ background: '#1E3A5F' }}
+        style={{ background: '#000d66' }}
       >
         {estado === 'sending' && <Loader2 className="animate-spin" size={18} />}
         Send payment proof
@@ -288,7 +288,7 @@ function SeccionFlete({
         placeholder="0.00"
         value={monto}
         onChange={e => setMonto(e.target.value)}
-        className="w-full mt-1.5 mb-4 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+        className="w-full mt-1.5 mb-4 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
       />
 
       <label className="text-xs font-semibold text-gray-500 uppercase">Bank payment proof</label>
@@ -318,7 +318,7 @@ function SeccionFlete({
         onClick={enviar}
         disabled={!archivo || !monto || estado === 'sending'}
         className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
-        style={{ background: '#1E3A5F' }}
+        style={{ background: '#000d66' }}
       >
         {estado === 'sending' && <Loader2 className="animate-spin" size={18} />}
         Send freight payment proof

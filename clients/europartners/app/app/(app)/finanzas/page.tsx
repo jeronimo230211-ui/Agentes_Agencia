@@ -139,8 +139,8 @@ export default function FinanzasPage() {
       {/* ── Encabezado ── */}
       <div className="px-8 pt-7 pb-4 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="mb-5">
-          <h1 className="text-2xl font-bold text-[#1E3A5F] flex items-center gap-2">
-            <Wallet size={22} className="text-[#D4A017]" />
+          <h1 className="text-2xl font-bold text-[#000d66] flex items-center gap-2">
+            <Wallet size={22} className="text-[#000d66]" />
             Finanzas
           </h1>
           <p className="text-gray-400 text-sm mt-0.5">Registro maestro — facturación, ganancia y deuda en vivo</p>
@@ -177,7 +177,7 @@ export default function FinanzasPage() {
             <button
               onClick={() => setAño('')}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                !año ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                !año ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
               Todos
@@ -187,7 +187,7 @@ export default function FinanzasPage() {
                 key={y}
                 onClick={() => setAño(a => a === y ? '' : y)}
                 className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  año === y ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  año === y ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                 }`}
               >
                 {y}
@@ -204,7 +204,7 @@ export default function FinanzasPage() {
               <button
                 onClick={() => setPais('')}
                 className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  !pais ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  !pais ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                 }`}
               >
                 Todos
@@ -214,7 +214,7 @@ export default function FinanzasPage() {
                   key={p}
                   onClick={() => setPais(v => v === p ? '' : p)}
                   className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                    pais === p ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                    pais === p ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                   }`}
                 >
                   {p}
@@ -239,7 +239,7 @@ export default function FinanzasPage() {
               key={value}
               onClick={() => setEstadoDeuda(e => e === value ? '' : value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoDeuda === value ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                estadoDeuda === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
               {label}
@@ -285,7 +285,7 @@ export default function FinanzasPage() {
                       onClick={() => setFilaSeleccionada(f)}
                     >
                       <td className="px-4 py-3">
-                        <span className="font-mono font-bold text-[#1E3A5F]">{f.numero}</span>
+                        <span className="font-mono font-bold text-[#000d66]">{f.numero}</span>
                         <span className="block text-xs text-gray-400">{fechaCorta(f.fecha)}</span>
                       </td>
                       <td className="px-4 py-3 text-gray-700 font-medium text-xs">
@@ -384,7 +384,7 @@ function DetalleProformaDrawer({
       <div className="relative bg-white w-full max-w-md h-full shadow-xl flex flex-col">
         <div className="p-5 border-b border-gray-100 flex items-start justify-between flex-none">
           <div>
-            <p className="font-mono font-bold text-lg text-[#1E3A5F]">{fila.numero}</p>
+            <p className="font-mono font-bold text-lg text-[#000d66]">{fila.numero}</p>
             <p className="text-sm text-gray-400 mt-0.5">
               {fila.cliente?.nombre ?? '—'} · {fechaCorta(fila.fecha)}
             </p>
@@ -529,7 +529,7 @@ function DetalleProformaDrawer({
           <Link
             href={`/cotizador/${fila.id}`}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-semibold text-sm text-white"
-            style={{ background: '#1E3A5F' }}
+            style={{ background: '#000d66' }}
           >
             Ver proforma completa
             <ArrowRight size={15} />

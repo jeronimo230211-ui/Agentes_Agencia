@@ -9,7 +9,7 @@ const modules = [
     title: "Catálogo de Productos",
     description: "Todos tus productos organizados y buscables en segundos. Adiós a los PDFs perdidos.",
     icon: BookOpen,
-    color: "#1E3A5F",
+    color: "#000d66",
     benefit: "6 categorías · búsqueda instantánea",
   },
   {
@@ -49,11 +49,11 @@ export default function Home() {
       <div className="mb-10">
         <div
           className="inline-block text-xs font-semibold px-3 py-1 rounded-full mb-3 text-white"
-          style={{ background: "#D4A017" }}
+          style={{ background: "#000d66" }}
         >
           DEMO INTERACTIVO — NEXORA IA
         </div>
-        <h1 className="text-3xl font-bold mb-2" style={{ color: "#1E3A5F" }}>
+        <h1 className="text-3xl font-bold mb-2" style={{ color: "#000d66" }}>
           Sistema de Gestión Europartners
         </h1>
         <p className="text-gray-500 text-base max-w-xl">
@@ -124,7 +124,7 @@ export default function Home() {
                   className="text-gray-300 group-hover:text-gray-500 transition-colors mt-1"
                 />
               </div>
-              <h3 className="font-bold text-base mb-1" style={{ color: "#1E3A5F" }}>
+              <h3 className="font-bold text-base mb-1" style={{ color: "#000d66" }}>
                 {title}
               </h3>
               <p className="text-gray-500 text-sm mb-3">{description}</p>

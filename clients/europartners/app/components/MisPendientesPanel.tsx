@@ -36,15 +36,15 @@ function Seccion({ titulo, icon: Icon, count, href, children }: {
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Icon size={16} className="text-[#1E3A5F]" />
-          <h3 className="text-sm font-semibold text-[#1E3A5F]">{titulo}</h3>
+          <Icon size={16} className="text-[#000d66]" />
+          <h3 className="text-sm font-semibold text-[#000d66]">{titulo}</h3>
           {count > 0 && (
-            <span className="bg-[#D4A017] text-[#1E3A5F] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="bg-[#ccc8fa] text-[#000d66] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
               {count}
             </span>
           )}
         </div>
-        <Link href={href} className="text-xs text-gray-400 hover:text-[#1E3A5F] underline">Ver todo</Link>
+        <Link href={href} className="text-xs text-gray-400 hover:text-[#000d66] underline">Ver todo</Link>
       </div>
       {count === 0 ? (
         <p className="text-xs text-gray-300 italic py-2">Sin pendientes</p>
@@ -70,8 +70,8 @@ export default function MisPendientesPanel() {
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-3">
-        <Clock size={18} className="text-[#D4A017]" />
-        <h2 className="text-lg font-bold text-[#1E3A5F]">Mis Pendientes</h2>
+        <Clock size={18} className="text-[#000d66]" />
+        <h2 className="text-lg font-bold text-[#000d66]">Mis Pendientes</h2>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Seccion titulo="Por aprobar" icon={CheckSquare} count={data.en_revision.length} href="/aprobacion">

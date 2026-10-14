@@ -112,11 +112,11 @@ function SelectorProductoModal({
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
         {/* Header */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#1E3A5F]">Seleccionar Producto</h3>
+          <h3 className="font-bold text-[#000d66]">Seleccionar Producto</h3>
           <div className="flex items-center gap-3">
             <button
               onClick={onNuevoProducto}
-              className="flex items-center gap-1 text-sm font-medium text-[#1E3A5F] hover:underline"
+              className="flex items-center gap-1 text-sm font-medium text-[#000d66] hover:underline"
             >
               <Plus size={14} /> Nuevo producto
             </button>
@@ -131,7 +131,7 @@ function SelectorProductoModal({
           <select
             value={categoriaId}
             onChange={e => setCategoriaId(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F] w-44"
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66] w-44"
           >
             <option value="">Todas las categorías</option>
             {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -144,7 +144,7 @@ function SelectorProductoModal({
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
               placeholder="Código o descripción..."
-              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
         </div>
@@ -161,7 +161,7 @@ function SelectorProductoModal({
               <p className="text-gray-500 text-sm font-medium">Sin productos que coincidan</p>
               <button
                 onClick={onNuevoProducto}
-                className="mt-4 inline-flex items-center gap-1 text-sm text-[#1E3A5F] underline"
+                className="mt-4 inline-flex items-center gap-1 text-sm text-[#000d66] underline"
               >
                 <Plus size={14} /> Crear un producto nuevo
               </button>
@@ -202,7 +202,7 @@ function SelectorProductoModal({
                       </td>
                       <td className="p-3">{textoProducto(p.nombre, p.descripcion)}</td>
                       <td className="p-3 text-right text-gray-500">{formatUSD(p.precio_fob_usd || 0)}</td>
-                      <td className="p-3 text-right font-medium text-[#1E3A5F]">
+                      <td className="p-3 text-right font-medium text-[#000d66]">
                         {precioSugerido !== undefined ? formatUSD(precioSugerido) : '—'}
                       </td>
                     </tr>
@@ -250,7 +250,7 @@ function ModalCambioTipoPrecio({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{ maxHeight: '80vh' }}>
         <div className="p-4 border-b border-gray-100 flex-none">
-          <h3 className="font-bold text-[#1E3A5F]">Cambiar tipo de precio</h3>
+          <h3 className="font-bold text-[#000d66]">Cambiar tipo de precio</h3>
           <p className="text-sm text-gray-500 mt-1">
             Estás a punto de cambiar de <strong>{labelTipo(actual)}</strong> a <strong>{labelTipo(nuevo)}</strong>.
             {paso === 'alcance'
@@ -264,7 +264,7 @@ function ModalCambioTipoPrecio({
             <div className="p-4 flex flex-col gap-2">
               <button
                 onClick={() => onConfirmar('todas')}
-                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#1E3A5F] hover:bg-blue-50 transition-colors"
+                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#000d66] hover:bg-blue-50 transition-colors"
               >
                 <p className="font-medium text-gray-800 text-sm">Cambiar toda la proforma</p>
                 <p className="text-xs text-gray-500 mt-0.5">
@@ -274,7 +274,7 @@ function ModalCambioTipoPrecio({
               </button>
               <button
                 onClick={() => setPaso('seleccion')}
-                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#1E3A5F] hover:bg-blue-50 transition-colors"
+                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#000d66] hover:bg-blue-50 transition-colors"
               >
                 <p className="font-medium text-gray-800 text-sm">Seleccionar productos específicos</p>
                 <p className="text-xs text-gray-500 mt-0.5">Elige uno a uno cuáles líneas actualizar.</p>
@@ -332,7 +332,7 @@ function ModalCambioTipoPrecio({
                 onClick={() => onConfirmar(Array.from(seleccionadas))}
                 disabled={seleccionadas.size === 0}
                 className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-40"
-                style={{ background: '#1E3A5F' }}
+                style={{ background: '#000d66' }}
               >
                 Aplicar a seleccionados ({seleccionadas.size})
               </button>
@@ -395,7 +395,7 @@ function RegistrarPagoModal({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '90vh' }}>
         <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#1E3A5F]">Registrar pago</h3>
+          <h3 className="font-bold text-[#000d66]">Registrar pago</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
             <X size={18} className="text-gray-500" />
           </button>
@@ -411,7 +411,7 @@ function RegistrarPagoModal({
                   type="button"
                   onClick={() => setTipo(t)}
                   className={`flex-1 py-2 transition-colors ${tipo === t ? 'text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
-                  style={tipo === t ? { background: '#1E3A5F' } : undefined}
+                  style={tipo === t ? { background: '#000d66' } : undefined}
                 >
                   {t === 'cliente' ? 'Cobro al cliente' : 'Pago a China'}
                 </button>
@@ -428,7 +428,7 @@ function RegistrarPagoModal({
                 value={monto}
                 onChange={e => setMonto(e.target.value)}
                 placeholder="0.00"
-                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               />
             </div>
             <div>
@@ -439,7 +439,7 @@ function RegistrarPagoModal({
                 value={comision}
                 onChange={e => setComision(e.target.value)}
                 placeholder="0.00"
-                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               />
             </div>
           </div>
@@ -451,7 +451,7 @@ function RegistrarPagoModal({
               value={referencia}
               onChange={e => setReferencia(e.target.value)}
               placeholder="No. de transferencia, wire, etc."
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
 
@@ -461,7 +461,7 @@ function RegistrarPagoModal({
               type="date"
               value={fecha}
               onChange={e => setFecha(e.target.value)}
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
 
@@ -471,7 +471,7 @@ function RegistrarPagoModal({
               value={nota}
               onChange={e => setNota(e.target.value)}
               placeholder="Observaciones (opcional)"
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
 
@@ -500,7 +500,7 @@ function RegistrarPagoModal({
             onClick={guardar}
             disabled={guardando}
             className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-            style={{ background: '#1E3A5F' }}
+            style={{ background: '#000d66' }}
           >
             {guardando ? 'Guardando...' : 'Registrar pago'}
           </button>
@@ -547,7 +547,7 @@ function ModalNuevoPaymentTerm({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#1E3A5F]">Nueva opción de Payment Terms</h3>
+          <h3 className="font-bold text-[#000d66]">Nueva opción de Payment Terms</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
             <X size={18} className="text-gray-500" />
           </button>
@@ -561,7 +561,7 @@ function ModalNuevoPaymentTerm({
             onChange={e => setValor(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') guardar() }}
             placeholder="Ej. 50% in advance, 50% before shipment"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
           />
           {error && <p className="text-xs text-red-600">{error}</p>}
         </div>
@@ -573,7 +573,7 @@ function ModalNuevoPaymentTerm({
             onClick={guardar}
             disabled={guardando || !valor.trim()}
             className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-            style={{ background: '#1E3A5F' }}
+            style={{ background: '#000d66' }}
           >
             {guardando ? 'Guardando...' : 'Guardar'}
           </button>
@@ -972,7 +972,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-full">
-        <Loader2 size={32} className="animate-spin text-[#1E3A5F]" />
+        <Loader2 size={32} className="animate-spin text-[#000d66]" />
       </div>
     )
   }
@@ -1065,7 +1065,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             <ArrowLeft size={18} className="text-gray-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[#1E3A5F]">
+            <h1 className="text-2xl font-bold text-[#000d66]">
               {proforma.numero || 'Nueva Proforma'}
             </h1>
             <p className="text-sm text-gray-500 mt-0.5">
@@ -1115,7 +1115,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                   onClick={enviarRevision}
                   disabled={!puedeEnviarRevision || enviando}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-                  style={{ background: '#1E3A5F' }}
+                  style={{ background: '#000d66' }}
                 >
                   <Send size={16} />
                   {enviando ? 'Enviando...' : 'Enviar a Marta'}
@@ -1125,7 +1125,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                   onClick={aprobarDirecto}
                   disabled={!puedeAprobarDirecto || aprobando}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-                  style={{ background: '#1E3A5F' }}
+                  style={{ background: '#000d66' }}
                 >
                   <CheckCircle size={16} />
                   {aprobando ? 'Aprobando...' : 'Aprobar'}
@@ -1160,7 +1160,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               className={`px-3 py-1.5 transition-colors ${
                 tipoPrecio === t ? 'text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
               } ${!puedeEditar ? 'opacity-60 cursor-not-allowed' : ''}`}
-              style={tipoPrecio === t ? { background: '#1E3A5F' } : undefined}
+              style={tipoPrecio === t ? { background: '#000d66' } : undefined}
             >
               {labelTipo(t)}
             </button>
@@ -1178,7 +1178,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               value={proforma.numero_cliente || ''}
               onChange={e => setProforma(prev => prev ? { ...prev, numero_cliente: e.target.value } : prev)}
               placeholder="Ej. EMAIL 12/08/2026"
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           ) : (
             <span className="text-sm text-gray-700">{proforma.numero_cliente || '—'}</span>
@@ -1203,7 +1203,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 }}
                 placeholder="Ej. FOB"
                 title="Al elegir FOB/CFR/CIF, Freight e Insurance se autocompletan según la regla de Marta (editable después)"
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               />
               <datalist id="incoterm-opciones">
                 {INCOTERM_SUGERENCIAS.map(op => <option key={op} value={op} />)}
@@ -1223,7 +1223,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 value={proforma.freight ?? ''}
                 onChange={e => setProforma(prev => prev ? { ...prev, freight: e.target.value } : prev)}
                 placeholder="Ej. COLLECT"
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               />
               <datalist id="freight-opciones">
                 {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
@@ -1243,7 +1243,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 value={proforma.insurance || ''}
                 onChange={e => setProforma(prev => prev ? { ...prev, insurance: e.target.value } : prev)}
                 placeholder="Ej. COLLECT"
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               />
               <datalist id="insurance-opciones">
                 {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
@@ -1260,7 +1260,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               <select
                 value={proforma.payment_terms || ''}
                 onChange={e => setProforma(prev => prev ? { ...prev, payment_terms: e.target.value || null } : prev)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm max-w-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm max-w-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
               >
                 <option value="">—</option>
                 {paymentTermsOpciones.map(op => (
@@ -1270,7 +1270,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               <button
                 type="button"
                 onClick={() => setMostrarNuevoPaymentTerm(true)}
-                className="text-xs font-medium text-[#1E3A5F] hover:underline whitespace-nowrap"
+                className="text-xs font-medium text-[#000d66] hover:underline whitespace-nowrap"
               >
                 + agregar
               </button>
@@ -1389,7 +1389,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           {rolPuedeEditar && (
             <button
               onClick={() => setMostrarModalPago(true)}
-              className="flex items-center gap-1.5 text-sm text-[#1E3A5F] font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-1.5 text-sm text-[#000d66] font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg"
             >
               <Plus size={16} />
               Registrar pago
@@ -1421,7 +1421,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           {puedeEditar && (
             <button
               onClick={agregarLinea}
-              className="flex items-center gap-1.5 text-sm text-[#1E3A5F] font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-1.5 text-sm text-[#000d66] font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg"
             >
               <Plus size={16} />
               Agregar línea
@@ -1463,7 +1463,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         <button
                           title="Buscar en catálogo"
                           onClick={() => abrirSelector(linea._key)}
-                          className="p-1 rounded hover:bg-blue-50 text-gray-400 hover:text-[#1E3A5F] flex-none"
+                          className="p-1 rounded hover:bg-blue-50 text-gray-400 hover:text-[#000d66] flex-none"
                         >
                           <Package size={14} />
                         </button>
@@ -1471,7 +1471,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                           type="text"
                           value={linea.codigo_pdf || ''}
                           onChange={e => actualizarLinea(linea._key, 'codigo_pdf', e.target.value)}
-                          className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                           placeholder="TZ-3430"
                         />
                       </div>
@@ -1487,7 +1487,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         type="text"
                         value={linea.descripcion_pdf || ''}
                         onChange={e => actualizarLinea(linea._key, 'descripcion_pdf', e.target.value)}
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         placeholder="Descripción del producto"
                       />
                     ) : (
@@ -1523,7 +1523,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                                 <button
                                   type="button"
                                   onClick={() => setAgregandoPrecioCodigo(linea.codigo_pdf!)}
-                                  className="text-[11px] text-[#1E3A5F] hover:underline font-medium"
+                                  className="text-[11px] text-[#000d66] hover:underline font-medium"
                                 >
                                   + Agregar precio de referencia
                                 </button>
@@ -1584,7 +1584,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         value={linea._cantidadStr}
                         onChange={e => actualizarCantidadStr(linea._key, e.target.value.replace(/\D/g, ''))}
                         onBlur={() => fijarCantidad(linea._key)}
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                       />
                     ) : (
                       <span className="text-center block">{linea.cantidad}</span>
@@ -1604,7 +1604,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         }}
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                       />
                     ) : (
                       <span className="text-right block text-gray-500">{formatUSD(linea.precio_costo_usd || 0)}</span>
@@ -1624,7 +1624,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         }}
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right font-medium focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right font-medium focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                       />
                     ) : (
                       <span className="text-right block font-medium">{formatUSD(linea.precio_cliente_usd || 0)}</span>
@@ -1641,7 +1641,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                           onChange={e => actualizarLinea(linea._key, 'margen_pct', (parseFloat(e.target.value) || 0) / 100)}
                           step="1"
                           placeholder="15"
-                          className="w-12 border border-gray-200 rounded px-1 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="w-12 border border-gray-200 rounded px-1 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                         <span className="text-gray-400 text-xs">%</span>
                       </div>
@@ -1655,7 +1655,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                   </td>
 
                   {/* Total */}
-                  <td className="p-3 text-right font-medium text-[#1E3A5F]">
+                  <td className="p-3 text-right font-medium text-[#000d66]">
                     {formatUSD((linea.precio_cliente_usd || 0) * (linea.cantidad || 1))}
                   </td>
 
@@ -1679,7 +1679,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           <div className="p-4 border-t border-gray-100 flex justify-end">
             <div className="text-right">
               <p className="text-sm text-gray-500">TOTAL {proforma.incoterm || 'FOB'}</p>
-              <p className="text-2xl font-bold text-[#1E3A5F]">{formatUSD(totalFob)}</p>
+              <p className="text-2xl font-bold text-[#000d66]">{formatUSD(totalFob)}</p>
             </div>
           </div>
         )}
@@ -1693,7 +1693,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             value={proforma.notas_internas || ''}
             onChange={e => setProforma(prev => prev ? { ...prev, notas_internas: e.target.value } : prev)}
             placeholder="Comentarios para Marta..."
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#000d66]"
           />
           <label className="flex items-center gap-2 mt-3 text-sm text-gray-600 cursor-pointer">
             <input
@@ -1751,7 +1751,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     setProforma(prev => prev ? { ...prev, total_china_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
                   }}
                   placeholder="0.00"
-                  className="w-full max-w-xs border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                  className="w-full max-w-xs border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                 />
               ) : (
                 <p className="text-sm text-gray-700">
@@ -1767,7 +1767,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                   value={proforma.acuerdo_pago || ''}
                   onChange={e => setProforma(prev => prev ? { ...prev, acuerdo_pago: e.target.value } : prev)}
                   placeholder="Ej. 50% anticipo, 50% contra BL..."
-                  className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                  className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                 />
               ) : (
                 <p className="text-sm text-gray-700 mt-1">{proforma.acuerdo_pago || '—'}</p>
@@ -1788,7 +1788,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                       setProforma(prev => prev ? { ...prev, perdida_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
                     }}
                     placeholder="0.00"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                   />
                 ) : (
                   <p className="text-sm text-gray-700 mt-1">
@@ -1804,7 +1804,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     value={proforma.motivo_perdida || ''}
                     onChange={e => setProforma(prev => prev ? { ...prev, motivo_perdida: e.target.value } : prev)}
                     placeholder="Ej. producto dañado en tránsito"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                   />
                 ) : (
                   <p className="text-sm text-gray-700 mt-1">{proforma.motivo_perdida || '—'}</p>
@@ -1826,7 +1826,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                       setProforma(prev => prev ? { ...prev, nota_credito_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
                     }}
                     placeholder="0.00"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                   />
                 ) : (
                   <p className="text-sm text-gray-700 mt-1">
@@ -1842,7 +1842,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     value={proforma.motivo_nota_credito || ''}
                     onChange={e => setProforma(prev => prev ? { ...prev, motivo_nota_credito: e.target.value } : prev)}
                     placeholder="Ej. descuento comercial acordado"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                   />
                 ) : (
                   <p className="text-sm text-gray-700 mt-1">{proforma.motivo_nota_credito || '—'}</p>
@@ -1856,7 +1856,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                   onClick={guardarFinancieros}
                   disabled={guardandoFinancieros}
                   className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-                  style={{ background: '#1E3A5F' }}
+                  style={{ background: '#000d66' }}
                 >
                   {guardandoFinancieros ? 'Guardando...' : 'Guardar datos financieros'}
                 </button>

@@ -40,8 +40,8 @@ export default function ReportesPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1E3A5F] mb-1 flex items-center gap-2">
-          <BarChart3 size={22} className="text-[#D4A017]" />
+        <h1 className="text-2xl font-bold text-[#000d66] mb-1 flex items-center gap-2">
+          <BarChart3 size={22} className="text-[#000d66]" />
           Reportes — Tiempo por persona
         </h1>
         <p className="text-gray-500 text-sm">
@@ -93,7 +93,7 @@ export default function ReportesPage() {
                 <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="p-4 font-medium text-gray-800">{f.nombre}</td>
                   <td className="p-4 text-gray-600">{f.etapa}</td>
-                  <td className="p-4 text-right font-bold text-[#1E3A5F]">{fechaLabel(f.promedio_horas)}</td>
+                  <td className="p-4 text-right font-bold text-[#000d66]">{fechaLabel(f.promedio_horas)}</td>
                   <td className="p-4 text-right text-gray-400">{f.muestras}</td>
                 </tr>
               ))}

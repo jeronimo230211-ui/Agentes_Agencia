@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image'
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -6,7 +7,7 @@ import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#1E3A5F]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#000d66]" />}>
       <LoginForm />
     </Suspense>
   )
@@ -40,15 +41,14 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1E3A5F] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#000d66] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
+        {/* Logo — base blanca para que se lea sobre el fondo navy, igual
+            que en el sidebar (el logo real tiene texto navy). */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
-               style={{ background: '#D4A017' }}>
-            <span className="text-2xl font-bold text-[#1E3A5F]">EP</span>
+          <div className="bg-white rounded-xl px-5 py-4 inline-block mb-3">
+            <Image src="/logo.png" alt="Europartners" width={180} height={101} priority />
           </div>
-          <h1 className="text-white text-2xl font-bold">Europartners</h1>
           <p className="text-white/50 text-sm mt-1">Sistema de Operaciones</p>
         </div>
 
@@ -70,7 +70,7 @@ function LoginForm() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]"
                 placeholder="deisy@europartners.com"
               />
             </div>
@@ -86,7 +86,7 @@ function LoginForm() {
                   onChange={e => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] pr-10"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66] pr-10"
                 />
                 <button
                   type="button"
@@ -106,7 +106,7 @@ function LoginForm() {
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-lg font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ background: '#1E3A5F', color: 'white' }}
+              style={{ background: '#000d66', color: 'white' }}
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : null}
               {loading ? 'Entrando...' : 'Iniciar sesión'}

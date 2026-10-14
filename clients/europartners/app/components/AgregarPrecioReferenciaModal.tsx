@@ -51,7 +51,7 @@ export default function AgregarPrecioReferenciaModal({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5">
         <div className="flex items-center justify-between mb-1">
-          <h3 className="font-bold text-[#1E3A5F]">Agregar precio de referencia</h3>
+          <h3 className="font-bold text-[#000d66]">Agregar precio de referencia</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
         </div>
         <p className="text-xs text-gray-400 font-mono mb-4">{codigo}</p>
@@ -63,7 +63,7 @@ export default function AgregarPrecioReferenciaModal({
               type="number" step="0.01" autoFocus
               value={precio} onChange={e => setPrecio(e.target.value)}
               placeholder="0.00"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
           <div>
@@ -71,7 +71,7 @@ export default function AgregarPrecioReferenciaModal({
             <input
               type="date"
               value={fecha} onChange={e => setFecha(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
           <div>
@@ -80,7 +80,7 @@ export default function AgregarPrecioReferenciaModal({
               type="text"
               value={referencia} onChange={e => setReferencia(e.target.value)}
               placeholder="Ej: proforma vieja #045, factura en PDF"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
           {error && <p className="text-xs text-red-500">{error}</p>}
@@ -96,7 +96,7 @@ export default function AgregarPrecioReferenciaModal({
           <button
             onClick={guardar}
             disabled={guardando}
-            className="flex-1 py-2 rounded-lg bg-[#1E3A5F] text-white text-sm font-semibold hover:bg-[#16304d] disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 py-2 rounded-lg bg-[#000d66] text-white text-sm font-semibold hover:bg-[#16304d] disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             {guardando ? <Loader2 size={14} className="animate-spin" /> : 'Guardar'}
           </button>

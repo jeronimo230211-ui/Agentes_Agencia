@@ -2,10 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Identidad calibrada contra el archivo real de Canva de la diseñadora
+   (ver lib/pdf/templates/proforma-estandar.tsx) — navy y lila exactos,
+   sin dorado: esa identidad vieja no existe en el diseño real, solo
+   quedaba hardcodeada en la app desde antes. */
 :root {
-  --ep-navy: #1E3A5F;
-  --ep-gold: #D4A017;
-  --ep-gold-light: #F0C040;
+  --ep-navy: #000d66;
+  --ep-lila: #ccc8fa;
   --ep-light: #F5F7FA;
   --ep-text: #1A1A2E;
   --background: #F5F7FA;
@@ -15,7 +18,7 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Work Sans', system-ui, -apple-system, sans-serif;
 }
 
 .ep-badge-activo {

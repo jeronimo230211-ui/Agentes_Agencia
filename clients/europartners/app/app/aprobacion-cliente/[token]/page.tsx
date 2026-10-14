@@ -134,21 +134,21 @@ export default function AprobacionClientePage({ params }: { params: { token: str
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="bg-[#1E3A5F] text-white rounded-t-xl p-5">
-          <h1 className="text-xl font-bold text-[#D4A017]">Europartners International</h1>
+        <div className="bg-[#000d66] text-white rounded-t-xl p-5">
+          <h1 className="text-xl font-bold text-[#000d66]">Europartners International</h1>
           <p className="text-sm opacity-75">Proforma Review</p>
         </div>
 
         <div className="bg-white rounded-b-xl shadow-lg p-6 mb-4">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-[#1E3A5F]">{proforma?.numero}</h2>
+              <h2 className="text-2xl font-bold text-[#000d66]">{proforma?.numero}</h2>
               <p className="text-gray-500">{cliente?.nombre} · {proforma?.incoterm}</p>
               <p className="text-sm text-gray-400">{proforma?.fecha}</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">Total {proforma?.incoterm}</p>
-              <p className="text-2xl font-bold text-[#1E3A5F]">{formatUSD(total)}</p>
+              <p className="text-2xl font-bold text-[#000d66]">{formatUSD(total)}</p>
             </div>
           </div>
 
@@ -156,7 +156,7 @@ export default function AprobacionClientePage({ params }: { params: { token: str
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[#1E3A5F] text-white">
+                <tr className="bg-[#000d66] text-white">
                   <th className="p-2 text-left">Description</th>
                   <th className="p-2 text-center">Qty</th>
                   <th className="p-2 text-right">Price</th>

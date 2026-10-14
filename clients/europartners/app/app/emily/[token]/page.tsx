@@ -105,7 +105,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
   if (estado === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#1E3A5F]" size={40} />
+        <Loader2 className="animate-spin text-[#000d66]" size={40} />
       </div>
     )
   }
@@ -139,10 +139,10 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
-      <div className="bg-[#1E3A5F] text-white px-4 py-5 sticky top-0 z-10 shadow-md">
+      <div className="bg-[#000d66] text-white px-4 py-5 sticky top-0 z-10 shadow-md">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-[#D4A017]">Europartners</h1>
+            <h1 className="text-lg font-bold text-[#000d66]">Europartners</h1>
             <p className="text-sm opacity-75">Supplier pricing · {nombre}</p>
           </div>
           <button
@@ -194,7 +194,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
               <button
                 onClick={cerrarOnboarding}
                 className="w-full py-3 rounded-lg font-bold text-white"
-                style={{ background: '#1E3A5F' }}
+                style={{ background: '#000d66' }}
               >
                 Got it, let&apos;s start
               </button>
@@ -222,7 +222,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
             <input
               type="text"
               placeholder="Search product..."
-              className="w-full pl-9 pr-4 py-2 text-base border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+              className="w-full pl-9 pr-4 py-2 text-base border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
@@ -231,7 +231,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
             <button
               onClick={() => setCategoriaId('')}
               className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                !categoriaId ? 'bg-[#1E3A5F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                !categoriaId ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               All
@@ -241,7 +241,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
                 key={cat.id}
                 onClick={() => setCategoriaId(prev => prev === cat.id ? '' : cat.id)}
                 className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                  categoriaId === cat.id ? 'bg-[#1E3A5F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  categoriaId === cat.id ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 {cat.nombre}
@@ -283,7 +283,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
+                        <p className="font-mono text-xs font-bold text-[#000d66]">{p.codigo}</p>
                         <p className="text-sm text-gray-700">{p.nombre}</p>
                       </div>
                       <span className="text-xs text-gray-400 flex-shrink-0">
@@ -300,7 +300,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
                           step="1"
                           value={fila.cantidad}
                           onChange={e => setFila(p.id, 'cantidad', e.target.value)}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                       </label>
                       <label className="block">
@@ -312,7 +312,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
                           step="0.01"
                           value={fila.precio}
                           onChange={e => setFila(p.id, 'precio', e.target.value)}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                       </label>
                     </div>
@@ -328,7 +328,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
+                      <p className="font-mono text-xs font-bold text-[#000d66]">{p.codigo}</p>
                       <p className="text-sm text-gray-700 truncate">{p.nombre}</p>
                     </div>
                     <span className="text-xs text-gray-400">
@@ -340,7 +340,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
                       step="1"
                       value={fila.cantidad}
                       onChange={e => setFila(p.id, 'cantidad', e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                     />
                     <input
                       type="number"
@@ -348,7 +348,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
                       step="0.01"
                       value={fila.precio}
                       onChange={e => setFila(p.id, 'precio', e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                     />
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
           value={notas}
           onChange={e => setNotas(e.target.value)}
           placeholder="E.g.: prices valid until..."
-          className="w-full mt-1.5 border border-gray-200 rounded-lg p-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20 mb-8"
+          className="w-full mt-1.5 border border-gray-200 rounded-lg p-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-[#000d66]/20 mb-8"
         />
       </div>
 
@@ -376,7 +376,7 @@ export default function EmilyPage({ params }: { params: { token: string } }) {
               onClick={enviar}
               disabled={estado === 'sending'}
               className="px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 disabled:opacity-50"
-              style={{ background: '#D4A017', color: '#1E3A5F' }}
+              style={{ background: '#ccc8fa', color: '#000d66' }}
             >
               {estado === 'sending' && <Loader2 size={14} className="animate-spin" />}
               Send to Europartners →

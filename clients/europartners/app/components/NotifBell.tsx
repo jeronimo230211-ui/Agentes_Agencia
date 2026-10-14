@@ -117,7 +117,7 @@ export default function NotifBell() {
       {abierto && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 max-h-96 overflow-y-auto">
           <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-[#1E3A5F]">Notificaciones</p>
+            <p className="text-sm font-semibold text-[#000d66]">Notificaciones</p>
           </div>
           {notifs.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-8">Sin notificaciones</p>

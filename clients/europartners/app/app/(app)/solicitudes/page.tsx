@@ -275,7 +275,7 @@ export default function SolicitudesPage() {
       <div className="px-8 pt-7 pb-4 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold text-[#1E3A5F]">Solicitudes de Clientes</h1>
+            <h1 className="text-2xl font-bold text-[#000d66]">Solicitudes de Clientes</h1>
             <p className="text-gray-400 text-sm mt-0.5">Pedidos entrantes antes de convertirlos en proforma</p>
           </div>
           <button
@@ -292,7 +292,7 @@ export default function SolicitudesPage() {
               key={value}
               onClick={() => setEstadoFiltro(value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoFiltro === value ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                estadoFiltro === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
               {label}
@@ -413,7 +413,7 @@ export default function SolicitudesPage() {
                                 {l.producto?.codigo && (
                                   <button
                                     onClick={() => setAgregandoPrecioCodigo(l.producto!.codigo)}
-                                    className="text-[11px] text-[#1E3A5F] hover:underline font-medium"
+                                    className="text-[11px] text-[#000d66] hover:underline font-medium"
                                   >
                                     + Agregar precio de referencia
                                   </button>
@@ -525,7 +525,7 @@ export default function SolicitudesPage() {
                   onClick={() => convertir(seleccionada)}
                   disabled={convirtiendo}
                   className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                  style={{ background: '#1E3A5F' }}
+                  style={{ background: '#000d66' }}
                 >
                   <Check size={16} />
                   {convirtiendo ? 'Convirtiendo...' : 'Convertir a proforma'}
@@ -594,7 +594,7 @@ export default function SolicitudesPage() {
                 onClick={devolver}
                 disabled={devolviendo || !comentarioDevolver.trim()}
                 className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: '#D4A017', color: '#1E3A5F' }}
+                style={{ background: '#ccc8fa', color: '#000d66' }}
               >
                 {devolviendo ? 'Enviando...' : 'Devolver con observación'}
               </button>
@@ -623,7 +623,7 @@ export default function SolicitudesPage() {
               {!puedeEditar ? null : !showNuevoCliente ? (
                 <button
                   onClick={() => setShowNuevoCliente(true)}
-                  className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-lg border border-dashed border-gray-200 text-gray-500 hover:border-[#1E3A5F] hover:text-[#1E3A5F] mb-3"
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-lg border border-dashed border-gray-200 text-gray-500 hover:border-[#000d66] hover:text-[#000d66] mb-3"
                 >
                   <Plus size={14} /> Nuevo cliente
                 </button>
@@ -635,7 +635,7 @@ export default function SolicitudesPage() {
                     placeholder="Nombre del cliente"
                     value={nombreNuevo}
                     onChange={e => setNombreNuevo(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                   />
                   <div className="flex gap-2">
                     <input
@@ -643,12 +643,12 @@ export default function SolicitudesPage() {
                       placeholder="País (opcional)"
                       value={paisNuevo}
                       onChange={e => setPaisNuevo(e.target.value)}
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                     />
                     <select
                       value={tipoNuevo}
                       onChange={e => setTipoNuevo(e.target.value as 'mayorista' | 'detallista')}
-                      className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                      className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                     >
                       <option value="mayorista">Mayorista</option>
                       <option value="detallista">Detallista</option>
@@ -666,7 +666,7 @@ export default function SolicitudesPage() {
                       onClick={crearCliente}
                       disabled={!nombreNuevo.trim() || creandoCliente}
                       className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg text-white disabled:opacity-40"
-                      style={{ background: '#1E3A5F' }}
+                      style={{ background: '#000d66' }}
                     >
                       {creandoCliente && <Loader2 size={13} className="animate-spin" />}
                       Crear cliente
@@ -691,7 +691,7 @@ export default function SolicitudesPage() {
                         {puedeEditar && (
                           <button
                             onClick={() => editandoContactoId === c.id ? setEditandoContactoId(null) : abrirEditarContacto(c)}
-                            className="text-gray-300 hover:text-[#1E3A5F] flex-shrink-0"
+                            className="text-gray-300 hover:text-[#000d66] flex-shrink-0"
                             title="Ver/editar contacto"
                           >
                             <Pencil size={11} />
@@ -730,14 +730,14 @@ export default function SolicitudesPage() {
                         placeholder="Nombre de contacto"
                         value={contactoForm.contacto_nombre}
                         onChange={e => setContactoForm(f => ({ ...f, contacto_nombre: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                       />
                       <input
                         type="email"
                         placeholder="Correo"
                         value={contactoForm.contacto_email}
                         onChange={e => setContactoForm(f => ({ ...f, contacto_email: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                       />
                       <div className="flex gap-2">
                         <input
@@ -745,14 +745,14 @@ export default function SolicitudesPage() {
                           placeholder="Teléfono"
                           value={contactoForm.contacto_telefono}
                           onChange={e => setContactoForm(f => ({ ...f, contacto_telefono: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                         <input
                           type="text"
                           placeholder="Dirección"
                           value={contactoForm.direccion}
                           onChange={e => setContactoForm(f => ({ ...f, direccion: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                       </div>
 
@@ -770,7 +770,7 @@ export default function SolicitudesPage() {
                           placeholder="Incoterm (ej. FOB)"
                           value={contactoForm.incoterm_default}
                           onChange={e => setContactoForm(f => ({ ...f, incoterm_default: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                         <datalist id={`incoterm-cliente-${c.id}`}>
                           {INCOTERM_SUGERENCIAS.map(op => <option key={op} value={op} />)}
@@ -781,7 +781,7 @@ export default function SolicitudesPage() {
                           placeholder="Freight (ej. FOB)"
                           value={contactoForm.freight_default}
                           onChange={e => setContactoForm(f => ({ ...f, freight_default: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                       </div>
                       <div>
@@ -791,7 +791,7 @@ export default function SolicitudesPage() {
                           placeholder="Insurance (ej. COLLECT)"
                           value={contactoForm.insurance_default}
                           onChange={e => setContactoForm(f => ({ ...f, insurance_default: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                          className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                         />
                         <datalist id={`insurance-cliente-${c.id}`}>
                           {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
@@ -810,7 +810,7 @@ export default function SolicitudesPage() {
                           onClick={() => guardarContactoCliente(c.id)}
                           disabled={guardandoContactoId === c.id}
                           className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg text-white disabled:opacity-40"
-                          style={{ background: '#1E3A5F' }}
+                          style={{ background: '#000d66' }}
                         >
                           {guardandoContactoId === c.id && <Loader2 size={12} className="animate-spin" />}
                           Guardar

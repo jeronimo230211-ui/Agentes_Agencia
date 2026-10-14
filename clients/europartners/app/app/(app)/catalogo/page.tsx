@@ -78,17 +78,17 @@ function ProductCard({ p, onClick }: { p: Producto; onClick: () => void }) {
           </span>
         )}
         <div className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-          <Eye size={13} className="text-[#1E3A5F]" />
+          <Eye size={13} className="text-[#000d66]" />
         </div>
       </div>
 
       {/* Info */}
       <div className="p-3 flex flex-col gap-0.5">
-        <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
+        <p className="font-mono text-xs font-bold text-[#000d66]">{p.codigo}</p>
         <p className="text-sm text-gray-800 font-medium leading-tight line-clamp-2">{p.nombre}</p>
         <p className="text-xs text-gray-400">{p.categoria?.nombre || '—'}</p>
         {p.precio_mayorista != null ? (
-          <p className="text-sm font-bold text-[#1E3A5F] mt-1">{formatUSD(p.precio_mayorista)}</p>
+          <p className="text-sm font-bold text-[#000d66] mt-1">{formatUSD(p.precio_mayorista)}</p>
         ) : p.precio_fob_usd != null ? (
           <p className="text-xs text-gray-400 mt-1">FOB {formatUSD(p.precio_fob_usd)}</p>
         ) : (
@@ -220,7 +220,7 @@ export default function CatalogoPage() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1E3A5F] mb-1">Catálogo de Productos</h1>
+          <h1 className="text-2xl font-bold text-[#000d66] mb-1">Catálogo de Productos</h1>
           <p className="text-gray-500 text-sm">
             {cargando ? 'Cargando...' : `${productos.length} referencias`}
           </p>
@@ -229,7 +229,7 @@ export default function CatalogoPage() {
           <button
             onClick={() => setMostrarNuevo(true)}
             className="flex items-center gap-1.5 text-sm font-medium text-white px-4 py-2 rounded-lg flex-none"
-            style={{ background: '#1E3A5F' }}
+            style={{ background: '#000d66' }}
           >
             <Plus size={16} /> Nuevo producto
           </button>
@@ -243,7 +243,7 @@ export default function CatalogoPage() {
           <input
             type="text"
             placeholder="Código, nombre o descripción..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
           />
@@ -254,7 +254,7 @@ export default function CatalogoPage() {
           <button
             onClick={() => setCategoriaId('')}
             className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-              !categoriaId ? 'bg-[#1E3A5F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              !categoriaId ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             Todas
@@ -264,7 +264,7 @@ export default function CatalogoPage() {
               key={cat.id}
               className={`flex items-center gap-1 text-xs rounded-full font-medium transition-colors pl-3 pr-1.5 py-1.5 ${
                 categoriaId === cat.id
-                  ? 'bg-[#1E3A5F] text-white'
+                  ? 'bg-[#000d66] text-white'
                   : cat.activo
                     ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     : 'bg-amber-50 text-amber-600 border border-amber-200'
@@ -292,7 +292,7 @@ export default function CatalogoPage() {
               type="checkbox"
               checked={mostrarOcultos}
               onChange={e => setMostrarOcultos(e.target.checked)}
-              className="rounded accent-[#1E3A5F]"
+              className="rounded accent-[#000d66]"
             />
             Mostrar ocultos
           </label>

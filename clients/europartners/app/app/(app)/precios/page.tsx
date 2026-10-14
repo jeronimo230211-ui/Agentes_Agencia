@@ -33,7 +33,7 @@ function Slider({
     <div className="mb-4">
       <div className="flex justify-between items-center mb-1.5">
         <label className="text-sm font-medium text-gray-700">{label}</label>
-        <span className="text-sm font-bold" style={{ color: "#1E3A5F" }}>{format(value)}</span>
+        <span className="text-sm font-bold" style={{ color: "#000d66" }}>{format(value)}</span>
       </div>
       <input
         type="range"
@@ -78,7 +78,7 @@ export default function PreciosPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-bold px-2 py-0.5 rounded text-white" style={{ background: "#1E6B5F" }}>02</span>
-          <h1 className="text-2xl font-bold" style={{ color: "#1E3A5F" }}>Motor de Precios</h1>
+          <h1 className="text-2xl font-bold" style={{ color: "#000d66" }}>Motor de Precios</h1>
         </div>
         <p className="text-gray-500 text-sm">
           Ajusta las variables y mira cómo todos los precios se recalculan en tiempo real.
@@ -89,7 +89,7 @@ export default function PreciosPage() {
         {/* Panel de variables */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-5">
-            <RefreshCw size={16} style={{ color: "#D4A017" }} />
+            <RefreshCw size={16} style={{ color: "#000d66" }} />
             <h2 className="font-bold text-gray-800">Variables de precio</h2>
           </div>
 
@@ -150,7 +150,7 @@ export default function PreciosPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp size={16} style={{ color: "#1E3A5F" }} />
+                <TrendingUp size={16} style={{ color: "#000d66" }} />
                 <span className="font-semibold text-gray-800">Tabla de precios actualizada</span>
               </div>
               <span className="text-xs text-gray-400">Recalculando automáticamente →</span>
@@ -177,7 +177,7 @@ export default function PreciosPage() {
                     <td className="px-4 py-3 text-right text-sm text-blue-600">+${p.fleteProrr.toFixed(2)}</td>
                     <td className="px-4 py-3 text-right text-sm text-purple-600">+${p.aduana.toFixed(2)}</td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-bold text-sm" style={{ color: "#1E3A5F" }}>
+                      <span className="font-bold text-sm" style={{ color: "#000d66" }}>
                         ${p.precioVenta.toFixed(2)}
                       </span>
                     </td>

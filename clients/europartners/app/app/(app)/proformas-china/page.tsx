@@ -64,7 +64,7 @@ export default function ProformasChinaPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-[#1E3A5F]" size={32} />
+        <Loader2 className="animate-spin text-[#000d66]" size={32} />
       </div>
     )
   }
@@ -72,7 +72,7 @@ export default function ProformasChinaPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-1">
-        <Ship size={22} className="text-[#1E3A5F]" />
+        <Ship size={22} className="text-[#000d66]" />
         <h1 className="text-xl font-bold text-gray-800">Proformas de China (Emily)</h1>
       </div>
       <p className="text-sm text-gray-500 mb-6">
@@ -125,7 +125,7 @@ export default function ProformasChinaPage() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-mono text-xs font-bold text-[#1E3A5F]">{l.producto?.codigo}</p>
+                            <p className="font-mono text-xs font-bold text-[#000d66]">{l.producto?.codigo}</p>
                             <p className="text-sm text-gray-700 truncate">{l.producto?.nombre}</p>
                           </div>
                           <div className="text-right text-xs text-gray-400 w-20 flex-shrink-0">
@@ -164,7 +164,7 @@ export default function ProformasChinaPage() {
                       onClick={() => aplicar(pc)}
                       disabled={guardando}
                       className="px-5 py-2.5 rounded-lg font-bold text-sm text-white disabled:opacity-50 flex items-center gap-2"
-                      style={{ background: '#1E3A5F' }}
+                      style={{ background: '#000d66' }}
                     >
                       {guardando && <Loader2 size={14} className="animate-spin" />}
                       Aplicar decisiones

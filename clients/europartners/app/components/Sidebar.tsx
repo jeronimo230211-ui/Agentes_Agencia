@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -140,14 +141,14 @@ export default function Sidebar() {
         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
           active ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/10'
         }`}
-        style={active ? { background: '#D4A017', color: '#1E3A5F' } : {}}
+        style={active ? { background: '#ccc8fa', color: '#000d66' } : {}}
       >
         <Icon size={18} />
         <span className="flex-1">{label}</span>
         {badge && !active && (
           <span
             className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full"
-            style={{ background: '#D4A017', color: '#1E3A5F' }}
+            style={{ background: '#ccc8fa', color: '#000d66' }}
           >
             {badge}
           </span>
@@ -157,16 +158,15 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col sticky top-0" style={{ background: '#1E3A5F', height: '100vh' }}>
-      {/* Logo */}
+    <aside className="w-60 flex-shrink-0 flex flex-col sticky top-0" style={{ background: '#000d66', height: '100vh' }}>
+      {/* Logo — el logo real tiene texto navy, así que necesita una base
+          clara para leerse sobre el fondo navy del sidebar (antes era un
+          círculo "EP" + texto, sin logo real). */}
       <div className="px-6 py-6 border-b border-white/10 flex-none">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style={{ background: '#D4A017', color: '#1E3A5F' }}>
-            EP
-          </div>
-          <span className="text-white font-bold text-base tracking-wide">EUROPARTNERS</span>
+        <div className="bg-white rounded-lg px-3 py-2.5 inline-block">
+          <Image src="/logo.png" alt="Europartners" width={140} height={79} priority />
         </div>
-        <p className="text-white/50 text-xs pl-10">Sistema de Operaciones</p>
+        <p className="text-white/50 text-xs mt-2">Sistema de Operaciones</p>
       </div>
 
       {/* Nav */}

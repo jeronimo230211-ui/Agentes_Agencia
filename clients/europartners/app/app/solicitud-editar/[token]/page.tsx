@@ -60,7 +60,7 @@ export default function SolicitudEditarPage({ params }: { params: { token: strin
   if (estado === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#1E3A5F]" size={40} />
+        <Loader2 className="animate-spin text-[#000d66]" size={40} />
       </div>
     )
   }

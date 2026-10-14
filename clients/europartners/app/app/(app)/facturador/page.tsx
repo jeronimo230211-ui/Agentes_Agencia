@@ -81,7 +81,7 @@ export default function FacturadorPage() {
     <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden">
       <div className="px-8 pt-7 pb-4 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="mb-5">
-          <h1 className="text-2xl font-bold text-[#1E3A5F]">Facturador</h1>
+          <h1 className="text-2xl font-bold text-[#000d66]">Facturador</h1>
           <p className="text-gray-400 text-sm mt-0.5">
             Proformas que ya son un compromiso comercial — enviadas, facturadas y su estado de cobro
           </p>
@@ -93,7 +93,7 @@ export default function FacturadorPage() {
               key={value}
               onClick={() => setFiltro(f => f === value ? '' : value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                filtro === value ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                filtro === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
               {label}{value && ` (${conteos[value]})`}
@@ -129,7 +129,7 @@ export default function FacturadorPage() {
                   const total = p.total_cif_usd ?? p.total_fob_usd ?? 0
                   return (
                     <tr key={p.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
-                      <td className="px-4 py-3 font-mono font-bold text-[#1E3A5F]">{p.numero}</td>
+                      <td className="px-4 py-3 font-mono font-bold text-[#000d66]">{p.numero}</td>
                       <td className="px-4 py-3 text-gray-700">{p.cliente?.nombre ?? '—'}</td>
                       <td className="px-4 py-3 text-gray-500">{p.fecha}</td>
                       <td className="px-4 py-3 text-right font-medium">{formatUSD(total)}</td>

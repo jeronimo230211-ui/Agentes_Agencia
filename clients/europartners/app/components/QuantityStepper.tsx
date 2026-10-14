@@ -49,7 +49,7 @@ export default function QuantityStepper({ value, onChange, size = 'sm', min = 0 
         onBlur={commit}
         onKeyDown={e => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
         onClick={e => e.stopPropagation()}
-        className={`${dims.input} text-center font-semibold text-gray-800 border border-gray-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20`}
+        className={`${dims.input} text-center font-semibold text-gray-800 border border-gray-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-[#000d66]/20`}
         aria-label="Quantity"
       />
       <button

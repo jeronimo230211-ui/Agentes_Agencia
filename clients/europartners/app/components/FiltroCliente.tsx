@@ -21,7 +21,7 @@ export default function FiltroCliente({ clientes, value, onChange, className }: 
       onChange={e => onChange(e.target.value)}
       className={
         className ??
-        'text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20'
+        'text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#000d66]/20'
       }
     >
       <option value="todos">Todos los clientes</option>

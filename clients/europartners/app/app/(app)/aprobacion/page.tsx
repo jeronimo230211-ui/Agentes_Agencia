@@ -77,12 +77,12 @@ export default function AprobacionPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-[#1E3A5F] mb-2">Aprobaciones</h1>
+      <h1 className="text-2xl font-bold text-[#000d66] mb-2">Aprobaciones</h1>
       <p className="text-gray-500 text-sm mb-6">Proformas que esperan tu revisión</p>
 
       {loading ? (
         <div className="flex justify-center p-12">
-          <Loader2 size={32} className="animate-spin text-[#1E3A5F]" />
+          <Loader2 size={32} className="animate-spin text-[#000d66]" />
         </div>
       ) : proformas.length === 0 ? (
         <div className="bg-white rounded-xl p-12 text-center shadow-sm border border-gray-100">
@@ -96,18 +96,18 @@ export default function AprobacionPage() {
             <div key={p.id} className="bg-white rounded-xl shadow-sm border border-yellow-200 p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-[#1E3A5F] text-lg">{p.numero}</p>
+                  <p className="font-bold text-[#000d66] text-lg">{p.numero}</p>
                   <p className="text-gray-600 text-sm">{p.cliente?.nombre} · {p.incoterm}</p>
                   <p className="text-gray-400 text-xs mt-0.5">{p.fecha} · creada por {p.creador?.nombre || 'Deisy'}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-400">Total {p.incoterm}</p>
-                  <p className="text-xl font-bold text-[#1E3A5F]">
+                  <p className="text-xl font-bold text-[#000d66]">
                     {formatUSD(p.total_cif_usd || p.total_fob_usd || 0)}
                   </p>
                   <button
                     onClick={() => verDetalle(p)}
-                    className="mt-2 text-sm text-[#1E3A5F] underline flex items-center gap-1 ml-auto"
+                    className="mt-2 text-sm text-[#000d66] underline flex items-center gap-1 ml-auto"
                   >
                     <Eye size={14} />
                     Revisar
@@ -125,7 +125,7 @@ export default function AprobacionPage() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-lg text-[#1E3A5F]">{seleccionada.numero}</h2>
+                <h2 className="font-bold text-lg text-[#000d66]">{seleccionada.numero}</h2>
                 <p className="text-sm text-gray-500">{seleccionada.cliente?.nombre} · {seleccionada.incoterm}</p>
               </div>
               <div className="flex gap-2">
@@ -160,7 +160,7 @@ export default function AprobacionPage() {
               <div className="overflow-x-auto mb-6">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-[#1E3A5F] text-white">
+                    <tr className="bg-[#000d66] text-white">
                       <th className="p-2 text-left">Descripción</th>
                       <th className="p-2 text-center">Qty</th>
                       <th className="p-2 text-right">Costo China</th>
@@ -188,7 +188,7 @@ export default function AprobacionPage() {
                               step="0.01"
                               value={precioActual}
                               onChange={e => setPreciosEditados(prev => ({ ...prev, [l.id]: Number(e.target.value) }))}
-                              className="w-24 text-right border border-gray-200 rounded px-1.5 py-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+                              className="w-24 text-right border border-gray-200 rounded px-1.5 py-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#000d66]"
                             />
                           </td>
                           <td className={`p-2 text-right font-medium ${margenActual < 0.10 ? 'text-red-600' : 'text-green-600'}`}>
@@ -200,11 +200,11 @@ export default function AprobacionPage() {
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-[#1E3A5F]">
+                    <tr className="border-t-2 border-[#000d66]">
                       <td colSpan={5} className="p-2 font-bold text-right">
                         TOTAL {seleccionada.incoterm}
                       </td>
-                      <td className="p-2 text-right font-bold text-[#1E3A5F] text-lg">
+                      <td className="p-2 text-right font-bold text-[#000d66] text-lg">
                         {formatUSD(
                           (seleccionada.lineas || []).reduce((sum, l) => {
                             const precio = preciosEditados[l.id] ?? l.precio_cliente_usd ?? 0

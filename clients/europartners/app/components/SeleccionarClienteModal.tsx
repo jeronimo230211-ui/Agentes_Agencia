@@ -36,7 +36,7 @@ export default function SeleccionarClienteModal({
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
         <div className="p-5 pb-3 flex-none">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-[#1E3A5F]">{titulo}</h3>
+            <h3 className="font-bold text-[#000d66]">{titulo}</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <X size={18} />
             </button>
@@ -49,7 +49,7 @@ export default function SeleccionarClienteModal({
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
               placeholder="Buscar cliente..."
-              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#1E3A5F]"
+              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
             />
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function SeleccionarClienteModal({
                 <button
                   key={c.id}
                   onClick={() => onSeleccionar(c)}
-                  className="flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-100 hover:border-[#1E3A5F] hover:bg-[#1E3A5F]/5 text-left transition-all"
+                  className="flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-100 hover:border-[#000d66] hover:bg-[#000d66]/5 text-left transition-all"
                 >
                   <span className="font-semibold text-gray-800 text-sm">{c.nombre}</span>
                   <span className="text-xs text-gray-400 font-mono">{c.incoterm_default || 'FOB'}</span>

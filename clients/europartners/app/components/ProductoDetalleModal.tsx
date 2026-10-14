@@ -61,7 +61,7 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
         {/* Header */}
         <div className="flex items-start justify-between gap-3 p-5 border-b border-gray-100 flex-none">
           <div>
-            <p className="font-mono text-xs font-bold text-[#1E3A5F]">{producto.codigo}</p>
+            <p className="font-mono text-xs font-bold text-[#000d66]">{producto.codigo}</p>
             <h2 className="text-lg font-bold text-gray-800 leading-tight mt-0.5">{producto.nombre}</h2>
           </div>
           <button
@@ -90,7 +90,7 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
                   key={url + i}
                   onClick={() => setImagenActiva(url)}
                   className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 bg-gray-50"
-                  style={{ borderColor: imagenActiva === url ? '#1E3A5F' : 'transparent' }}
+                  style={{ borderColor: imagenActiva === url ? '#000d66' : 'transparent' }}
                 >
                   <img src={url} alt="" className="w-full h-full object-contain p-1" />
                 </button>
@@ -102,7 +102,7 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
             {producto.precio_cliente != null && (
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Price</p>
-                <p className="text-2xl font-bold" style={{ color: '#1E3A5F' }}>{formatUSD(producto.precio_cliente)}</p>
+                <p className="text-2xl font-bold" style={{ color: '#000d66' }}>{formatUSD(producto.precio_cliente)}</p>
               </div>
             )}
 
@@ -135,7 +135,7 @@ export default function ProductoDetalleModal({ producto, cantidadActual, onConfi
           <button
             onClick={() => onConfirmar(cantidad)}
             className="flex-1 py-3 rounded-lg font-bold text-white text-sm"
-            style={{ background: '#1E3A5F' }}
+            style={{ background: '#000d66' }}
           >
             {cantidadActual > 0 ? 'Update quantity' : 'Add to order'}
           </button>

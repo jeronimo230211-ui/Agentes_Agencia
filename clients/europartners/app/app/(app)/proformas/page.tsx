@@ -199,7 +199,7 @@ export default function ProformasPage() {
       <div className="px-8 pt-7 pb-4 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold text-[#1E3A5F]">Proformas</h1>
+            <h1 className="text-2xl font-bold text-[#000d66]">Proformas</h1>
             <p className="text-gray-400 text-sm mt-0.5">Gestión, historial y creación de cotizaciones</p>
           </div>
           <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export default function ProformasPage() {
               <button
                 onClick={() => setShowNueva(true)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm text-white"
-                style={{ background: '#D4A017', color: '#1E3A5F' }}
+                style={{ background: '#ccc8fa', color: '#000d66' }}
               >
                 <Plus size={16} /> Nueva Proforma
               </button>
@@ -227,11 +227,11 @@ export default function ProformasPage() {
         <div className="grid grid-cols-4 gap-3 mb-5">
           <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
             <p className="text-xs text-gray-400 mb-0.5">Total proformas</p>
-            <p className="text-xl font-bold text-[#1E3A5F]">{kpis.count}</p>
+            <p className="text-xl font-bold text-[#000d66]">{kpis.count}</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
             <p className="text-xs text-gray-400 mb-0.5">Valor total</p>
-            <p className="text-xl font-bold text-[#1E3A5F]">
+            <p className="text-xl font-bold text-[#000d66]">
               {kpis.suma > 0 ? formatUSD(kpis.suma) : '—'}
             </p>
           </div>
@@ -265,7 +265,7 @@ export default function ProformasPage() {
             <button
               onClick={() => { setAño(''); setMes('') }}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                !año ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                !año ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
               Todos
@@ -275,7 +275,7 @@ export default function ProformasPage() {
                 key={y}
                 onClick={() => { setAño(a => a === y ? '' : y); setMes('') }}
                 className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  año === y ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  año === y ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                 }`}
               >
                 {y}
@@ -292,7 +292,7 @@ export default function ProformasPage() {
               <button
                 onClick={() => setMes('')}
                 className={`text-xs px-2.5 py-1.5 rounded-full font-medium border transition-colors ${
-                  !mes ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  !mes ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                 }`}
               >
                 Todos
@@ -302,7 +302,7 @@ export default function ProformasPage() {
                   key={i}
                   onClick={() => setMes(mes === String(i + 1) ? '' : String(i + 1))}
                   className={`text-xs px-2.5 py-1.5 rounded-full font-medium border transition-colors ${
-                    mes === String(i + 1) ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                    mes === String(i + 1) ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                   }`}
                 >
                   {m}
@@ -321,7 +321,7 @@ export default function ProformasPage() {
               key={value}
               onClick={() => setEstado(e => e === value ? '' : value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estado === value ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                estado === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
               {label}
@@ -342,7 +342,7 @@ export default function ProformasPage() {
               onClick={enviarSeleccionadas}
               disabled={enviandoLote}
               className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm text-white disabled:opacity-50 transition-opacity"
-              style={{ background: '#1E3A5F' }}
+              style={{ background: '#000d66' }}
             >
               {enviandoLote ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               {enviandoLote ? 'Enviando...' : 'Enviar seleccionadas'}
@@ -412,7 +412,7 @@ export default function ProformasPage() {
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono font-bold text-[#1E3A5F]">{p.numero}</span>
+                        <span className="font-mono font-bold text-[#000d66]">{p.numero}</span>
                         {p.numero_cliente && (
                           <span className="ml-2 text-xs text-gray-400">({p.numero_cliente})</span>
                         )}
@@ -474,7 +474,7 @@ export default function ProformasPage() {
               </p>
               {kpis.suma > 0 && (
                 <p className="text-xs font-semibold text-gray-600">
-                  Total vista: <span className="text-[#1E3A5F]">{formatUSD(kpis.suma)}</span>
+                  Total vista: <span className="text-[#000d66]">{formatUSD(kpis.suma)}</span>
                 </p>
               )}
             </div>
@@ -497,7 +497,7 @@ export default function ProformasPage() {
                   onClick={() => setNuevoCliente(c.id)}
                   className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
                     nuevoCliente === c.id
-                      ? 'border-[#1E3A5F] bg-[#1E3A5F]/5'
+                      ? 'border-[#000d66] bg-[#000d66]/5'
                       : 'border-gray-100 hover:border-gray-300'
                   }`}
                 >
@@ -511,7 +511,7 @@ export default function ProformasPage() {
                 onClick={crearProforma}
                 disabled={!nuevoCliente || creando}
                 className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white disabled:opacity-40 transition-opacity"
-                style={{ background: '#1E3A5F' }}
+                style={{ background: '#000d66' }}
               >
                 {creando ? 'Creando...' : 'Crear proforma →'}
               </button>

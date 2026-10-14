@@ -206,28 +206,28 @@ export default function SolicitudForm({
                   placeholder="Contact name"
                   value={contactoNombre}
                   onChange={e => setContactoNombre(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
                 />
                 <input
                   type="email"
                   placeholder="Email *"
                   value={contactoEmail}
                   onChange={e => setContactoEmail(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
                 />
                 <input
                   type="text"
                   placeholder="Phone"
                   value={contactoTelefono}
                   onChange={e => setContactoTelefono(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
                 />
                 <input
                   type="text"
                   placeholder="Shipping/delivery address"
                   value={contactoDireccion}
                   onChange={e => setContactoDireccion(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
                 />
               </div>
               {errorContacto && <p className="text-xs text-red-500 mt-2">{errorContacto}</p>}
@@ -242,7 +242,7 @@ export default function SolicitudForm({
                   onClick={guardarContacto}
                   disabled={!contactoEmail.trim() || guardandoContacto}
                   className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold py-2.5 rounded-lg text-white disabled:opacity-40"
-                  style={{ background: '#1E3A5F' }}
+                  style={{ background: '#000d66' }}
                 >
                   {guardandoContacto && <Loader2 size={14} className="animate-spin" />}
                   Save
@@ -265,7 +265,7 @@ export default function SolicitudForm({
           <button
             onClick={() => setEstado('form')}
             className="px-5 py-2 rounded-lg font-medium text-white"
-            style={{ background: '#1E3A5F' }}
+            style={{ background: '#000d66' }}
           >
             Back to order
           </button>
@@ -277,10 +277,10 @@ export default function SolicitudForm({
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
-      <div className="bg-[#1E3A5F] text-white px-4 py-5 sticky top-0 z-10 shadow-md">
+      <div className="bg-[#000d66] text-white px-4 py-5 sticky top-0 z-10 shadow-md">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-[#D4A017]">Europartners</h1>
+            <h1 className="text-lg font-bold text-[#000d66]">Europartners</h1>
             <p className="text-sm opacity-75">{subtitulo} · {clienteNombre}</p>
           </div>
           <button
@@ -290,7 +290,7 @@ export default function SolicitudForm({
             <ShoppingCart size={18} />
             My order
             {totalItems > 0 && (
-              <span className="absolute -top-2 -right-2 bg-[#D4A017] text-[#1E3A5F] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-2 -right-2 bg-[#ccc8fa] text-[#000d66] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
               </span>
             )}
@@ -316,7 +316,7 @@ export default function SolicitudForm({
             <input
               type="text"
               placeholder="Search product..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
@@ -325,7 +325,7 @@ export default function SolicitudForm({
             <button
               onClick={() => setCategoriaId('')}
               className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                !categoriaId ? 'bg-[#1E3A5F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                !categoriaId ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               All
@@ -335,7 +335,7 @@ export default function SolicitudForm({
                 key={cat.id}
                 onClick={() => setCategoriaId(prev => prev === cat.id ? '' : cat.id)}
                 className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                  categoriaId === cat.id ? 'bg-[#1E3A5F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  categoriaId === cat.id ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 {cat.nombre}
@@ -368,14 +368,14 @@ export default function SolicitudForm({
                       <Package size={28} className="text-gray-300" />
                     )}
                     <div className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-1.5 shadow-sm opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                      <Eye size={13} className="text-[#1E3A5F]" />
+                      <Eye size={13} className="text-[#000d66]" />
                     </div>
                   </div>
                   <div className="p-3 flex flex-col gap-1 flex-1">
-                    <p className="font-mono text-xs font-bold text-[#1E3A5F]">{p.codigo}</p>
+                    <p className="font-mono text-xs font-bold text-[#000d66]">{p.codigo}</p>
                     <p className="text-sm text-gray-800 font-medium leading-tight line-clamp-2 flex-1">{p.nombre}</p>
                     {p.precio_cliente != null && (
-                      <p className="text-sm font-bold" style={{ color: '#D4A017' }}>{formatUSD(p.precio_cliente)}</p>
+                      <p className="text-sm font-bold" style={{ color: '#000d66' }}>{formatUSD(p.precio_cliente)}</p>
                     )}
                     {cantidad > 0 ? (
                       <div className="mt-2 flex justify-center">
@@ -385,7 +385,7 @@ export default function SolicitudForm({
                       <button
                         onClick={e => { e.stopPropagation(); agregarProducto(p) }}
                         className="mt-2 text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-white"
-                        style={{ background: '#1E3A5F' }}
+                        style={{ background: '#000d66' }}
                       >
                         <Plus size={13} />
                         Add
@@ -405,7 +405,7 @@ export default function SolicitudForm({
             <input
               type="text"
               placeholder="Describe the product..."
-              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
               value={descLibre}
               onChange={e => setDescLibre(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && agregarLibre()}
@@ -414,7 +414,7 @@ export default function SolicitudForm({
               onClick={agregarLibre}
               disabled={!descLibre.trim()}
               className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40"
-              style={{ background: '#1E3A5F' }}
+              style={{ background: '#000d66' }}
             >
               Add
             </button>
@@ -429,13 +429,13 @@ export default function SolicitudForm({
             <p className="text-sm text-gray-600">
               <strong>{totalItems}</strong> item{totalItems !== 1 ? 's' : ''} in your order
               {totalPedido > 0 && (
-                <> · <strong style={{ color: '#1E3A5F' }}>{formatUSD(totalPedido)}</strong>{hayItemsSinPrecio ? '+' : ''}</>
+                <> · <strong style={{ color: '#000d66' }}>{formatUSD(totalPedido)}</strong>{hayItemsSinPrecio ? '+' : ''}</>
               )}
             </p>
             <button
               onClick={() => setShowCarrito(true)}
               className="px-5 py-2.5 rounded-lg font-bold text-sm"
-              style={{ background: '#D4A017', color: '#1E3A5F' }}
+              style={{ background: '#ccc8fa', color: '#000d66' }}
             >
               Review and send →
             </button>
@@ -482,7 +482,7 @@ export default function SolicitudForm({
                     <p className="text-sm font-semibold text-gray-700">
                       {hayItemsSinPrecio ? 'Estimated total' : 'Total'}
                     </p>
-                    <p className="text-lg font-bold" style={{ color: '#1E3A5F' }}>{formatUSD(totalPedido)}</p>
+                    <p className="text-lg font-bold" style={{ color: '#000d66' }}>{formatUSD(totalPedido)}</p>
                   </div>
                   {hayItemsSinPrecio && (
                     <p className="text-xs text-gray-400 -mt-2">
@@ -497,7 +497,7 @@ export default function SolicitudForm({
                 value={notasCliente}
                 onChange={e => setNotasCliente(e.target.value)}
                 placeholder="E.g.: I need the order before August 30..."
-                className="w-full mt-1.5 border border-gray-200 rounded-lg p-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+                className="w-full mt-1.5 border border-gray-200 rounded-lg p-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
               />
             </div>
 
@@ -506,7 +506,7 @@ export default function SolicitudForm({
                 onClick={enviar}
                 disabled={carrito.length === 0 || estado === 'sending'}
                 className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: '#1E3A5F' }}
+                style={{ background: '#000d66' }}
               >
                 {estado === 'sending' ? <Loader2 className="animate-spin" size={18} /> : null}
                 {textoBoton}

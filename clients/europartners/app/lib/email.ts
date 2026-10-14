@@ -40,25 +40,25 @@ export async function enviarNotificacionAprobacion(
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-      <div style="background:#1E3A5F;padding:20px;text-align:center">
-        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+      <div style="background:#000d66;padding:20px;text-align:center">
+        <h1 style="color:#000d66;margin:0;font-size:20px">Europartners</h1>
         <p style="color:white;margin:4px 0 0;font-size:13px">Sistema de Operaciones</p>
       </div>
       <div style="padding:24px;background:#f9fafb">
-        <h2 style="color:#1E3A5F;margin:0 0 8px">Proforma lista para revisión</h2>
+        <h2 style="color:#000d66;margin:0 0 8px">Proforma lista para revisión</h2>
         <p style="color:#6b7280;margin:0 0 20px">
           Deisy preparó la proforma <strong>${proforma.numero}</strong> para
           <strong>${clienteNombre}</strong>.
         </p>
         ${comentarioCliente ? `
-        <div style="background:#fffbeb;border-left:4px solid #D4A017;border-radius:4px;padding:14px 16px;margin-bottom:20px">
+        <div style="background:#fffbeb;border-left:4px solid #000d66;border-radius:4px;padding:14px 16px;margin-bottom:20px">
           <p style="color:#92400e;margin:0 0 4px;font-size:12px;font-weight:bold;text-transform:uppercase">El cliente pidió este cambio</p>
-          <p style="color:#1E3A5F;margin:0;font-size:14px">${comentarioCliente}</p>
+          <p style="color:#000d66;margin:0;font-size:14px">${comentarioCliente}</p>
         </div>` : ''}
         <div style="background:white;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:20px">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead>
-              <tr style="background:#1E3A5F;color:white">
+              <tr style="background:#000d66;color:white">
                 <th style="padding:8px;text-align:left">Código</th>
                 <th style="padding:8px;text-align:left">Descripción</th>
                 <th style="padding:8px;text-align:center">Qty</th>
@@ -70,7 +70,7 @@ export async function enviarNotificacionAprobacion(
             <tfoot>
               <tr style="background:#f9fafb;font-weight:bold">
                 <td colspan="3" style="padding:8px">TOTAL ${proforma.incoterm}</td>
-                <td colspan="2" style="padding:8px;text-align:right;color:#1E3A5F">${formatUSD(total)}</td>
+                <td colspan="2" style="padding:8px;text-align:right;color:#000d66">${formatUSD(total)}</td>
               </tr>
             </tfoot>
           </table>
@@ -113,22 +113,22 @@ export async function enviarNotificacionComprobante(
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-      <div style="background:#1E3A5F;padding:20px;text-align:center">
-        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+      <div style="background:#000d66;padding:20px;text-align:center">
+        <h1 style="color:#000d66;margin:0;font-size:20px">Europartners</h1>
         <p style="color:white;margin:4px 0 0;font-size:13px">Sistema de Operaciones</p>
       </div>
       <div style="padding:24px;background:#f9fafb">
-        <h2 style="color:#1E3A5F;margin:0 0 8px">Comprobante de pago recibido</h2>
+        <h2 style="color:#000d66;margin:0 0 8px">Comprobante de pago recibido</h2>
         <p style="color:#6b7280;margin:0 0 12px">
           <strong>${clienteNombre}</strong> subió ${textoConcepto}
           <strong>${numeroProforma}</strong>.
         </p>
         <p style="color:#6b7280;margin:0 0 20px">
-          Monto declarado: <strong style="color:#1E3A5F">${monto != null ? formatUSD(monto) : 'No especificado por el cliente'}</strong>
+          Monto declarado: <strong style="color:#000d66">${monto != null ? formatUSD(monto) : 'No especificado por el cliente'}</strong>
         </p>
         <div style="text-align:center;margin:24px 0">
           <a href="${verUrl}"
-             style="background:#1E3A5F;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+             style="background:#000d66;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
             Revisar y confirmar pago
           </a>
         </div>
@@ -148,19 +148,19 @@ export async function enviarNotificacionSolicitudNueva(
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-      <div style="background:#1E3A5F;padding:20px;text-align:center">
-        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+      <div style="background:#000d66;padding:20px;text-align:center">
+        <h1 style="color:#000d66;margin:0;font-size:20px">Europartners</h1>
         <p style="color:white;margin:4px 0 0;font-size:13px">Sistema de Operaciones</p>
       </div>
       <div style="padding:24px;background:#f9fafb">
-        <h2 style="color:#1E3A5F;margin:0 0 8px">Nueva solicitud de pedido</h2>
+        <h2 style="color:#000d66;margin:0 0 8px">Nueva solicitud de pedido</h2>
         <p style="color:#6b7280;margin:0 0 20px">
           <strong>${clienteNombre}</strong> envió una solicitud nueva con
           ${numLineas} línea${numLineas !== 1 ? 's' : ''}.
         </p>
         <div style="text-align:center;margin:24px 0">
           <a href="${solicitudesUrl}"
-             style="background:#1E3A5F;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+             style="background:#000d66;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
             Ver solicitud
           </a>
         </div>
@@ -179,19 +179,19 @@ export async function enviarNotificacionProformaChina(
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-      <div style="background:#1E3A5F;padding:20px;text-align:center">
-        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+      <div style="background:#000d66;padding:20px;text-align:center">
+        <h1 style="color:#000d66;margin:0;font-size:20px">Europartners</h1>
         <p style="color:white;margin:4px 0 0;font-size:13px">Sistema de Operaciones</p>
       </div>
       <div style="padding:24px;background:#f9fafb">
-        <h2 style="color:#1E3A5F;margin:0 0 8px">Nueva proforma de Emily (China)</h2>
+        <h2 style="color:#000d66;margin:0 0 8px">Nueva proforma de Emily (China)</h2>
         <p style="color:#6b7280;margin:0 0 20px">
           Emily envió una propuesta de costo con ${numLineas} línea${numLineas !== 1 ? 's' : ''},
           pendiente de tu revisión.
         </p>
         <div style="text-align:center;margin:24px 0">
           <a href="${url}"
-             style="background:#1E3A5F;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+             style="background:#000d66;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
             Revisar
           </a>
         </div>
@@ -224,8 +224,8 @@ export async function enviarNotificacionResultado(
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-      <div style="background:#1E3A5F;padding:20px;text-align:center">
-        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+      <div style="background:#000d66;padding:20px;text-align:center">
+        <h1 style="color:#000d66;margin:0;font-size:20px">Europartners</h1>
       </div>
       <div style="padding:24px;background:#f9fafb">
         <h2 style="color:${color};margin:0 0 8px">Proforma ${etiqueta}</h2>
@@ -235,7 +235,7 @@ export async function enviarNotificacionResultado(
         </p>
         ${motivo ? `<p style="color:#6b7280"><strong>Motivo:</strong> ${motivo}</p>` : ''}
         <div style="text-align:center;margin:20px 0">
-          <a href="${APP_URL}/proformas" style="color:#1E3A5F;font-size:13px;text-decoration:underline">Ver en el sistema</a>
+          <a href="${APP_URL}/proformas" style="color:#000d66;font-size:13px;text-decoration:underline">Ver en el sistema</a>
         </div>
       </div>
     </div>
@@ -254,24 +254,24 @@ export async function enviarSolicitudDevuelta(
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-      <div style="background:#1E3A5F;padding:20px;text-align:center">
-        <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners</h1>
+      <div style="background:#000d66;padding:20px;text-align:center">
+        <h1 style="color:#000d66;margin:0;font-size:20px">Europartners</h1>
       </div>
       <div style="padding:24px;background:#f9fafb">
-        <h2 style="color:#1E3A5F;margin:0 0 8px">We need to confirm something about your order</h2>
+        <h2 style="color:#000d66;margin:0 0 8px">We need to confirm something about your order</h2>
         <p style="color:#6b7280;margin:0 0 16px">Hello ${clienteNombre},</p>
         <p style="color:#6b7280;margin:0 0 16px">
           Before preparing your proforma, we reviewed your order and need you to confirm or adjust the following:
         </p>
-        <div style="background:white;border-left:4px solid #D4A017;border-radius:4px;padding:14px 16px;margin-bottom:20px">
-          <p style="color:#1E3A5F;margin:0;font-size:14px">${motivo}</p>
+        <div style="background:white;border-left:4px solid #000d66;border-radius:4px;padding:14px 16px;margin-bottom:20px">
+          <p style="color:#000d66;margin:0;font-size:14px">${motivo}</p>
         </div>
         <p style="color:#6b7280;margin:0 0 20px">
           You can review and edit your order directly from the link below:
         </p>
         <div style="text-align:center;margin:24px 0">
           <a href="${editarUrl}"
-             style="background:#D4A017;color:#1E3A5F;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+             style="background:#ccc8fa;color:#000d66;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
             Review my order
           </a>
         </div>
@@ -301,8 +301,8 @@ export async function enviarProformaParaAprobacion(
     subject: `Proforma ${proforma.numero} — Please Review — Europartners International`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-        <div style="background:#1E3A5F;padding:20px">
-          <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners International</h1>
+        <div style="background:#000d66;padding:20px">
+          <h1 style="color:#000d66;margin:0;font-size:20px">Europartners International</h1>
         </div>
         <div style="padding:24px">
           <p>Dear ${clienteNombre},</p>
@@ -311,7 +311,7 @@ export async function enviarProformaParaAprobacion(
           <p>Please review it and let us know if you approve it or need any changes before we issue the final invoice.</p>
           <div style="text-align:center;margin:24px 0">
             <a href="${aprobacionUrl}"
-               style="background:#D4A017;color:#1E3A5F;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+               style="background:#ccc8fa;color:#000d66;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
               Review &amp; Approve Proforma
             </a>
           </div>
@@ -367,7 +367,7 @@ export async function enviarProformasCliente(items: ProformaLote[]): Promise<voi
         <td style="padding:8px;border-bottom:1px solid #e5e7eb">${it.proforma.numero}</td>
         <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right">${formatUSD(total)}</td>
         <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center">
-          <a href="${approveUrl}" style="color:#1E3A5F;font-weight:bold;text-decoration:underline">Review &amp; Approve</a>
+          <a href="${approveUrl}" style="color:#000d66;font-weight:bold;text-decoration:underline">Review &amp; Approve</a>
         </td>
       </tr>`
   }).join('')
@@ -383,8 +383,8 @@ export async function enviarProformasCliente(items: ProformaLote[]): Promise<voi
     subject: `Proformas ${numeros.join(', ')} — Please Review — Europartners International`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-        <div style="background:#1E3A5F;padding:20px">
-          <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners International</h1>
+        <div style="background:#000d66;padding:20px">
+          <h1 style="color:#000d66;margin:0;font-size:20px">Europartners International</h1>
         </div>
         <div style="padding:24px">
           <p>Dear ${clienteNombre},</p>
@@ -432,8 +432,8 @@ export async function enviarProformaCliente(
     subject: `${label} ${proforma.numero} — Europartners International`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-        <div style="background:#1E3A5F;padding:20px">
-          <h1 style="color:#D4A017;margin:0;font-size:20px">Europartners International</h1>
+        <div style="background:#000d66;padding:20px">
+          <h1 style="color:#000d66;margin:0;font-size:20px">Europartners International</h1>
         </div>
         <div style="padding:24px">
           <p>Dear ${clienteNombre},</p>
@@ -446,7 +446,7 @@ export async function enviarProformaCliente(
           ${pagoUrl ? `
           <div style="text-align:center;margin:24px 0">
             <a href="${pagoUrl}"
-               style="background:#D4A017;color:#1E3A5F;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+               style="background:#ccc8fa;color:#000d66;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
               Upload payment proof
             </a>
           </div>` : ''}
