@@ -32,11 +32,15 @@ export interface ProductoDetalleInterno {
   categoria: { id: string; nombre: string } | null
   tiene_historial: boolean
   veces_vendido: number | null
+  descripcion_corta_es?: string | null
+  descripcion_corta_en?: string | null
   descripcion_larga_es?: string | null
   descripcion_larga_en?: string | null
   ficha_tecnica?: FichaTecnica | null
   ficha_tecnica_estado?: 'borrador' | 'aprobada' | null
 }
+
+type IdiomaFicha = 'es' | 'en'
 
 export default function ProductoDetalleInternoModal({
   producto,
@@ -58,7 +62,14 @@ export default function ProductoDetalleInternoModal({
   const [estadoFicha, setEstadoFicha] = useState(producto.ficha_tecnica_estado)
   const [aprobando, setAprobando] = useState(false)
   const [cambiandoVisibilidad, setCambiandoVisibilidad] = useState(false)
+  const [idiomaFicha, setIdiomaFicha] = useState<IdiomaFicha>('es')
   const oculto = producto.estado === 'oculto'
+
+  // Descripción corta/larga según el idioma activo del toggle ES/EN. El grid
+  // de campos (ficha_tecnica.campos) todavía no viene bilingüe desde el
+  // pipeline de contenido, así que se muestra igual en ambos idiomas.
+  const descripcionCorta = idiomaFicha === 'es' ? producto.descripcion_corta_es : producto.descripcion_corta_en
+  const descripcionLarga = idiomaFicha === 'es' ? producto.descripcion_larga_es : producto.descripcion_larga_en
 
   async function aprobarFicha() {
     setAprobando(true)
@@ -168,32 +179,59 @@ export default function ProductoDetalleInternoModal({
               </div>
             )}
 
-            {(producto.descripcion_larga_es || (producto.ficha_tecnica?.campos?.length ?? 0) > 0) && (
+            {(producto.descripcion_larga_es || producto.descripcion_larga_en || (producto.ficha_tecnica?.campos?.length ?? 0) > 0) && (
               <div className="border border-gray-100 rounded-xl p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <p className="text-xs font-semibold text-[#000d66] uppercase tracking-wide flex items-center gap-1.5">
                     <Sparkles size={12} className="text-[#000d66]" /> Ficha técnica
                   </p>
-                  <span
-                    className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${
-                      estadoFicha === 'aprobada'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                        : 'bg-amber-50 text-amber-700 border-amber-100'
-                    }`}
-                  >
-                    {estadoFicha === 'aprobada' ? 'Aprobada' : 'Borrador'}
-                  </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Toggle ES/EN — la ficha se genera bilingüe pero el modal interno
+                        solo mostraba español; Marta necesita ver ambos idiomas para
+                        revisar el contenido generado por el pipeline. */}
+                    <div className="flex rounded-full border border-gray-200 overflow-hidden text-[11px] font-semibold">
+                      <button
+                        onClick={() => setIdiomaFicha('es')}
+                        className={`px-2.5 py-1 transition-colors ${
+                          idiomaFicha === 'es' ? 'bg-[#000d66] text-white' : 'bg-white text-gray-400 hover:text-gray-600'
+                        }`}
+                      >
+                        ES
+                      </button>
+                      <button
+                        onClick={() => setIdiomaFicha('en')}
+                        className={`px-2.5 py-1 transition-colors ${
+                          idiomaFicha === 'en' ? 'bg-[#000d66] text-white' : 'bg-white text-gray-400 hover:text-gray-600'
+                        }`}
+                      >
+                        EN
+                      </button>
+                    </div>
+                    <span
+                      className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${
+                        estadoFicha === 'aprobada'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-amber-50 text-amber-700 border-amber-100'
+                      }`}
+                    >
+                      {estadoFicha === 'aprobada' ? 'Aprobada' : 'Borrador'}
+                    </span>
+                  </div>
                 </div>
 
-                {producto.descripcion_larga_es && (
-                  <p className="text-sm text-gray-700 leading-relaxed mb-3">{producto.descripcion_larga_es}</p>
+                {descripcionCorta && (
+                  <p className="text-sm font-semibold italic text-gray-600 mb-1.5">{descripcionCorta}</p>
+                )}
+
+                {descripcionLarga && (
+                  <p className="text-sm text-gray-700 leading-relaxed mb-3">{descripcionLarga}</p>
                 )}
 
                 {(producto.ficha_tecnica?.campos?.length ?? 0) > 0 && (
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     {producto.ficha_tecnica!.campos.map((c, i) => (
-                      <div key={i} className="bg-gray-50 rounded-lg p-2">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{c.label}</p>
+                      <div key={i} className="bg-[#ccc8fa]/40 rounded-lg p-2">
+                        <p className="text-[10px] font-semibold text-[#000d66] uppercase tracking-wide">{c.label}</p>
                         <p className="text-xs font-medium text-gray-800">{c.valor}</p>
                       </div>
                     ))}

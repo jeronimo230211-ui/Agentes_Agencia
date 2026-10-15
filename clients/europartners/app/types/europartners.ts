@@ -85,6 +85,8 @@ export interface Producto {
   estado: EstadoProducto
   variantes?: ProductoVariante[]
   componentes?: ProductoComponente[]
+  descripcion_corta_es?: string | null
+  descripcion_corta_en?: string | null
   descripcion_larga_es?: string | null
   descripcion_larga_en?: string | null
   ficha_tecnica?: { campos: { label: string; valor: string }[] } | null
