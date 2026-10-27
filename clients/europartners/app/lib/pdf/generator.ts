@@ -10,11 +10,21 @@
 // mismo paquete de la misma forma, una sola instancia.
 import { renderToBuffer } from '@react-pdf/renderer'
 import { ProformaPDF } from './templates/proforma-estandar'
+import { FichaTecnicaPDF, type ProductoFicha } from './templates/ficha-tecnica'
 import type { Proforma } from '@/types/europartners'
 import React from 'react'
 
 export async function generarPDFProforma(proforma: Proforma): Promise<Buffer> {
   const element = React.createElement(ProformaPDF, { proforma })
+  const buffer = await renderToBuffer(element as Parameters<typeof renderToBuffer>[0])
+  return Buffer.from(buffer)
+}
+
+// Mismo patrón que generarPDFProforma — ficha-tecnica.tsx importa
+// @react-pdf/renderer con `import` (igual que este archivo), nunca con
+// `require`, por el bug de fuentes documentado arriba.
+export async function generarPDFFichaTecnica(producto: ProductoFicha, idioma: 'es' | 'en' = 'es'): Promise<Buffer> {
+  const element = React.createElement(FichaTecnicaPDF, { producto, idioma })
   const buffer = await renderToBuffer(element as Parameters<typeof renderToBuffer>[0])
   return Buffer.from(buffer)
 }

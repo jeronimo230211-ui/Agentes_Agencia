@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2, AlertCircle } from 'lucide-react'
 import SolicitudForm from '@/components/SolicitudForm'
+import { useSolicitudCarrito } from '@/lib/SolicitudCarritoContext'
 
 interface Categoria { id: string; nombre: string }
 interface Producto {
@@ -16,6 +18,8 @@ interface Producto {
 
 // Página pública — el cliente entra desde su link fijo de pedido, sin login.
 export default function SolicitudPage({ params }: { params: { token: string } }) {
+  const router = useRouter()
+  const { carrito, setCarrito } = useSolicitudCarrito()
   const [estado, setEstado] = useState<'loading' | 'invalid' | 'ready'>('loading')
   const [clienteNombre, setClienteNombre] = useState('')
   const [contactoCompleto, setContactoCompleto] = useState(true)
@@ -67,6 +71,9 @@ export default function SolicitudPage({ params }: { params: { token: string } })
       categorias={categorias}
       productos={productos}
       contactoCompleto={contactoCompleto}
+      carrito={carrito}
+      onCarritoChange={setCarrito}
+      onVerProducto={p => router.push(`/solicitud/${params.token}/producto/${p.id}`)}
       onEnviar={async ({ lineas, notas_cliente }) => {
         const res = await fetch(`/api/solicitud/${params.token}`, {
           method: 'POST',

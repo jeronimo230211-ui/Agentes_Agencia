@@ -13,6 +13,24 @@
   --ep-text: #1A1A2E;
   --background: #F5F7FA;
   --foreground: #1A1A2E;
+
+  /* Tokens de la página de detalle de producto (ui-ux-designer, oct-2026) */
+  --ep-surface: #FFFFFF;
+  --ep-border: #E5E7EB;
+  --ep-muted: #94A3B8;
+  --ep-success: #10B981;
+  --ep-success-bg: #ECFDF5;
+  --ep-warning: #F59E0B;
+  --ep-warning-bg: #FFFBEB;
+  --ep-danger: #EF4444;
+  --ep-danger-bg: #FEF2F2;
+
+  /* Segunda vuelta de rediseño de detalle de producto (oct-2026) — el lila
+     deja de usarse como tinte translúcido y pasa a ser siempre superficie
+     sólida de marca. Estados de interacción del navy para CTAs. */
+  --ep-navy-hover: #000a52;
+  --ep-navy-press: #000844;
+  --ep-lila-on-navy: #ccc8fa;
 }
 
 body {
@@ -30,9 +48,69 @@ body {
 .ep-badge-pendiente {
   @apply bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full;
 }
+.ep-badge-oculto {
+  @apply bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-2 py-0.5 rounded-full;
+}
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Miniaturas de la galería de producto — clases propias (no utilidades
+   Tailwind) porque el estado activo necesita ganarle al :hover de forma
+   predecible; con bg/border puestos inline eso se rompía por especificidad. */
+.ep-thumb {
+  border: 1.5px solid var(--ep-border);
+  background: #fff;
+}
+.ep-thumb:hover {
+  border-color: rgba(0, 13, 102, 0.4);
+}
+.ep-thumb--activa,
+.ep-thumb--activa:hover {
+  /* El fondo vuelve a blanco (igual que .ep-thumb en reposo) — Jerónimo
+     rechazó el lila sólido como fondo; el borde navy ya marcaba bien el
+     estado activo por sí solo. */
+  border: 2.5px solid var(--ep-navy);
+  background: #fff;
+}
+
+/* Lupa de hover de la galería — recuadro + panel ampliado comparten esta
+   MISMA clase a propósito. Antes usaban dos utilidades Tailwind de
+   breakpoint distinto (hidden md:block / hidden lg:block) y dejaban una
+   zona muerta 768-1023px donde el mouse-tracking corría sin nada visible.
+   Un único gate evita que eso vuelva a pasar. */
+.ep-lupa-pieza {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+  .ep-lupa-pieza {
+    display: block;
+  }
+}
+
+/* Hover-magnify del stage de galería (react-inner-image-zoom, ver
+   GaleriaProducto.tsx) -- la librería por defecto deja que el <figure> y la
+   <img> definan su propio tamaño (pensada para fluir dentro de un artículo),
+   pero nuestro stage tiene una altura fija y necesita que ambos la respeten
+   igual que el <img object-contain> al que reemplazan. !important porque el
+   orden de carga entre el CSS de la librería y este archivo no está
+   garantizado -- sin esto, a veces gana una, a veces la otra. */
+.ep-galeria-zoom.iiz {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+/* Div intermedio sin clase propia que la librería arma alrededor del <img>
+   (ver node_modules/react-inner-image-zoom Image.js) -- sin este paso el
+   alto 100% del <img> de abajo no tiene contra qué resolverse y cae a auto. */
+.ep-galeria-zoom > div {
+  height: 100%;
+}
+.ep-galeria-zoom .iiz__img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
 }

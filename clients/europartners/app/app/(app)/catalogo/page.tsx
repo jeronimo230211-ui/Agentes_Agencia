@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, Filter, RefreshCw, Package, Plus, Eye, EyeOff } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import NuevoProductoModal from '@/components/NuevoProductoModal'
-import ProductoDetalleInternoModal from '@/components/ProductoDetalleInternoModal'
-import SeleccionarClienteModal, { type ClienteOpcion } from '@/components/SeleccionarClienteModal'
-import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
+import Paginacion from '@/components/Paginacion'
+
+// 24-40 referencias por página (rango pedido) -- con grillas de 2 a 5
+// columnas según breakpoint, 30 reparte bien en la mayoría.
+const TAMANO_PAGINA = 30
 
 interface Categoria {
   id: string
@@ -100,6 +103,7 @@ function ProductCard({ p, onClick }: { p: Producto; onClick: () => void }) {
 }
 
 export default function CatalogoPage() {
+  const router = useRouter()
   const { puedeEditar } = useRol()
   const [productos, setProductos]   = useState<Producto[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -108,22 +112,9 @@ export default function CatalogoPage() {
   const [categoriaId, setCategoriaId] = useState('')
   const [mostrarOcultos, setMostrarOcultos] = useState(false)
   const [mostrarNuevo, setMostrarNuevo] = useState(false)
-  const [productoEditando, setProductoEditando] = useState<Producto | null>(null)
-  const [productoDetalle, setProductoDetalle] = useState<Producto | null>(null)
-  const [productoParaPrecioEspecial, setProductoParaPrecioEspecial] = useState<Producto | null>(null)
-  const [clienteParaPrecioEspecial, setClienteParaPrecioEspecial] = useState<ClienteOpcion | null>(null)
-  const [refrescarPrecios, setRefrescarPrecios] = useState(0)
+  const [pagina, setPagina] = useState(1)
+  const [total, setTotal] = useState(0)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
-
-  function cerrarFlujoPrecioEspecial() {
-    setProductoParaPrecioEspecial(null)
-    setClienteParaPrecioEspecial(null)
-  }
-
-  function precioEspecialGuardado() {
-    cerrarFlujoPrecioEspecial()
-    setRefrescarPrecios(n => n + 1)
-  }
 
   useEffect(() => {
     fetch('/api/categorias')
@@ -135,26 +126,42 @@ export default function CatalogoPage() {
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => cargar(), busqueda ? 300 : 0)
     return () => clearTimeout(timerRef.current)
-  }, [busqueda, categoriaId, mostrarOcultos])
+  }, [busqueda, categoriaId, mostrarOcultos, pagina])
 
   async function cargar() {
     setCargando(true)
-    // Límite alto para que "Todas" traiga el catálogo completo: el orden es
-    // por categoria_id (uuid), no por la columna "orden" visible en el filtro,
-    // así que un límite bajo cortaba antes de llegar a categorías cuyo uuid
-    // cae lexicográficamente tarde (ej. Toilets, Windows) aunque tuvieran
-    // productos — quedaban invisibles en "Todas" pero sí aparecían al
-    // filtrar por esa categoría puntual (bug reportado 2026-09-03).
-    const params = new URLSearchParams({ limit: '1000' })
+    // Antes traía todo con limit=1000 de una sola vez ("scroll infinito" —
+    // Jerónimo lo rechazó, pidió paginación real estilo Amazon/Homecenter).
+    // Ahora el corte de página va DESPUÉS del filtro, en el servidor
+    // (/api/productos ya hacía el filtro de q/categoria_id ahí mismo).
+    const params = new URLSearchParams({
+      limit: String(TAMANO_PAGINA),
+      offset: String((pagina - 1) * TAMANO_PAGINA),
+    })
     if (busqueda.trim())  params.set('q', busqueda.trim())
     if (categoriaId)      params.set('categoria_id', categoriaId)
     // Sin esto el GET solo trae estado='activo' — un producto apagado
     // desaparecería también de este panel y no habría forma de reactivarlo.
     if (mostrarOcultos)   params.set('incluir_ocultos', '1')
     const res = await fetch(`/api/productos?${params}`)
-    const { data } = await res.json()
+    const { data, total: totalRes } = await res.json()
     setProductos(data || [])
+    setTotal(totalRes ?? 0)
     setCargando(false)
+  }
+
+  // Cambiar de filtro siempre vuelve a la página 1 -- si no, buscar algo
+  // nuevo mientras estás en la página 4 mostraría "sin resultados" aunque sí
+  // los haya en la página 1 de ese filtro nuevo.
+  function cambiarBusqueda(valor: string) { setBusqueda(valor); setPagina(1) }
+  function cambiarCategoria(id: string) { setCategoriaId(id); setPagina(1) }
+  function cambiarMostrarOcultos(valor: boolean) { setMostrarOcultos(valor); setPagina(1) }
+
+  const totalPaginas = Math.max(1, Math.ceil(total / TAMANO_PAGINA))
+
+  function irAPagina(p: number) {
+    setPagina(p)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function toggleCategoria(cat: Categoria) {
@@ -180,49 +187,12 @@ export default function CatalogoPage() {
         />
       )}
 
-      {productoEditando && (
-        <NuevoProductoModal
-          producto={productoEditando}
-          onClose={() => setProductoEditando(null)}
-          onSaved={() => { setProductoEditando(null); cargar() }}
-        />
-      )}
-
-      {productoDetalle && (
-        <ProductoDetalleInternoModal
-          producto={productoDetalle}
-          onClose={() => setProductoDetalle(null)}
-          onEditar={puedeEditar ? () => { setProductoEditando(productoDetalle); setProductoDetalle(null) } : undefined}
-          onFijarPrecioEspecial={puedeEditar ? () => setProductoParaPrecioEspecial(productoDetalle) : undefined}
-          onVisibilidadCambiada={() => { setProductoDetalle(null); cargar() }}
-          puedeEditar={puedeEditar}
-          refrescarPrecios={refrescarPrecios}
-        />
-      )}
-
-      {productoParaPrecioEspecial && !clienteParaPrecioEspecial && (
-        <SeleccionarClienteModal
-          titulo={`Precio especial para ${productoParaPrecioEspecial.codigo}`}
-          onSeleccionar={setClienteParaPrecioEspecial}
-          onClose={cerrarFlujoPrecioEspecial}
-        />
-      )}
-
-      {productoParaPrecioEspecial && clienteParaPrecioEspecial && (
-        <FijarPrecioEspecialModal
-          clienteId={clienteParaPrecioEspecial.id}
-          codigo={productoParaPrecioEspecial.codigo}
-          onClose={cerrarFlujoPrecioEspecial}
-          onGuardado={precioEspecialGuardado}
-        />
-      )}
-
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#000d66] mb-1">Catálogo de Productos</h1>
           <p className="text-gray-500 text-sm">
-            {cargando ? 'Cargando...' : `${productos.length} referencias`}
+            {cargando ? 'Cargando...' : `${total} referencia${total !== 1 ? 's' : ''}`}
           </p>
         </div>
         {puedeEditar && (
@@ -245,14 +215,14 @@ export default function CatalogoPage() {
             placeholder="Código, nombre o descripción..."
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
             value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
+            onChange={e => cambiarBusqueda(e.target.value)}
           />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <Filter size={14} className="text-gray-400" />
           <button
-            onClick={() => setCategoriaId('')}
+            onClick={() => cambiarCategoria('')}
             className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
               !categoriaId ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
@@ -270,7 +240,7 @@ export default function CatalogoPage() {
                     : 'bg-amber-50 text-amber-600 border border-amber-200'
               }`}
             >
-              <button onClick={() => setCategoriaId(prev => prev === cat.id ? '' : cat.id)}>
+              <button onClick={() => cambiarCategoria(categoriaId === cat.id ? '' : cat.id)}>
                 {cat.nombre}{!cat.activo && ' (oculta)'}
               </button>
               {puedeEditar && (
@@ -291,7 +261,7 @@ export default function CatalogoPage() {
             <input
               type="checkbox"
               checked={mostrarOcultos}
-              onChange={e => setMostrarOcultos(e.target.checked)}
+              onChange={e => cambiarMostrarOcultos(e.target.checked)}
               className="rounded accent-[#000d66]"
             />
             Mostrar ocultos
@@ -311,15 +281,19 @@ export default function CatalogoPage() {
           <p>No se encontraron productos</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {productos.map(p => (
-            <ProductCard key={p.id} p={p} onClick={() => setProductoDetalle(p)} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {productos.map(p => (
+              <ProductCard key={p.id} p={p} onClick={() => router.push(`/catalogo/${p.id}`)} />
+            ))}
+          </div>
+
+          <Paginacion pagina={pagina} totalPaginas={totalPaginas} onCambiar={irAPagina} />
+        </>
       )}
 
       <div className="mt-6 text-xs text-gray-400 text-right">
-        {productos.length} producto{productos.length !== 1 ? 's' : ''} · FOB = último costo China registrado
+        {total} producto{total !== 1 ? 's' : ''} · FOB = último costo China registrado
       </div>
     </div>
   )

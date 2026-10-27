@@ -11,6 +11,36 @@ function num(v: FormDataEntryValue | null): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+// Detalle de un solo producto para la página interna /catalogo/[id] (antes
+// solo existía el listado completo en GET /api/productos). Mismos campos
+// que ese listado + imagenes_urls, que el listado nunca necesitó.
+export async function GET(_req: NextRequest, { params }: Params) {
+  const supabase = createRouteHandlerClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  const { data, error } = await supabase
+    .from('productos')
+    .select(`
+      id, codigo, nombre, descripcion, imagen_url, imagenes_urls, dimensiones,
+      precio_fob_usd, precio_fob_fecha, estado, notas,
+      precio_mayorista, precio_detallista, cbm_unitario, moq, color_variante,
+      tiene_historial, veces_vendido, fecha_ultima_venta, precio_cliente_historico_ultimo,
+      descripcion_corta_es, descripcion_corta_en, descripcion_larga_es, descripcion_larga_en,
+      ficha_tecnica, ficha_tecnica_estado,
+      categoria:categorias_producto(id, nombre)
+    `)
+    .eq('id', params.id)
+    .single()
+
+  if (error) {
+    const status = error.code === 'PGRST116' ? 404 : 500
+    return NextResponse.json({ error: status === 404 ? 'Producto no encontrado' : error.message }, { status })
+  }
+
+  return NextResponse.json({ data })
+}
+
 // Edición de un producto ya cargado — antes solo existía alta (POST /api/productos),
 // no había forma de corregir nombre/descripción/precio desde la app (pendiente #26).
 export async function PATCH(req: NextRequest, { params }: Params) {

@@ -18,6 +18,9 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('productos')
+    // count: 'exact' -- la grilla del catálogo interno pagina sobre este
+    // total (ver app/(app)/catalogo/page.tsx); sin él no hay forma de saber
+    // cuántas páginas hay sin traer todas las filas primero.
     .select(`
       id, codigo, nombre, descripcion, imagen_url, dimensiones,
       precio_fob_usd, precio_fob_fecha, estado, notas,
@@ -28,7 +31,7 @@ export async function GET(req: NextRequest) {
       categoria:categorias_producto(id, nombre),
       variantes:producto_variantes(*),
       componentes:producto_componentes(*)
-    `)
+    `, { count: 'exact' })
     .order('categoria_id', { ascending: true })
     .order('codigo', { ascending: true })
     .range(offset, offset + limit - 1)
@@ -50,10 +53,10 @@ export async function GET(req: NextRequest) {
     query = query.eq('estado', 'activo')
   }
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ data })
+  return NextResponse.json({ data, total: count ?? data?.length ?? 0 })
 }
 
 function num(v: FormDataEntryValue | null): number | undefined {

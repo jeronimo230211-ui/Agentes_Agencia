@@ -1,12 +1,23 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Search, Package, Plus, Trash2, Loader2, AlertCircle,
   CheckCircle, ShoppingCart, X, Eye,
 } from 'lucide-react'
 import QuantityStepper from './QuantityStepper'
 import ProductoDetalleModal from './ProductoDetalleModal'
+import Paginacion from './Paginacion'
 import { formatUSD } from '@/lib/precio'
+import { fijarCantidadProducto, type LineaCarrito } from '@/lib/carrito'
+
+// Mismo tamaño de página que el catálogo interno -- la grilla pública se
+// sentía "scroll infinito" (Jerónimo la comparó mal contra Amazon/Homecenter)
+// porque mostraba TODOS los productos filtrados de una. Acá el catálogo
+// completo ya llega de una sola vez desde el padre (getCatalogoPublico no
+// pagina -- el cliente necesita poder buscar en todo para armar su pedido),
+// así que el corte de página es puramente de render sobre el resultado ya
+// filtrado: no toca el fetch ni el carrito.
+const TAMANO_PAGINA = 30
 
 interface Categoria { id: string; nombre: string }
 interface Producto {
@@ -25,20 +36,12 @@ interface Producto {
   ficha_tecnica?: { campos: { label: string; valor: string }[] } | null
 }
 
-export interface LineaCarrito {
-  key: string
-  producto_id?: string
-  descripcion_libre?: string
-  codigo?: string
-  nombre: string
-  cantidad: number
-  // Copiado de producto.precio_cliente al agregar la línea (no se
-  // recalcula desde `productos` en el carrito) — así el total no cambia
-  // si el catálogo se refresca a medio pedido. Los items de texto libre
-  // (descripcion_libre) siempre quedan sin precio, ya que no hay producto
-  // del catálogo con el que cotizarlos.
-  precio_cliente?: number | null
-}
+// Reexportado por compatibilidad — quien ya hacía `import { LineaCarrito }
+// from '@/components/SolicitudForm'` (solicitud-editar) sigue funcionando.
+// La definición real vive en lib/carrito.ts para poder compartirla con la
+// página de detalle de producto (app/solicitud/[token]/producto/[id]) y el
+// contexto de carrito (lib/SolicitudCarritoContext.tsx).
+export type { LineaCarrito }
 
 interface Props {
   clienteNombre: string
@@ -56,6 +59,15 @@ interface Props {
   // al cliente correo/nombre/teléfono/dirección (opcional, con "Not now").
   contactoCompleto?: boolean
   onGuardarContacto?: (datos: { contacto_nombre: string; contacto_email: string; contacto_telefono: string; direccion: string }) => Promise<{ ok: boolean; error?: string }>
+  // Carrito controlado desde afuera (usado por /solicitud/[token]/page.tsx,
+  // que lo guarda en SolicitudCarritoContext para que sobreviva la
+  // navegación a la página de detalle de producto). Si no se pasa, el
+  // carrito vive en estado local como siempre (caso de solicitud-editar).
+  carrito?: LineaCarrito[]
+  onCarritoChange?: (actualizar: (prev: LineaCarrito[]) => LineaCarrito[]) => void
+  // Si se pasa, un click en una tarjeta navega a la página de detalle del
+  // producto en vez de abrir el modal viejo (ver ProductoDetalleModal).
+  onVerProducto?: (p: Producto) => void
 }
 
 // Formulario compartido de pedido — usado por el link fijo de pedido
@@ -69,6 +81,7 @@ export default function SolicitudForm({
   banner, subtitulo = 'New order', tituloExito = 'Order submitted!',
   mensajeExito, textoBoton = 'Send order to Europartners', onEnviar,
   contactoCompleto = true, onGuardarContacto,
+  carrito: carritoControlado, onCarritoChange, onVerProducto,
 }: Props) {
   const [estado, setEstado] = useState<'form' | 'sending' | 'done' | 'error'>('form')
   const [pedirContacto, setPedirContacto] = useState(false)
@@ -81,11 +94,21 @@ export default function SolicitudForm({
   const [error, setError] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
-  const [carrito, setCarrito] = useState<LineaCarrito[]>(carritoInicial)
+  const [carritoInterno, setCarritoInterno] = useState<LineaCarrito[]>(carritoInicial)
   const [notasCliente, setNotasCliente] = useState(notasInicial)
   const [showCarrito, setShowCarrito] = useState(false)
   const [descLibre, setDescLibre] = useState('')
   const [productoDetalle, setProductoDetalle] = useState<Producto | null>(null)
+  const [pagina, setPagina] = useState(1)
+
+  // Modo controlado/no controlado: si el padre pasa `carrito` + `onCarritoChange`
+  // (ver SolicitudCarritoProvider), esos ganan; si no, se usa el estado local
+  // de siempre. Así solicitud-editar sigue funcionando sin tocarla.
+  const carrito = carritoControlado ?? carritoInterno
+  function setCarrito(actualizar: (prev: LineaCarrito[]) => LineaCarrito[]) {
+    if (onCarritoChange) onCarritoChange(actualizar)
+    else setCarritoInterno(actualizar)
+  }
 
   const productosFiltrados = useMemo(() => {
     let list = productos
@@ -101,19 +124,23 @@ export default function SolicitudForm({
     return list
   }, [productos, categoriaId, busqueda])
 
+  // Vuelve a la página 1 cada vez que cambia el filtro (no cuando solo
+  // cambia de página) -- si no, buscar algo nuevo mientras estás en la
+  // página 3 mostraría "No products found" aunque sí haya resultados en la
+  // página 1 de esa búsqueda.
+  useEffect(() => { setPagina(1) }, [busqueda, categoriaId])
+
+  const totalPaginasProductos = Math.max(1, Math.ceil(productosFiltrados.length / TAMANO_PAGINA))
+  const productosPagina = useMemo(
+    () => productosFiltrados.slice((pagina - 1) * TAMANO_PAGINA, pagina * TAMANO_PAGINA),
+    [productosFiltrados, pagina]
+  )
+
   // Fija la cantidad absoluta de un producto en el carrito (no la suma) —
-  // cantidad <= 0 lo quita, si no existe lo crea, si ya existe la actualiza.
+  // misma regla que usa la página de detalle de producto (lib/carrito.ts),
+  // para que agregar desde la grilla o desde el detalle sea idéntico.
   function setCantidadProducto(p: Producto, cantidad: number) {
-    setCarrito(prev => {
-      const existente = prev.find(l => l.producto_id === p.id)
-      if (cantidad <= 0) {
-        return prev.filter(l => l.producto_id !== p.id)
-      }
-      if (existente) {
-        return prev.map(l => l.producto_id === p.id ? { ...l, cantidad } : l)
-      }
-      return [...prev, { key: p.id, producto_id: p.id, codigo: p.codigo, nombre: p.nombre, cantidad, precio_cliente: p.precio_cliente }]
-    })
+    setCarrito(prev => fijarCantidadProducto(prev, p, cantidad))
   }
 
   function agregarProducto(p: Producto) {
@@ -351,14 +378,14 @@ export default function SolicitudForm({
             <p>No products found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-            {productosFiltrados.map(p => {
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-2">
+            {productosPagina.map(p => {
               const enCarrito = carrito.find(l => l.producto_id === p.id)
               const cantidad = enCarrito?.cantidad || 0
               return (
                 <div
                   key={p.id}
-                  onClick={() => setProductoDetalle(p)}
+                  onClick={() => onVerProducto ? onVerProducto(p) : setProductoDetalle(p)}
                   className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
                 >
                   <div className="relative bg-gray-50 h-32 flex items-center justify-center overflow-hidden">
@@ -397,6 +424,18 @@ export default function SolicitudForm({
             })}
           </div>
         )}
+
+        {productosFiltrados.length > 0 && (
+          <Paginacion
+            pagina={pagina}
+            totalPaginas={totalPaginasProductos}
+            onCambiar={setPagina}
+            textoAnterior="Previous"
+            textoSiguiente="Next"
+            textoPagina={(p, t) => `Page ${p} of ${t}`}
+          />
+        )}
+        <div className="mb-6" />
 
         {/* No lo encuentro */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-8">

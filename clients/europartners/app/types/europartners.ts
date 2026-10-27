@@ -81,6 +81,8 @@ export interface Producto {
   precio_mayorista?: number
   precio_detallista?: number
   imagen_url?: string | null
+  imagenes_urls?: string[] | null
+  color_variante?: string | null
   cbm_unitario?: number
   estado: EstadoProducto
   variantes?: ProductoVariante[]
