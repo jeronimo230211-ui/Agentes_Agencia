@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import {
   Ship, Plus, X, Upload, CheckCircle2, Clock, PackageCheck,
   ChevronRight, AlertTriangle, Search, Wallet,
@@ -8,6 +8,9 @@ import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import HistorialPagos from '@/components/HistorialPagos'
 import Badge, { type BadgeVariant } from '@/components/ui/Badge'
+import SearchField from '@/components/ui/SearchField'
+import FilterChipRow from '@/components/ui/FilterChipRow'
+import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
 
 interface ClienteMini { id: string; nombre: string; slug?: string }
 interface ProformaMini {
@@ -44,6 +47,18 @@ const ESTADO_STYLE: Record<string, { variant: BadgeVariant; label: string; icon:
   entregado:   { variant: 'success', label: 'Entregado',   icon: <CheckCircle2 size={12} /> },
 }
 
+// Opciones del chip row de Estado de la lista principal -- movidas a nivel
+// de módulo (antes vivían dentro del componente) para poder reusar sus
+// valores también en el validador de useFiltrosUrl.
+const ESTADOS_FILTRO: { label: string; value: string }[] = [
+  { label: 'Todos', value: '' },
+  { label: 'Preparando', value: 'preparando' },
+  { label: 'En tránsito', value: 'en_transito' },
+  { label: 'En puerto', value: 'en_puerto' },
+  { label: 'Entregado', value: 'entregado' },
+]
+const ESTADOS_FILTRO_VALIDOS = new Set(ESTADOS_FILTRO.map(e => e.value))
+
 function fechaCorta(iso: string | null) {
   if (!iso) return '—'
   const [y, m, d] = iso.split('-')
@@ -60,12 +75,25 @@ function otifBadge(d: Despacho) {
   )
 }
 
+// useSearchParams (dentro de useFiltrosUrl) exige un boundary de Suspense
+// en Next 14 -- mismo patrón que /proformas.
 export default function DespachosPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen text-text-subtle text-sm">Cargando...</div>}>
+      <DespachosContent />
+    </Suspense>
+  )
+}
+
+function DespachosContent() {
   const { puedeEditar } = useRol()
   const [despachos, setDespachos] = useState<Despacho[]>([])
   const [proformas, setProformas] = useState<ProformaMini[]>([])
   const [loading, setLoading] = useState(true)
-  const [estadoFiltro, setEstadoFiltro] = useState('')
+  const { filtros, setFiltro, limpiarFiltros } = useFiltrosUrl(
+    { q: '', estado: '' },
+    { estado: v => ESTADOS_FILTRO_VALIDOS.has(v) }
+  )
   const [seleccionado, setSeleccionado] = useState<Despacho | null>(null)
   const [showNuevo, setShowNuevo] = useState(false)
   const [creando, setCreando] = useState(false)
@@ -76,13 +104,26 @@ export default function DespachosPage() {
   const cargarDespachos = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (estadoFiltro) params.set('estado', estadoFiltro)
+    if (filtros.estado) params.set('estado', filtros.estado)
     fetch(`/api/despachos?${params}`)
       .then(r => r.json())
       .then(({ data }) => { setDespachos(data || []); setLoading(false) })
-  }, [estadoFiltro])
+  }, [filtros.estado])
 
   useEffect(() => { cargarDespachos() }, [cargarDespachos])
+
+  // Búsqueda en memoria sobre los despachos ya cargados (AND con el filtro
+  // de Estado, que ya se aplica server-side en cargarDespachos arriba).
+  const despachosFiltrados = useMemo(() => {
+    const q = filtros.q.trim().toLowerCase()
+    if (!q) return despachos
+    return despachos.filter(d => {
+      const campos = [d.proforma?.numero, d.proforma?.cliente?.nombre, d.naviera, d.booking_no]
+      return campos.some(campo => campo?.toLowerCase().includes(q))
+    })
+  }, [despachos, filtros.q])
+
+  const hayFiltrosActivos = filtros.q !== '' || filtros.estado !== ''
 
   function cargarProformasElegibles() {
     fetch('/api/proformas?estado=enviada&limit=300')
@@ -156,14 +197,6 @@ export default function DespachosPage() {
     }
   }
 
-  const estadosDisponibles = [
-    { label: 'Todos', value: '' },
-    { label: 'Preparando', value: 'preparando' },
-    { label: 'En tránsito', value: 'en_transito' },
-    { label: 'En puerto', value: 'en_puerto' },
-    { label: 'Entregado', value: 'entregado' },
-  ]
-
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden">
       <div className="px-8 pt-7 pb-4 bg-bg-surface border-b border-border flex-shrink-0">
@@ -182,25 +215,33 @@ export default function DespachosPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {estadosDisponibles.map(({ label, value }) => (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <SearchField
+            value={filtros.q}
+            onChange={v => setFiltro('q', v)}
+            placeholder="Buscar por proforma, cliente, naviera o booking..."
+            className="w-full sm:max-w-xs flex-shrink-0"
+          />
+          <FilterChipRow
+            options={ESTADOS_FILTRO}
+            value={filtros.estado}
+            onChange={v => setFiltro('estado', v)}
+          />
+          {hayFiltrosActivos && (
             <button
-              key={value}
-              onClick={() => setEstadoFiltro(value)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoFiltro === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-              }`}
+              onClick={limpiarFiltros}
+              className="flex items-center gap-1 text-xs text-text-subtle hover:text-danger flex-shrink-0"
             >
-              {label}
+              <X size={12} /> Limpiar filtros
             </button>
-          ))}
+          )}
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-8 py-4">
         {loading ? (
           <div className="flex items-center justify-center h-40 text-text-subtle text-sm">Cargando despachos...</div>
-        ) : despachos.length === 0 ? (
+        ) : despachosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-text-subtle gap-2">
             <Ship size={36} strokeWidth={1} />
             <p className="text-sm">No hay despachos con este filtro</p>
@@ -220,7 +261,7 @@ export default function DespachosPage() {
                 </tr>
               </thead>
               <tbody>
-                {despachos.map(d => {
+                {despachosFiltrados.map(d => {
                   const st = ESTADO_STYLE[d.estado]
                   return (
                     <tr

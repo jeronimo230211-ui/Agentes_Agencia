@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import {
   Wallet, DollarSign, TrendingUp, AlertTriangle, Ship, ChevronRight, FileText,
@@ -10,6 +10,9 @@ import HistorialPagos from '@/components/HistorialPagos'
 import FiltroCliente from '@/components/FiltroCliente'
 import Badge, { type BadgeVariant } from '@/components/ui/Badge'
 import StatCard from '@/components/ui/StatCard'
+import SearchField from '@/components/ui/SearchField'
+import FilterChipRow from '@/components/ui/FilterChipRow'
+import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
 
 interface Cliente { id: string; nombre: string; pais: string }
 
@@ -68,6 +71,21 @@ const ESTADO_DEUDA_STYLE: Record<string, { variant: BadgeVariant; label: string 
   pagado:    { variant: 'success', label: 'Pagado' },
 }
 
+const AÑOS_DISPONIBLES = [
+  { label: 'Todos', value: '' },
+  { label: '2024', value: '2024' },
+  { label: '2025', value: '2025' },
+  { label: '2026', value: '2026' },
+]
+
+const ESTADOS_DEUDA_DISPONIBLES = [
+  { label: 'Todos', value: '' },
+  { label: 'Sin deuda', value: 'sin_deuda' },
+  { label: 'Pendiente', value: 'pendiente' },
+  { label: 'Parcial', value: 'parcial' },
+  { label: 'Pagado', value: 'pagado' },
+]
+
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 
 function fechaCorta(iso: string) {
@@ -76,18 +94,35 @@ function fechaCorta(iso: string) {
   return `${d} ${MESES[parseInt(m) - 1]} ${y}`
 }
 
+// useFiltrosUrl exige un boundary de Suspense en Next 14 -- mismo patrón que
+// /proformas (ver app/(app)/proformas/page.tsx).
 export default function FinanzasPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen text-text-subtle text-sm">Cargando...</div>}>
+      <FinanzasContent />
+    </Suspense>
+  )
+}
+
+function FinanzasContent() {
   const [clientes, setClientes]   = useState<Cliente[]>([])
   const [filas, setFilas]         = useState<FilaFinanzas[]>([])
   const [indicadores, setIndicadores] = useState<Indicadores | null>(null)
   const [loading, setLoading]     = useState(true)
   const [sinAcceso, setSinAcceso] = useState(false)
-
-  const [clienteTab, setClienteTab] = useState<string>('todos')
-  const [año, setAño]               = useState<string>('')
-  const [pais, setPais]             = useState<string>('')
-  const [estadoDeuda, setEstadoDeuda] = useState<string>('')
   const [filaSeleccionada, setFilaSeleccionada] = useState<FilaFinanzas | null>(null)
+
+  // Todos los filtros de la pantalla sincronizados con la URL para poder
+  // compartir un link ya filtrado. `q` (búsqueda) no entra a la query de
+  // /api/finanzas -- filtra en memoria sobre lo que ya llegó del servidor,
+  // igual que el buscador de /catalogo con los datos ya paginados.
+  // `estado_deuda` se valida contra los estados reales de negocio (mismo
+  // criterio que /proformas con `estado`, BUG-001): un query param escrito
+  // a mano o viejo no debe dejar el filtro en un valor que la API no matchea.
+  const { filtros, setFiltro, limpiarFiltros } = useFiltrosUrl(
+    { q: '', cliente: 'todos', año: '', pais: '', estado_deuda: '' },
+    { estado_deuda: v => v in ESTADO_DEUDA_STYLE }
+  )
 
   useEffect(() => {
     fetch('/api/clientes')
@@ -98,10 +133,10 @@ export default function FinanzasPage() {
   useEffect(() => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (clienteTab !== 'todos') params.set('cliente_id', clienteTab)
-    if (año) params.set('año', año)
-    if (pais) params.set('pais', pais)
-    if (estadoDeuda) params.set('estado_deuda', estadoDeuda)
+    if (filtros.cliente !== 'todos') params.set('cliente_id', filtros.cliente)
+    if (filtros.año) params.set('año', filtros.año)
+    if (filtros.pais) params.set('pais', filtros.pais)
+    if (filtros.estado_deuda) params.set('estado_deuda', filtros.estado_deuda)
 
     fetch(`/api/finanzas?${params}`)
       .then(async r => {
@@ -113,12 +148,27 @@ export default function FinanzasPage() {
         setIndicadores(indicadores || null)
         setLoading(false)
       })
-  }, [clienteTab, año, pais, estadoDeuda])
+  }, [filtros.cliente, filtros.año, filtros.pais, filtros.estado_deuda])
 
   const paisesDisponibles = useMemo(
     () => Array.from(new Set(clientes.map(c => c.pais).filter(Boolean))).sort(),
     [clientes]
   )
+
+  // Búsqueda en memoria por número de proforma o nombre de cliente, en AND
+  // con los demás filtros (que ya llegan filtrados desde /api/finanzas).
+  const filasFiltradas = useMemo(() => {
+    const q = filtros.q.trim().toLowerCase()
+    if (!q) return filas
+    return filas.filter(f =>
+      f.numero.toLowerCase().includes(q) ||
+      (f.cliente?.nombre ?? '').toLowerCase().includes(q)
+    )
+  }, [filas, filtros.q])
+
+  const hayFiltrosActivos =
+    filtros.q !== '' || filtros.cliente !== 'todos' || filtros.año !== '' ||
+    filtros.pais !== '' || filtros.estado_deuda !== ''
 
   const kpiCards = [
     { label: 'Facturado', value: indicadores?.facturado, icon: DollarSign, color: 'bg-success-bg text-success' },
@@ -141,7 +191,7 @@ export default function FinanzasPage() {
     <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden">
 
       {/* ── Encabezado ── */}
-      <div className="px-8 pt-7 pb-4 bg-bg-surface border-b border-border flex-shrink-0">
+      <div className="px-4 sm:px-8 pt-7 pb-4 bg-bg-surface border-b border-border flex-shrink-0">
         <div className="mb-5">
           <h1 className="text-2xl font-bold text-text-heading flex items-center gap-2">
             <Wallet size={22} className="text-text-heading" />
@@ -150,8 +200,9 @@ export default function FinanzasPage() {
           <p className="text-text-subtle text-sm mt-0.5">Registro maestro — facturación, ganancia y deuda en vivo</p>
         </div>
 
-        {/* Tablero de indicadores */}
-        <div className="grid grid-cols-4 gap-4 mb-5">
+        {/* Tablero de indicadores -- 2 columnas en mobile (4 columnas fijas
+            recortaba los montos en 375px, mismo bug que tenía /proformas) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
           {kpiCards.map(({ label, value, icon, color }) => (
             <StatCard
               key={label}
@@ -165,99 +216,77 @@ export default function FinanzasPage() {
         </div>
 
         {/* Filtro de cliente */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-xs font-semibold text-text-subtle uppercase">Cliente</span>
-          <FiltroCliente clientes={clientes} value={clienteTab} onChange={setClienteTab} />
+          <FiltroCliente clientes={clientes} value={filtros.cliente} onChange={v => setFiltro('cliente', v)} />
         </div>
+
+        {/* Buscador -- filtra en memoria por número de proforma o cliente */}
+        <SearchField
+          value={filtros.q}
+          onChange={v => setFiltro('q', v)}
+          placeholder="Buscar por número de proforma o cliente..."
+          className="max-w-sm"
+        />
       </div>
 
       {/* ── Filtros secundarios ── */}
-      <div className="px-8 py-3 bg-bg-surface border-b border-border flex items-center gap-4 flex-wrap flex-shrink-0">
+      <div className="px-4 sm:px-8 py-3 bg-bg-surface border-b border-border flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-shrink-0">
         {/* Año */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text-subtle uppercase">Año</span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setAño('')}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                !año ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-              }`}
-            >
-              Todos
-            </button>
-            {['2024', '2025', '2026'].map(y => (
-              <button
-                key={y}
-                onClick={() => setAño(a => a === y ? '' : y)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  año === y ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-                }`}
-              >
-                {y}
-              </button>
-            ))}
-          </div>
-        </div>
+        <FilterChipRow
+          label="Año"
+          options={AÑOS_DISPONIBLES}
+          value={filtros.año}
+          onChange={v => setFiltro('año', v)}
+        />
 
-        {/* País */}
+        {/* País -- select en vez de chips: no escala bien a medida que crece
+            la cantidad de países distintos en los datos (igual al patrón del
+            filtro de Cliente en esta misma página). */}
         {paisesDisponibles.length > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-text-subtle uppercase">País</span>
-            <div className="flex gap-1 flex-wrap">
-              <button
-                onClick={() => setPais('')}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  !pais ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-                }`}
-              >
-                Todos
-              </button>
+            <span className="text-xs font-semibold text-text-subtle uppercase flex-shrink-0">País</span>
+            <select
+              value={filtros.pais}
+              onChange={e => setFiltro('pais', e.target.value)}
+              className="text-sm border border-border rounded-lg px-3 py-2 bg-bg-surface text-text font-medium focus:outline-none focus:ring-2 focus:ring-focus-ring"
+            >
+              <option value="">Todos los países</option>
               {paisesDisponibles.map(p => (
-                <button
-                  key={p}
-                  onClick={() => setPais(v => v === p ? '' : p)}
-                  className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                    pais === p ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-                  }`}
-                >
-                  {p}
-                </button>
+                <option key={p} value={p}>{p}</option>
               ))}
-            </div>
+            </select>
           </div>
         )}
 
-        <div className="flex-1" />
+        <div className="hidden sm:block flex-1" />
 
         {/* Estado de deuda */}
-        <div className="flex items-center gap-1.5">
-          {[
-            { label: 'Todos', value: '' },
-            { label: 'Sin deuda', value: 'sin_deuda' },
-            { label: 'Pendiente', value: 'pendiente' },
-            { label: 'Parcial', value: 'parcial' },
-            { label: 'Pagado', value: 'pagado' },
-          ].map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setEstadoDeuda(e => e === value ? '' : value)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoDeuda === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <FilterChipRow
+          options={ESTADOS_DEUDA_DISPONIBLES}
+          value={filtros.estado_deuda}
+          onChange={v => setFiltro('estado_deuda', v)}
+        />
+
+        {hayFiltrosActivos && (
+          <button
+            type="button"
+            onClick={limpiarFiltros}
+            className="flex items-center gap-1 text-xs text-text-subtle hover:text-danger flex-shrink-0"
+          >
+            <X size={13} />
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {/* ── Tabla ── */}
-      <div className="flex-1 overflow-y-auto px-8 py-4">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4">
         {loading ? (
           <div className="flex items-center justify-center h-40 text-text-subtle text-sm">
             Cargando finanzas...
           </div>
-        ) : filas.length === 0 ? (
+        ) : filasFiltradas.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-text-subtle gap-2">
             <FileText size={36} strokeWidth={1} />
             <p className="text-sm">No hay proformas con los filtros seleccionados</p>
@@ -278,7 +307,7 @@ export default function FinanzasPage() {
                 </tr>
               </thead>
               <tbody>
-                {filas.map(f => {
+                {filasFiltradas.map(f => {
                   const st = ESTADO_STYLE[f.estado] ?? ESTADO_STYLE.borrador
                   const dst = ESTADO_DEUDA_STYLE[f.estado_deuda] ?? ESTADO_DEUDA_STYLE.sin_deuda
                   return (
@@ -337,10 +366,10 @@ export default function FinanzasPage() {
             </table>
             <div className="px-4 py-2.5 border-t border-border">
               <p className="text-xs text-text-subtle">
-                {filas.length} proforma{filas.length !== 1 ? 's' : ''}
-                {año ? ` · ${año}` : ''}
-                {pais ? ` · ${pais}` : ''}
-                {clienteTab !== 'todos' ? ` · ${clientes.find(c => c.id === clienteTab)?.nombre}` : ''}
+                {filasFiltradas.length} proforma{filasFiltradas.length !== 1 ? 's' : ''}
+                {filtros.año ? ` · ${filtros.año}` : ''}
+                {filtros.pais ? ` · ${filtros.pais}` : ''}
+                {filtros.cliente !== 'todos' ? ` · ${clientes.find(c => c.id === filtros.cliente)?.nombre}` : ''}
               </p>
             </div>
           </div>

@@ -1,14 +1,16 @@
 'use client'
 import { Suspense, useState, useEffect, useMemo, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
 import {
   FileText, Clock, CheckCircle, XCircle, Send,
-  Receipt, ChevronRight, Plus, Download, AlertCircle, Ban, Loader2,
+  Receipt, ChevronRight, Plus, Download, AlertCircle, Ban, Loader2, X,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
+import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
 import FiltroCliente from '@/components/FiltroCliente'
 import Badge, { type BadgeVariant } from '@/components/ui/Badge'
+import SearchField from '@/components/ui/SearchField'
+import FilterChipRow from '@/components/ui/FilterChipRow'
 
 interface Cliente { id: string; nombre: string; slug: string; incoterm_default: string | null }
 interface Proforma {
@@ -74,21 +76,22 @@ export default function ProformasPage() {
 }
 
 function ProformasContent() {
-  const searchParams = useSearchParams()
   const { puedeEditar } = useRol()
   const [clientes, setClientes]     = useState<Cliente[]>([])
   const [proformas, setProformas]   = useState<Proforma[]>([])
   const [loading, setLoading]       = useState(true)
   const [clienteTab, setClienteTab]     = useState<string>('todos')
-  const [año, setAño]                   = useState<string>('')
-  const [mes, setMes]                   = useState<string>('')
-  // Valor inicial desde ?estado= en la URL (lo que llega desde los tiles de
-  // pipeline del Dashboard, BUG-001) -- solo si es un estado real, para no
-  // dejar el filtro en un valor que la API nunca va a matchear.
-  const [estado, setEstado]             = useState<string>(() => {
-    const e = searchParams.get('estado')
-    return e && e in ESTADO_STYLE ? e : ''
-  })
+  // q/año/mes/estado viven en la URL (useFiltrosUrl) para que un link
+  // filtrado sea compartible, ej. ?q=0126&estado=enviada&anio=2026. El
+  // validador de `estado` reemplaza el chequeo manual que antes hacía este
+  // componente contra ?estado= al montar (BUG-001, viene de los tiles de
+  // pipeline del Dashboard) -- mismo criterio: solo acepta un estado real
+  // del catálogo, para no dejar el filtro en un valor que la API nunca va
+  // a matchear.
+  const { filtros, setFiltro, setFiltros, limpiarFiltros } = useFiltrosUrl(
+    { q: '', anio: '', mes: '', estado: '' },
+    { estado: (valor) => valor in ESTADO_STYLE }
+  )
   const [showNueva, setShowNueva]       = useState(false)
   const [nuevoCliente, setNuevoCliente] = useState('')
   const [creando, setCreando]           = useState(false)
@@ -104,40 +107,56 @@ function ProformasContent() {
       .then(({ data }) => setClientes(data || []))
   }, [])
 
-  // Cargar proformas cada vez que cambie algún filtro
+  // Cargar proformas cada vez que cambie algún filtro que pega contra la
+  // API (cliente, año, mes, estado). La búsqueda (q) NO dispara esta
+  // llamada -- filtra en memoria sobre lo que ya está cargado (ver
+  // proformasVisibles).
   const cargarProformas = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams({ limit: '300' })
     if (clienteTab !== 'todos') params.set('cliente_id', clienteTab)
-    if (año)    params.set('año', año)
-    if (mes)    params.set('mes', mes)
-    if (estado) params.set('estado', estado)
+    if (filtros.anio)   params.set('año', filtros.anio)
+    if (filtros.mes)    params.set('mes', filtros.mes)
+    if (filtros.estado) params.set('estado', filtros.estado)
 
     return fetch(`/api/proformas?${params}`)
       .then(r => r.json())
       .then(({ data }) => { setProformas(data || []); setLoading(false) })
-  }, [clienteTab, año, mes, estado])
+  }, [clienteTab, filtros.anio, filtros.mes, filtros.estado])
 
   useEffect(() => { cargarProformas(); setSeleccionadas(new Set()) }, [cargarProformas])
 
+  // Búsqueda por número de proforma, número de cliente o nombre del
+  // cliente -- en memoria, AND con los demás filtros (que ya recortaron
+  // `proformas` vía la API).
+  const proformasVisibles = useMemo(() => {
+    const q = filtros.q.trim().toLowerCase()
+    if (!q) return proformas
+    return proformas.filter(p =>
+      p.numero.toLowerCase().includes(q) ||
+      (p.numero_cliente ?? '').toLowerCase().includes(q) ||
+      (p.cliente?.nombre ?? '').toLowerCase().includes(q)
+    )
+  }, [proformas, filtros.q])
+
   // KPIs de la vista actual
   const kpis = useMemo(() => {
-    const totales = proformas.map(totalProforma).filter((v): v is number => v !== null)
+    const totales = proformasVisibles.map(totalProforma).filter((v): v is number => v !== null)
     return {
-      count: proformas.length,
+      count: proformasVisibles.length,
       suma: totales.reduce((a, b) => a + b, 0),
-      aprobadas: proformas.filter(p => p.estado === 'aprobada' || p.estado === 'enviada').length,
-      pendientes: proformas.filter(p => p.estado === 'en_revision').length,
+      aprobadas: proformasVisibles.filter(p => p.estado === 'aprobada' || p.estado === 'enviada').length,
+      pendientes: proformasVisibles.filter(p => p.estado === 'en_revision').length,
     }
-  }, [proformas])
+  }, [proformasVisibles])
 
   async function exportarExcel() {
     setExportando(true)
     const params = new URLSearchParams()
     if (clienteTab !== 'todos') params.set('cliente_id', clienteTab)
-    if (año)    params.set('año', año)
-    if (mes)    params.set('mes', mes)
-    if (estado) params.set('estado', estado)
+    if (filtros.anio)   params.set('año', filtros.anio)
+    if (filtros.mes)    params.set('mes', filtros.mes)
+    if (filtros.estado) params.set('estado', filtros.estado)
 
     const res = await fetch(`/api/proformas/export?${params}`)
     if (!res.ok) { setExportando(false); return }
@@ -166,8 +185,9 @@ function ProformasContent() {
   }
 
   // Solo se pueden seleccionar/enviar proformas 'aprobada' — mismo requisito
-  // que POST /api/proformas/[id]/enviar-cliente.
-  const proformasEnviables = useMemo(() => proformas.filter(p => p.estado === 'aprobada'), [proformas])
+  // que POST /api/proformas/[id]/enviar-cliente. Restringido a las visibles
+  // (post-búsqueda) para que "seleccionar todas" no incluya filas ocultas.
+  const proformasEnviables = useMemo(() => proformasVisibles.filter(p => p.estado === 'aprobada'), [proformasVisibles])
   const todasSeleccionadas = proformasEnviables.length > 0 && proformasEnviables.every(p => seleccionadas.has(p.id))
 
   function toggleSeleccion(id: string) {
@@ -203,6 +223,18 @@ function ProformasContent() {
     setEnviandoLote(false)
   }
 
+  const anioOptions = [
+    { label: 'Todos', value: '' },
+    { label: '2024', value: '2024' },
+    { label: '2025', value: '2025' },
+    { label: '2026', value: '2026' },
+  ]
+
+  const mesOptions = [
+    { label: 'Todos', value: '' },
+    ...MESES.map((m, i) => ({ label: m, value: String(i + 1) })),
+  ]
+
   const estadosDisponibles = [
     { label: 'Todos', value: '' },
     { label: 'Borrador', value: 'borrador' },
@@ -215,6 +247,11 @@ function ProformasContent() {
     { label: 'Anulada', value: 'anulada' },
     { label: 'Descartada', value: 'descartada' },
   ]
+
+  // Controla el botón "Limpiar filtros" -- solo cuenta los filtros que vive
+  // en la URL (búsqueda, año, mes, estado); el filtro de Cliente tiene su
+  // propio tab "Todos" en FiltroCliente.
+  const hayFiltrosActivos = Boolean(filtros.q || filtros.anio || filtros.mes || filtros.estado)
 
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden">
@@ -277,7 +314,7 @@ function ProformasContent() {
           <FiltroCliente
             clientes={clientes}
             value={clienteTab}
-            onChange={id => { setClienteTab(id); setMes('') }}
+            onChange={id => { setClienteTab(id); setFiltro('mes', '') }}
           />
         </div>
       </div>
@@ -287,80 +324,63 @@ function ProformasContent() {
           propio -- el ancestro raíz del page (línea ~220) tiene overflow-hidden
           para fijar el layout de la tabla, así que todo lo que no cabía en
           375px quedaba recortado y solo "Todos" (Año) era alcanzable. Ahora
-          cada fila (Año, Mes, Estado) es su propia pista de scroll horizontal
-          (overflow-x-auto + flex-nowrap), apiladas verticalmente en mobile y
-          en una sola fila desde sm: como antes. -mx-4/px-4 extiende el área
-          de scroll hasta el borde de la pantalla sin mover el resto del layout. */}
-      <div className="px-4 sm:px-8 py-3 bg-bg-surface border-b border-border flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-shrink-0">
-        {/* Año */}
-        <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
-          <span className="text-xs font-semibold text-text-subtle uppercase flex-shrink-0">Año</span>
-          <div className="flex gap-1 flex-nowrap flex-shrink-0">
-            <button
-              onClick={() => { setAño(''); setMes('') }}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors flex-shrink-0 ${
-                !año ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-              }`}
-            >
-              Todos
-            </button>
-            {['2024', '2025', '2026'].map(y => (
-              <button
-                key={y}
-                onClick={() => { setAño(a => a === y ? '' : y); setMes('') }}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors flex-shrink-0 ${
-                  año === y ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-                }`}
-              >
-                {y}
-              </button>
-            ))}
-          </div>
+          cada fila de chips usa FilterChipRow, que ya resuelve ese scroll
+          seguro por su cuenta (ver components/ui/FilterChipRow.tsx). */}
+      <div className="px-4 sm:px-8 py-3 bg-bg-surface border-b border-border flex-shrink-0">
+        {/* Búsqueda -- en memoria sobre lo ya cargado, AND con el resto de
+            los filtros (Cliente, Año, Mes, Estado). */}
+        <div className="mb-3">
+          <SearchField
+            value={filtros.q}
+            onChange={v => setFiltro('q', v)}
+            placeholder="Buscar por número de proforma, número de cliente o nombre..."
+            className="max-w-md"
+          />
         </div>
 
-        {/* Mes (solo cuando hay año seleccionado) */}
-        {año && (
-          <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
-            <span className="text-xs font-semibold text-text-subtle uppercase flex-shrink-0">Mes</span>
-            <div className="flex gap-1 flex-nowrap flex-shrink-0">
-              <button
-                onClick={() => setMes('')}
-                className={`text-xs px-2.5 py-1.5 rounded-full font-medium border transition-colors flex-shrink-0 ${
-                  !mes ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-                }`}
-              >
-                Todos
-              </button>
-              {MESES.map((m, i) => (
-                <button
-                  key={i}
-                  onClick={() => setMes(mes === String(i + 1) ? '' : String(i + 1))}
-                  className={`text-xs px-2.5 py-1.5 rounded-full font-medium border transition-colors flex-shrink-0 ${
-                    mes === String(i + 1) ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* BUG-010: sin flex-wrap en sm:, cuando Estado (9 opciones) ya pasaba
+            a 2 líneas por su propio flex-wrap interno, el flex-1 del spacer
+            colapsaba a 0 y Estado quedaba centrado verticalmente justo encima
+            de la fila de Mes -- overlap de texto en laptops 1280-1366px. Con
+            flex-wrap el contenedor también reacomoda sus hijos a una segunda
+            línea en vez de superponerlos. */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
+          {/* Año */}
+          <FilterChipRow
+            label="Año"
+            options={anioOptions}
+            value={filtros.anio}
+            onChange={v => setFiltros(prev => ({ ...prev, anio: v, mes: '' }))}
+          />
 
-        <div className="hidden sm:block flex-1" />
+          {/* Mes (solo cuando hay año seleccionado) */}
+          {filtros.anio && (
+            <FilterChipRow
+              label="Mes"
+              options={mesOptions}
+              value={filtros.mes}
+              onChange={v => setFiltro('mes', v)}
+            />
+          )}
 
-        {/* Estado */}
-        <div className="flex items-center gap-1.5 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
-          {estadosDisponibles.map(({ label, value }) => (
+          <div className="hidden sm:block flex-1" />
+
+          {/* Estado */}
+          <FilterChipRow
+            options={estadosDisponibles}
+            value={filtros.estado}
+            onChange={v => setFiltro('estado', v)}
+          />
+
+          {/* Limpiar filtros -- solo si hay algo que limpiar */}
+          {hayFiltrosActivos && (
             <button
-              key={value}
-              onClick={() => setEstado(e => e === value ? '' : value)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors flex-shrink-0 ${
-                estado === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-              }`}
+              onClick={limpiarFiltros}
+              className="flex items-center gap-1 text-xs text-text-subtle hover:text-danger flex-shrink-0"
             >
-              {label}
+              <X size={12} /> Limpiar filtros
             </button>
-          ))}
+          )}
         </div>
       </div>
 
@@ -390,7 +410,7 @@ function ProformasContent() {
           <div className="flex items-center justify-center h-40 text-text-subtle text-sm">
             Cargando proformas...
           </div>
-        ) : proformas.length === 0 ? (
+        ) : proformasVisibles.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-text-subtle gap-2">
             <FileText size={36} strokeWidth={1} />
             <p className="text-sm">No hay proformas con los filtros seleccionados</p>
@@ -424,7 +444,7 @@ function ProformasContent() {
                 </tr>
               </thead>
               <tbody>
-                {proformas.map((p) => {
+                {proformasVisibles.map((p) => {
                   const st = ESTADO_STYLE[p.estado] ?? ESTADO_STYLE.borrador
                   const total = totalProforma(p)
                   const numLineas = p.lineas?.[0]?.count ?? 0
@@ -500,8 +520,8 @@ function ProformasContent() {
             </table>
             <div className="px-4 py-2.5 border-t border-border flex items-center justify-between">
               <p className="text-xs text-text-subtle">
-                {proformas.length} proforma{proformas.length !== 1 ? 's' : ''}
-                {año ? ` · ${año}${mes ? ` · ${MESES[parseInt(mes) - 1]}` : ''}` : ''}
+                {proformasVisibles.length} proforma{proformasVisibles.length !== 1 ? 's' : ''}
+                {filtros.anio ? ` · ${filtros.anio}${filtros.mes ? ` · ${MESES[parseInt(filtros.mes) - 1]}` : ''}` : ''}
                 {clienteTab !== 'todos' ? ` · ${clientes.find(c => c.id === clienteTab)?.nombre}` : ''}
               </p>
               {kpis.suma > 0 && (

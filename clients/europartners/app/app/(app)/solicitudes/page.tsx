@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Package, Link as LinkIcon, Check, X, ChevronRight,
   Copy, CheckCircle2, Undo2, Clock, Plus, Loader2, Mail, Pencil,
@@ -12,6 +12,9 @@ import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaMo
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 import Badge, { type BadgeVariant } from '@/components/ui/Badge'
 import DataTable from '@/components/ui/DataTable'
+import SearchField from '@/components/ui/SearchField'
+import FilterChipRow from '@/components/ui/FilterChipRow'
+import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
 
 interface Cliente {
   id: string
@@ -96,12 +99,29 @@ function fechaCorta(iso: string) {
   return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+// useFiltrosUrl exige un boundary de Suspense en Next 14 -- mismo patrón
+// que /proformas (ver app/(app)/proformas/page.tsx).
 export default function SolicitudesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen text-text-subtle text-sm">Cargando...</div>}>
+      <SolicitudesContent />
+    </Suspense>
+  )
+}
+
+function SolicitudesContent() {
   const { puedeEditar } = useRol()
+  // 'estado' usa ESTADO_STYLE (ya definido arriba) para validar lo que venga
+  // de la URL -- mismo criterio que /proformas (BUG-001): si alguien escribe
+  // a mano un ?estado= que no existe, cae al default en vez de dejar la
+  // pantalla filtrando por algo que la API nunca va a matchear.
+  const { filtros, setFiltro, limpiarFiltros } = useFiltrosUrl(
+    { q: '', estado: 'pendiente' },
+    { estado: valor => valor === '' || valor in ESTADO_STYLE }
+  )
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
   const [loading, setLoading] = useState(true)
-  const [estadoFiltro, setEstadoFiltro] = useState('pendiente')
   const [seleccionada, setSeleccionada] = useState<Solicitud | null>(null)
   const [convirtiendo, setConvirtiendo] = useState(false)
   const [copiadoId, setCopiadoId] = useState<string | null>(null)
@@ -131,17 +151,28 @@ export default function SolicitudesPage() {
   const cargar = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (estadoFiltro) params.set('estado', estadoFiltro)
+    if (filtros.estado) params.set('estado', filtros.estado)
     fetch(`/api/solicitudes?${params}`)
       .then(r => r.json())
       .then(({ data }) => { setSolicitudes(data || []); setLoading(false) })
-  }, [estadoFiltro])
+  }, [filtros.estado])
 
   useEffect(() => {
     fetch('/api/clientes').then(r => r.json()).then(({ data }) => setClientes(data || []))
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
+
+  // Búsqueda en tiempo real sobre lo que ya trajo el servidor para el estado
+  // filtrado (AND con Estado). La tabla solo muestra el nombre del cliente
+  // como texto identificador -- Fecha no es un campo de búsqueda, Artículos
+  // es un conteo y Estado ya tiene su propio filtro -- así que ese es el
+  // único campo con sentido real para el buscador.
+  const solicitudesFiltradas = useMemo(() => {
+    const q = filtros.q.trim().toLowerCase()
+    if (!q) return solicitudes
+    return solicitudes.filter(s => (s.cliente?.nombre ?? '').toLowerCase().includes(q))
+  }, [solicitudes, filtros.q])
 
   const cargarComparacion = useCallback(() => {
     if (!seleccionada) { setComparacion(null); return }
@@ -274,6 +305,8 @@ export default function SolicitudesPage() {
     { label: 'Todas', value: '' },
   ]
 
+  const hayFiltrosActivos = filtros.q !== '' || filtros.estado !== 'pendiente'
+
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden">
       {/* Encabezado */}
@@ -291,18 +324,26 @@ export default function SolicitudesPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {estadosDisponibles.map(({ label, value }) => (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <SearchField
+            value={filtros.q}
+            onChange={v => setFiltro('q', v)}
+            placeholder="Buscar por cliente..."
+            className="sm:max-w-xs"
+          />
+          <FilterChipRow
+            options={estadosDisponibles}
+            value={filtros.estado}
+            onChange={v => setFiltro('estado', v)}
+          />
+          {hayFiltrosActivos && (
             <button
-              key={value}
-              onClick={() => setEstadoFiltro(value)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoFiltro === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
-              }`}
+              onClick={limpiarFiltros}
+              className="flex items-center gap-1 text-xs text-text-subtle hover:text-danger flex-shrink-0"
             >
-              {label}
+              <X size={12} /> Limpiar filtros
             </button>
-          ))}
+          )}
         </div>
       </div>
 
@@ -310,8 +351,8 @@ export default function SolicitudesPage() {
       <div className="flex-1 overflow-y-auto px-8 py-4">
         <DataTable
           loading={loading}
-          emptyMessage="No hay solicitudes en este estado"
-          rows={solicitudes}
+          emptyMessage={filtros.q ? 'Ninguna solicitud coincide con la búsqueda' : 'No hay solicitudes en este estado'}
+          rows={solicitudesFiltradas}
           rowKey={s => s.id}
           onRowClick={s => setSeleccionada(s)}
           columns={[

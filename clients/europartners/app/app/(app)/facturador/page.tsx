@@ -1,9 +1,11 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo } from 'react'
 import { Receipt, Clock, DollarSign, CheckCircle2, Ban, X, Loader2 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
+import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
 import Badge, { type BadgeVariant } from '@/components/ui/Badge'
+import SearchField from '@/components/ui/SearchField'
 
 interface ClienteMini { id: string; nombre: string }
 interface ProformaFacturador {
@@ -39,11 +41,24 @@ function clasificar(p: ProformaFacturador): Clasificacion {
   return 'pendiente_abono'
 }
 
+// useFiltrosUrl exige un boundary de Suspense en Next 14 -- mismo patrón
+// que /proformas (ver app/(app)/proformas/page.tsx).
 export default function FacturadorPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen text-text-subtle text-sm">Cargando...</div>}>
+      <FacturadorContent />
+    </Suspense>
+  )
+}
+
+function FacturadorContent() {
   const { rol } = useRol()
   const [proformas, setProformas] = useState<ProformaFacturador[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<Clasificacion | ''>('')
+  const { filtros, setFiltro, limpiarFiltros } = useFiltrosUrl(
+    { q: '', clasificacion: '' },
+    { clasificacion: (valor) => valor in CLASIFICACION_STYLE }
+  )
   const [anulando, setAnulando] = useState<ProformaFacturador | null>(null)
   const [marcando, setMarcando] = useState<ProformaFacturador | null>(null)
 
@@ -69,10 +84,23 @@ export default function FacturadorPage() {
     return c
   }, [clasificadas])
 
-  const visibles = useMemo(
-    () => filtro ? clasificadas.filter(x => x.clase === filtro) : clasificadas,
-    [clasificadas, filtro]
-  )
+  // Búsqueda en memoria (número de proforma + nombre del cliente) combinada
+  // con AND junto a la pill de Clasificación activa -- ambas ya están en
+  // memoria, sin llamada a red por cada tecla (igual que /proformas).
+  const visibles = useMemo(() => {
+    const q = filtros.q.trim().toLowerCase()
+    return clasificadas.filter(({ p, clase }) => {
+      if (filtros.clasificacion && clase !== filtros.clasificacion) return false
+      if (q) {
+        const coincideNumero = p.numero.toLowerCase().includes(q)
+        const coincideCliente = p.cliente?.nombre?.toLowerCase().includes(q) ?? false
+        if (!coincideNumero && !coincideCliente) return false
+      }
+      return true
+    })
+  }, [clasificadas, filtros.clasificacion, filtros.q])
+
+  const hayFiltrosActivos = filtros.q !== '' || filtros.clasificacion !== ''
 
   const pills: { label: string; value: Clasificacion | '' }[] = [
     { label: 'Todas', value: '' },
@@ -93,13 +121,31 @@ export default function FacturadorPage() {
           </p>
         </div>
 
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+          <SearchField
+            value={filtros.q}
+            onChange={v => setFiltro('q', v)}
+            placeholder="Buscar por número o cliente..."
+            className="sm:max-w-xs"
+          />
+          {hayFiltrosActivos && (
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="flex items-center gap-1 text-xs text-text-subtle hover:text-danger transition-colors"
+            >
+              <X size={13} /> Limpiar filtros
+            </button>
+          )}
+        </div>
+
         <div className="flex items-center gap-1.5 flex-wrap">
           {pills.map(({ label, value }) => (
             <button
               key={value}
-              onClick={() => setFiltro(f => f === value ? '' : value)}
+              onClick={() => setFiltro('clasificacion', filtros.clasificacion === value ? '' : value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                filtro === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
+                filtros.clasificacion === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
               }`}
             >
               {label}{value && ` (${conteos[value]})`}
