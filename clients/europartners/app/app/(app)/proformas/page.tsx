@@ -65,6 +65,13 @@ function totalProforma(p: Proforma) {
   return p.total_cif_usd ?? p.total_fob_usd ?? null
 }
 
+// 'facturada' se anula desde /facturador (admin-only, es cancelar una
+// factura ya emitida) y 'anulada' ya no tiene acción posible -- para esos
+// dos estados esta pantalla no muestra el botón.
+function puedeAnularseAqui(estado: string) {
+  return estado !== 'facturada' && estado !== 'anulada'
+}
+
 // useSearchParams exige un boundary de Suspense en Next 14 -- mismo patrón
 // que /login (ver app/(auth)/login/page.tsx).
 export default function ProformasPage() {
@@ -99,6 +106,10 @@ function ProformasContent() {
   const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set())
   const [enviandoLote, setEnviandoLote]   = useState(false)
   const [errorLote, setErrorLote]         = useState('')
+  // Anular desde cualquier estado -- antes la única anulación vivía en
+  // /facturador y solo aplicaba a 'facturada'. Deisy pidió poder anularla
+  // acá mismo sin pasar por Facturador (ESTADO_PUEDE_ANULARSE más abajo).
+  const [anulando, setAnulando] = useState<Proforma | null>(null)
 
   // Cargar clientes una vez
   useEffect(() => {
@@ -440,6 +451,7 @@ function ProformasContent() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Incoterm</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Total USD</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Estado</th>
+                  <th className="w-20 px-4 py-3" />
                   <th className="w-8 px-4 py-3" />
                 </tr>
               </thead>
@@ -510,6 +522,16 @@ function ProformasContent() {
                           )}
                         </div>
                       </td>
+                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        {puedeEditar && puedeAnularseAqui(p.estado) && (
+                          <button
+                            onClick={() => setAnulando(p)}
+                            className="flex items-center gap-1 text-xs font-semibold text-danger hover:opacity-80"
+                          >
+                            <Ban size={13} /> Anular
+                          </button>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-text-subtle">
                         <ChevronRight size={15} />
                       </td>
@@ -576,6 +598,91 @@ function ProformasContent() {
           </div>
         </div>
       )}
+
+      {/* ── Modal anular proforma ── */}
+      {anulando && (
+        <ModalAnularProforma
+          proforma={anulando}
+          onClose={() => setAnulando(null)}
+          onAnulada={() => { setAnulando(null); cargarProformas() }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Mismo patrón que ModalAnular de /facturador (motivo obligatorio, mensaje
+// de advertencia, llamada a POST /api/proformas/[id]/anular) -- se adapta
+// acá en vez de reusarse directamente porque esta pantalla puede anular
+// desde cualquier estado, no solo 'facturada', y el texto de advertencia
+// cambia según eso.
+function ModalAnularProforma({
+  proforma, onClose, onAnulada,
+}: {
+  proforma: Proforma
+  onClose: () => void
+  onAnulada: () => void
+}) {
+  const [motivo, setMotivo] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function confirmar() {
+    if (!motivo.trim()) { setError('El motivo es obligatorio'); return }
+    setEnviando(true)
+    setError('')
+    const res = await fetch(`/api/proformas/${proforma.id}/anular`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivo }),
+    })
+    const json = await res.json()
+    setEnviando(false)
+    if (!res.ok) { setError(json.error || 'Error al anular'); return }
+    onAnulada()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div>
+            <h2 className="text-lg font-bold text-text">Anular proforma</h2>
+            <p className="text-xs text-text-subtle">{proforma.numero} · {proforma.cliente?.nombre}</p>
+          </div>
+          <button onClick={onClose} className="text-text-subtle hover:text-text-muted"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <p className="text-sm text-text-muted">
+            Anularla es permanente — no se puede editar ni volver a un estado anterior.
+            Explica el motivo para dejarlo registrado.
+          </p>
+          <textarea
+            autoFocus
+            value={motivo}
+            onChange={e => setMotivo(e.target.value)}
+            placeholder="Ej.: cliente canceló el pedido, error en los datos..."
+            className="bg-bg-surface w-full border border-border rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-danger"
+          />
+          {error && <p className="text-xs text-danger">{error}</p>}
+        </div>
+        <div className="flex gap-3 p-5 pt-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm border border-border text-text-muted hover:bg-bg-subtle"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={confirmar}
+            disabled={enviando}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-on-danger bg-danger hover:opacity-90 disabled:opacity-50"
+          >
+            {enviando && <Loader2 size={14} className="animate-spin" />}
+            Anular proforma
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

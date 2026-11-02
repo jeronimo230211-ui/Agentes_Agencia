@@ -156,6 +156,7 @@ Subagents live at **user level** in `C:\Users\Jeronimo\.claude\agents\` so they 
 | `project-manager.md` | PM | Task planning, timelines |
 | `data-analyst.md` | Analyst | KPIs, reporting, real-usage audits |
 | `supabase-architect.md` | DB | Schema, migrations, RLS, backups, DB security |
+| `security-ia-agency.md` | Security | App security: auth, exposed keys, XSS/CSRF/CORS, headers, vulnerable deps, git secrets, daily security report (opus) |
 | `solutions-architect.md` | Estimación | Hours, hard costs, price options with margin |
 | `data-pipeline-engineer.md` | Data | Excel/PDF migrations, bulk loads, content pipelines |
 | `client-success.md` | Post-venta | Client feedback → classified changes, follow-ups, monthly report |

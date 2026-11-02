@@ -40,6 +40,8 @@ const MAPEO = {
   'LAUN-005': 'image3.png',
 }
 
+const IMG_DIR = 'C:/Users/Jeronimo/OneDrive/Europartners_BD/Europartners_Imagenes'
+
 const envPath = path.join(__dirname, '..', '..', 'app', '.env.local')
 const env = Object.fromEntries(
   fs.readFileSync(envPath, 'utf8')
@@ -86,6 +88,15 @@ async function main() {
       console.log(`  ✗ ${codigo}: error subiendo — ${upErr.message}`)
       continue
     }
+
+    // CRÍTICO: también sobreescribir el archivo local en IMG_DIR — si se deja
+    // el archivo viejo/roto en disco, la próxima vez que se corra
+    // importar-catalogo-final.js --write (para CUALQUIER categoría nueva, no
+    // solo Laundry) va a re-subir ese archivo roto con upsert:true y pisar
+    // este fix otra vez (regresión real que pasó el 2026-08-03).
+    const carpetaLocal = path.join(IMG_DIR, 'Laundry Sinks')
+    fs.mkdirSync(carpetaLocal, { recursive: true })
+    fs.writeFileSync(path.join(carpetaLocal, `${codigo}${ext}`), data)
 
     const { data: urlData } = admin.storage.from('productos').getPublicUrl(destino)
     const { error: updErr } = await admin

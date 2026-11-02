@@ -6,9 +6,16 @@ import { enviarNotificacionResultado } from '@/lib/email'
 
 type Params = { params: { id: string } }
 
-// Anula una factura ya emitida (estado 'facturada') — para cuando Deisy o
-// Marta encuentran un error después de que el cliente ya aprobó. Mismo
-// patrón que rechazar/route.ts (motivo obligatorio, evento, notificación).
+// Anula una proforma desde cualquier estado -- antes solo se podía anular una
+// factura ya emitida ('facturada'). Deisy y Jero pidieron poder anular desde
+// /proformas sin pasar por Facturador (ej. un borrador que ya no aplica, una
+// proforma rechazada que no se va a retomar). Mismo patrón que
+// rechazar/route.ts (motivo obligatorio, evento, notificación), pero el
+// permiso varía según el estado de origen:
+//   - 'facturada' -> solo admin (cancelar una factura ya emitida es más
+//     delicado, es la regla de negocio real).
+//   - cualquier otro estado no terminal -> operaciones o admin (Deisy es
+//     operaciones y necesita poder anular ella misma).
 export async function POST(req: NextRequest, { params }: Params) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
@@ -16,18 +23,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: usuario } = await supabase
     .from('usuarios')
-    .select('rol')
+    .select('rol, nombre')
     .eq('id', session.user.id)
     .single()
-
-  if (usuario?.rol !== 'admin') {
-    return NextResponse.json({ error: 'Solo Marta puede anular una factura' }, { status: 403 })
-  }
-
-  const { motivo } = await req.json()
-  if (!motivo?.trim()) {
-    return NextResponse.json({ error: 'El motivo de anulación es requerido' }, { status: 400 })
-  }
 
   const { data: proforma } = await supabase
     .from('proformas')
@@ -36,9 +34,28 @@ export async function POST(req: NextRequest, { params }: Params) {
     .single()
 
   if (!proforma) return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
-  if (proforma.estado !== 'facturada') {
-    return NextResponse.json({ error: `Solo se puede anular una factura ya emitida (estado actual: ${proforma.estado})` }, { status: 400 })
+
+  if (proforma.estado === 'anulada') {
+    return NextResponse.json({ error: 'Esta proforma ya está anulada' }, { status: 400 })
   }
+
+  // El chequeo de permiso depende del estado de origen -- ver comentario de
+  // arriba. Se valida el estado antes del rol para que el mensaje de error
+  // sea el mismo sin importar quién lo intente.
+  if (proforma.estado === 'facturada') {
+    if (usuario?.rol !== 'admin') {
+      return NextResponse.json({ error: 'Solo Marta puede anular una factura' }, { status: 403 })
+    }
+  } else if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  }
+
+  const { motivo } = await req.json()
+  if (!motivo?.trim()) {
+    return NextResponse.json({ error: 'El motivo de anulación es requerido' }, { status: 400 })
+  }
+
+  const estadoOrigen = proforma.estado
 
   await supabase
     .from('proformas')
@@ -52,7 +69,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   await supabase.from('proforma_eventos').insert({
     proforma_id: params.id,
     usuario_id: session.user.id,
-    estado_desde: 'facturada',
+    estado_desde: estadoOrigen,
     estado_hacia: 'anulada',
     comentario: motivo,
   })
@@ -66,13 +83,13 @@ export async function POST(req: NextRequest, { params }: Params) {
       usuario_id: proforma.creada_por,
       tipo: 'proforma_anulada',
       proforma_id: params.id,
-      mensaje: `Factura ${proforma.numero} anulada: ${motivo}`,
+      mensaje: `Proforma ${proforma.numero} anulada: ${motivo}`,
     })
 
     const { data: creador } = await adminClient.from('usuarios').select('email').eq('id', proforma.creada_por).single()
     if (creador?.email) {
       try {
-        await enviarNotificacionResultado(proforma, 'anulada', creador.email, motivo)
+        await enviarNotificacionResultado(proforma, 'anulada', creador.email, motivo, usuario?.nombre)
         email_enviado = true
       } catch (e) {
         email_error = e instanceof Error ? e.message : String(e)

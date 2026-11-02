@@ -230,7 +230,12 @@ export async function enviarNotificacionResultado(
   proforma: ProformaResumen,
   resultado: 'aprobada' | 'rechazada' | 'anulada',
   destinatarioEmail: string,
-  motivo?: string
+  motivo?: string,
+  // Quién ejecutó la acción -- antes 'aprobada'/'rechazada' eran siempre
+  // admin-only así que "por Marta" era correcto a secas. Ahora 'anulada'
+  // también puede venir de operaciones (Deisy), así que ese caller pasa el
+  // nombre real; los demás no pasan nada y se mantiene el texto de siempre.
+  actorNombre?: string
 ): Promise<void> {
   const clienteObj = Array.isArray(proforma.cliente) ? proforma.cliente[0] : proforma.cliente
   const clienteNombre = clienteObj?.nombre || 'Cliente'
@@ -248,7 +253,7 @@ export async function enviarNotificacionResultado(
         <h2 style="color:${color};margin:0 0 8px">Proforma ${etiqueta}</h2>
         <p style="color:#6b7280;margin:0 0 12px">
           La proforma <strong>${proforma.numero}</strong> para <strong>${clienteNombre}</strong>
-          fue ${resultado} por Marta.
+          fue ${resultado} por ${actorNombre || 'Marta'}.
         </p>
         ${motivo ? `<p style="color:#6b7280"><strong>Motivo:</strong> ${motivo}</p>` : ''}
         <div style="text-align:center;margin:20px 0">

@@ -20,6 +20,8 @@ const WRITE = process.argv.includes('--write')
 const BASE = '802-80'
 const VARIANTES = ['802-60', '802-70', '802-75', '802-80LR', '802-90', '802-90LR', '802-100', '802-100LR', '802-120', '802-120LR']
 
+const IMG_DIR = 'C:/Users/Jeronimo/OneDrive/Europartners_BD/Europartners_Imagenes'
+
 const envPath = path.join(__dirname, '..', '..', 'app', '.env.local')
 const env = Object.fromEntries(
   fs.readFileSync(envPath, 'utf8').split('\n').filter(l => l.includes('='))
@@ -61,6 +63,10 @@ async function main() {
       upsert: true,
     })
     if (upErr) { console.log(`     ✗ error subiendo: ${upErr.message}`); continue }
+
+    const carpetaLocal = path.join(IMG_DIR, carpeta)
+    fs.mkdirSync(carpetaLocal, { recursive: true })
+    fs.writeFileSync(path.join(carpetaLocal, `${codigo}${ext}`), buffer)
 
     const { data: urlData } = admin.storage.from('productos').getPublicUrl(destPath)
     const { error: updErr } = await admin.from('productos').update({ imagen_url: urlData.publicUrl }).eq('id', prod.id)

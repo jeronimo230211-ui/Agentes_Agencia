@@ -12,6 +12,7 @@
     "migrate:prohardware": "node index.js --cliente prohardware"
   },
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "@supabase/supabase-js": "^2.47.10",
     "dotenv": "^16.4.7",
     "xlsx": "^0.18.5"

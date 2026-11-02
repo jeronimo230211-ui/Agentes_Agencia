@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation'
 import {
   Plus, Trash2, Send, Eye, Loader2,
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
-  Search, X, Package, FileText,
+  Search, X, Package, FileText, Ban,
   TrendingUp, TrendingDown, Minus, History, Users, Tag,
-  Wallet, ChevronDown, ChevronUp,
+  Wallet, ChevronDown, ChevronUp, UserCog,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
@@ -16,6 +16,7 @@ import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS, INCOTERM_FREIGHT_INSURANCE
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
+import SeleccionarClienteModal, { type ClienteOpcion } from '@/components/SeleccionarClienteModal'
 import HistorialPagos from '@/components/HistorialPagos'
 import Badge from '@/components/ui/Badge'
 
@@ -607,6 +608,20 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [mostrarNuevoPaymentTerm, setMostrarNuevoPaymentTerm] = useState(false)
   const { puedeEditar: rolPuedeEditar } = useRol()
 
+  // Cambiar el cliente de una proforma ya creada (ver cambiar-cliente/route.ts
+  // — solo permitido en borrador/en_revision, antes de que el cliente final
+  // haya visto nada). avisoCambioCliente queda fijo (no se auto-oculta como
+  // guardadoOk) porque es una advertencia que el usuario debe leer y actuar,
+  // no una confirmación pasajera.
+  const [modalCambiarClienteAbierto, setModalCambiarClienteAbierto] = useState(false)
+  const [cambiandoCliente, setCambiandoCliente] = useState(false)
+  const [avisoCambioCliente, setAvisoCambioCliente] = useState<string | null>(null)
+
+  // Anular desde cualquier estado -- mismo criterio rol+estado que en
+  // /proformas (ver app/(app)/proformas/page.tsx): 'facturada' se anula
+  // desde /facturador (admin-only) y 'anulada' ya no tiene acción posible.
+  const [modalAnularAbierto, setModalAnularAbierto] = useState(false)
+
   // Datos financieros adicionales (Registro Maestro Vivo — ver
   // CAMPOS_FINANCIEROS_ADICIONALES en app/api/proformas/[id]/route.ts).
   // Sección aparte, colapsada por defecto, con su propio guardado: a
@@ -954,6 +969,33 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     setEnviando(false)
   }
 
+  async function cambiarCliente(nuevoCliente: ClienteOpcion) {
+    setCambiandoCliente(true)
+    setModalCambiarClienteAbierto(false)
+    const res = await fetch(`/api/proformas/${proforma!.id}/cambiar-cliente`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cliente_id: nuevoCliente.id }),
+    })
+    if (res.ok) {
+      // Las líneas ya tienen precio_cliente_usd fijado contra el cliente
+      // anterior (manual o vía precio especial) — cambiar el cliente NO
+      // los recalcula solo porque no hay forma de saber de forma segura
+      // qué precio corresponde al nuevo cliente. Es más seguro avisar y que
+      // operaciones revise, que asumir y aplicar el precio equivocado.
+      if (lineas.length > 0) {
+        setAvisoCambioCliente(
+          `Cliente cambiado a ${nuevoCliente.nombre}. Revisa los precios de las líneas — pueden no aplicar al nuevo cliente (ej. precios especiales del cliente anterior).`
+        )
+      }
+      await cargar()
+    } else {
+      const j = await res.json()
+      setError(j.error || 'Error al cambiar el cliente')
+    }
+    setCambiandoCliente(false)
+  }
+
   const totalFob = lineas.reduce((sum, l) => sum + ((l.precio_cliente_usd || 0) * (l.cantidad || 1)), 0)
   // Estados "de transición" (previos a una aprobación) habilitan además los
   // botones de enviar a revisión / aprobar directo. 'aprobada' se puede
@@ -965,6 +1007,11 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const puedeEnviarRevision = enTransicion && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
   const puedeAprobarDirecto = enTransicion && puedeEditar && lineas.length > 0 && !proforma?.requiere_revision
   const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
+  // Gate deliberadamente distinto (y más estricto) a puedeEditar: solo
+  // borrador/en_revision, nunca 'aprobada' — ver ESTADOS_PERMITE_CAMBIO_CLIENTE
+  // en cambiar-cliente/route.ts.
+  const puedeCambiarCliente = (proforma?.estado === 'borrador' || proforma?.estado === 'en_revision') && rolPuedeEditar
+  const puedeAnular = proforma?.estado !== 'facturada' && proforma?.estado !== 'anulada' && rolPuedeEditar
 
   if (loading) {
     return (
@@ -1044,6 +1091,30 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         />
       )}
 
+      {/* Modal anular proforma -- mismo patrón que ModalAnularProforma en
+          app/(app)/proformas/page.tsx (motivo obligatorio, POST a
+          /api/proformas/[id]/anular, que valida rol+estado otra vez en el
+          servidor). Se duplica en vez de importarse porque vive en una ruta
+          distinta y no hay un components/ compartido para este modal. */}
+      {modalAnularAbierto && proforma && (
+        <ModalAnularProforma
+          numero={proforma.numero}
+          clienteNombre={proforma.cliente?.nombre}
+          proformaId={proforma.id}
+          onClose={() => setModalAnularAbierto(false)}
+          onAnulada={() => { setModalAnularAbierto(false); cargar() }}
+        />
+      )}
+
+      {/* Modal cambiar cliente */}
+      {modalCambiarClienteAbierto && (
+        <SeleccionarClienteModal
+          titulo="Cambiar cliente de esta proforma"
+          onSeleccionar={cambiarCliente}
+          onClose={() => setModalCambiarClienteAbierto(false)}
+        />
+      )}
+
       {/* Modal cambio de tipo de precio */}
       {cambioTipoPendiente && (
         <ModalCambioTipoPrecio
@@ -1065,7 +1136,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             <h1 className="text-2xl font-bold text-text-heading">
               {proforma.numero || 'Nueva Proforma'}
             </h1>
-            <p className="text-sm text-text-muted mt-0.5">
+            <p className="text-sm text-text-muted mt-0.5 flex items-center gap-1.5 flex-wrap">
               {proforma.cliente?.nombre} · {proforma.incoterm} ·{' '}
               <span className={`font-medium ${
                 proforma.estado === 'aprobada'    ? 'text-success' :
@@ -1074,6 +1145,16 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               }`}>
                 {proforma.estado.replace('_', ' ')}
               </span>
+              {puedeCambiarCliente && (
+                <button
+                  onClick={() => setModalCambiarClienteAbierto(true)}
+                  disabled={cambiandoCliente}
+                  className="flex items-center gap-1 text-xs font-medium text-action-primary hover:underline disabled:opacity-50"
+                >
+                  {cambiandoCliente ? <Loader2 size={12} className="animate-spin" /> : <UserCog size={12} />}
+                  Cambiar cliente
+                </button>
+              )}
             </p>
           </div>
         </div>
@@ -1137,6 +1218,16 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             >
               <Send size={16} />
               {enviando ? 'Enviando...' : 'Enviar al Cliente'}
+            </button>
+          )}
+
+          {puedeAnular && (
+            <button
+              onClick={() => setModalAnularAbierto(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-danger border border-danger hover:bg-danger-bg"
+            >
+              <Ban size={16} />
+              Anular
             </button>
           )}
         </div>
@@ -1305,6 +1396,17 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             <p className="text-warning text-sm mt-0.5">{proforma.comentario_cliente}</p>
             <p className="text-warning text-xs mt-1">Ajusta las líneas y vuelve a enviarla al cliente.</p>
           </div>
+        </div>
+      )}
+      {avisoCambioCliente && (
+        <div className="bg-warning-bg border border-warning rounded-xl p-4 mb-4 flex gap-3">
+          <AlertCircle size={18} className="text-warning flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-warning text-sm">{avisoCambioCliente}</p>
+          </div>
+          <button onClick={() => setAvisoCambioCliente(null)} className="text-warning hover:opacity-70 flex-shrink-0">
+            <X size={16} />
+          </button>
         </div>
       )}
 
@@ -1860,6 +1962,83 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// Mismo patrón que ModalAnularProforma de app/(app)/proformas/page.tsx
+// (motivo obligatorio, POST a /api/proformas/[id]/anular) -- se duplica en
+// vez de extraerse a components/ porque hoy es el único otro lugar que la
+// necesita; si aparece un tercer lugar vale la pena moverla.
+function ModalAnularProforma({
+  numero, clienteNombre, proformaId, onClose, onAnulada,
+}: {
+  numero: string
+  clienteNombre?: string
+  proformaId: string
+  onClose: () => void
+  onAnulada: () => void
+}) {
+  const [motivo, setMotivo] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function confirmar() {
+    if (!motivo.trim()) { setError('El motivo es obligatorio'); return }
+    setEnviando(true)
+    setError('')
+    const res = await fetch(`/api/proformas/${proformaId}/anular`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivo }),
+    })
+    const json = await res.json()
+    setEnviando(false)
+    if (!res.ok) { setError(json.error || 'Error al anular'); return }
+    onAnulada()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div>
+            <h2 className="text-lg font-bold text-text">Anular proforma</h2>
+            <p className="text-xs text-text-subtle">{numero} · {clienteNombre}</p>
+          </div>
+          <button onClick={onClose} className="text-text-subtle hover:text-text-muted"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <p className="text-sm text-text-muted">
+            Anularla es permanente — no se puede editar ni volver a un estado anterior.
+            Explica el motivo para dejarlo registrado.
+          </p>
+          <textarea
+            autoFocus
+            value={motivo}
+            onChange={e => setMotivo(e.target.value)}
+            placeholder="Ej.: cliente canceló el pedido, error en los datos..."
+            className="bg-bg-surface w-full border border-border rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-danger"
+          />
+          {error && <p className="text-xs text-danger">{error}</p>}
+        </div>
+        <div className="flex gap-3 p-5 pt-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm border border-border text-text-muted hover:bg-bg-subtle"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={confirmar}
+            disabled={enviando}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-on-danger bg-danger hover:opacity-90 disabled:opacity-50"
+          >
+            {enviando && <Loader2 size={14} className="animate-spin" />}
+            Anular proforma
+          </button>
+        </div>
       </div>
     </div>
   )

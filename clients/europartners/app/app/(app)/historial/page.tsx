@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, TrendingUp, TrendingDown, Minus, Tag } from 'lucide-react'
 import { formatUSD, formatPct } from '@/lib/precio'
+import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 
 interface Ref {
   codigo_pdf: string
@@ -44,6 +45,18 @@ export default function HistorialPage() {
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
   const [clienteId, setClienteId]       = useState('')
   const [clientes, setClientes]         = useState<{ id: string; nombre: string }[]>([])
+  const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false)
+  // Cuando se fija un precio especial no cambian ni `seleccionado` ni `clienteId`
+  // (las dependencias del efecto de abajo), así que este contador es lo que
+  // fuerza a reconsultar /api/historial tras guardar.
+  const [refrescarContador, setRefrescarContador] = useState(0)
+  // El precio especial (precios_especiales_cliente) y el historial de esta
+  // pantalla (historial_precios) son tablas distintas: una es la config para
+  // cotizar a futuro, la otra el registro de lo que de verdad se facturó en
+  // proformas pasadas. Guardar un precio especial NUNCA va a aparecer en
+  // `filas` -- por eso esta confirmación aparte, para no dejar a Deisy
+  // pensando que el guardado no funcionó.
+  const [precioEspecialGuardado, setPrecioEspecialGuardado] = useState<number | null>(null)
 
   const filtroRef = useRef<HTMLInputElement>(null)
 
@@ -66,6 +79,12 @@ export default function HistorialPage() {
     fetch(`/api/historial?${params}`)
       .then(r => r.json())
       .then(({ data }) => { setFilas(data || []); setCargandoDetalle(false) })
+  }, [seleccionado, clienteId, refrescarContador])
+
+  // Limpia la confirmación de precio especial al cambiar de producto o cliente,
+  // para que no se quede pegada mostrando el precio fijado de la combinación anterior.
+  useEffect(() => {
+    setPrecioEspecialGuardado(null)
   }, [seleccionado, clienteId])
 
   const clienteSeleccionado = clientes.find(c => c.id === clienteId) || null
@@ -289,9 +308,48 @@ export default function HistorialPage() {
             {cargandoDetalle ? (
               <div className="text-center p-10 text-text-subtle text-sm">Cargando historial...</div>
             ) : filas.length === 0 ? (
-              <div className="text-center p-10 text-text-subtle text-sm">
-                {seleccionado ? 'Sin registros para esta referencia' : 'Sin registros para este cliente'}
-              </div>
+              seleccionado && clienteId ? (
+                // Caso que pidió Deisy: producto + cliente elegidos pero sin ningún
+                // precio histórico para esa combinación -- en vez de dejarla en un
+                // callejón sin salida, se le ofrece fijar el precio especial aquí
+                // mismo (reutiliza el mismo modal que ya existe en /cotizador).
+                <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+                  {precioEspecialGuardado != null ? (
+                    // El precio especial vive en precios_especiales_cliente (config para
+                    // cotizar a futuro), no en historial_precios (ventas ya facturadas) --
+                    // por eso esta tabla sigue sin filas. Se avisa explícito para que no
+                    // parezca que el guardado falló.
+                    <>
+                      <p className="text-sm font-medium text-green-600">
+                        Precio especial de {formatUSD(precioEspecialGuardado)} fijado para{' '}
+                        {clienteSeleccionado?.nombre} en {seleccionado.codigo_pdf}
+                      </p>
+                      <p className="text-xs text-text-subtle max-w-sm">
+                        Se aplicará en las próximas cotizaciones de este cliente. No aparece en esta tabla porque
+                        aquí solo se muestran proformas ya facturadas, y todavía no hay ninguna con este precio.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-text-subtle">
+                        <span className="font-medium text-text-heading">{clienteSeleccionado?.nombre}</span> no tiene
+                        ningún precio cargado para{' '}
+                        <span className="font-mono text-text-heading">{seleccionado.codigo_pdf}</span>
+                      </p>
+                      <button
+                        onClick={() => setMostrarModalPrecio(true)}
+                        className="px-4 py-2 rounded-lg bg-action-primary text-on-action-primary text-sm font-semibold hover:bg-action-primary-hover"
+                      >
+                        Fijar precio especial
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center p-10 text-text-subtle text-sm">
+                  {seleccionado ? 'Sin registros para esta referencia' : 'Sin registros para este cliente'}
+                </div>
+              )
             ) : (
               <>
                 {/* Stats — solo tienen sentido mirando una referencia puntual */}
@@ -407,6 +465,19 @@ export default function HistorialPage() {
           </div>
         )}
       </main>
+
+      {mostrarModalPrecio && seleccionado && clienteId && (
+        <FijarPrecioEspecialModal
+          clienteId={clienteId}
+          codigo={seleccionado.codigo_pdf}
+          onClose={() => setMostrarModalPrecio(false)}
+          onGuardado={(precioUsd) => {
+            setMostrarModalPrecio(false)
+            setPrecioEspecialGuardado(precioUsd)
+            setRefrescarContador(v => v + 1)
+          }}
+        />
+      )}
     </div>
   )
 }
