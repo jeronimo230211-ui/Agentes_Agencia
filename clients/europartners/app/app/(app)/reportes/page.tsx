@@ -40,18 +40,18 @@ export default function ReportesPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#000d66] mb-1 flex items-center gap-2">
-          <BarChart3 size={22} className="text-[#000d66]" />
+        <h1 className="text-2xl font-bold text-text-heading mb-1 flex items-center gap-2">
+          <BarChart3 size={22} className="text-text-heading" />
           Reportes — Tiempo por persona
         </h1>
-        <p className="text-gray-500 text-sm">
+        <p className="text-text-muted text-sm">
           Promedio de horas que tarda cada persona en actuar sobre cada etapa de una proforma, a partir del historial de transiciones (proforma_eventos).
         </p>
       </div>
 
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <select
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white"
+          className="text-sm border border-border rounded-lg px-3 py-2 bg-bg-surface"
           value={filtroUsuario}
           onChange={e => setFiltroUsuario(e.target.value)}
         >
@@ -59,7 +59,7 @@ export default function ReportesPage() {
           {usuarios.map(u => <option key={u} value={u}>{u}</option>)}
         </select>
         <select
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white"
+          className="text-sm border border-border rounded-lg px-3 py-2 bg-bg-surface"
           value={filtroEtapa}
           onChange={e => setFiltroEtapa(e.target.value)}
         >
@@ -69,32 +69,32 @@ export default function ReportesPage() {
       </div>
 
       {cargando ? (
-        <div className="flex items-center justify-center py-20 text-gray-400">
+        <div className="flex items-center justify-center py-20 text-text-subtle">
           <RefreshCw size={20} className="animate-spin mr-3" />
           Cargando...
         </div>
       ) : filtradas.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
+        <div className="text-center py-20 text-text-subtle">
           <p>Aún no hay suficientes datos de transiciones para reportar.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left p-4 font-medium text-gray-500">Persona</th>
-                <th className="text-left p-4 font-medium text-gray-500">Etapa</th>
-                <th className="text-right p-4 font-medium text-gray-500">Promedio</th>
-                <th className="text-right p-4 font-medium text-gray-500">Muestras</th>
+              <tr className="border-b border-border bg-bg-subtle">
+                <th className="text-left p-4 font-medium text-text-muted">Persona</th>
+                <th className="text-left p-4 font-medium text-text-muted">Etapa</th>
+                <th className="text-right p-4 font-medium text-text-muted">Promedio</th>
+                <th className="text-right p-4 font-medium text-text-muted">Muestras</th>
               </tr>
             </thead>
             <tbody>
               {filtradas.map((f, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-800">{f.nombre}</td>
-                  <td className="p-4 text-gray-600">{f.etapa}</td>
-                  <td className="p-4 text-right font-bold text-[#000d66]">{fechaLabel(f.promedio_horas)}</td>
-                  <td className="p-4 text-right text-gray-400">{f.muestras}</td>
+                <tr key={i} className="border-b border-border hover:bg-bg-subtle">
+                  <td className="p-4 font-medium text-text">{f.nombre}</td>
+                  <td className="p-4 text-text-muted">{f.etapa}</td>
+                  <td className="p-4 text-right font-bold text-text-heading">{fechaLabel(f.promedio_horas)}</td>
+                  <td className="p-4 text-right text-text-subtle">{f.muestras}</td>
                 </tr>
               ))}
             </tbody>

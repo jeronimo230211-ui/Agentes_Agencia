@@ -39,7 +39,7 @@ export default function BotonFavorito({ productoId, className = '', textoGuardar
       className={`flex items-center justify-center gap-1.5 rounded-lg border text-sm font-semibold transition-colors flex-shrink-0 ${
         guardado
           ? 'border-amber-200 bg-amber-50 text-amber-700'
-          : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+          : 'border-border text-text-muted hover:bg-bg-subtle'
       } ${className}`}
       style={{ minHeight: 44, minWidth: 44 }}
     >

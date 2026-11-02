@@ -8,6 +8,8 @@ import {
 import { formatUSD } from '@/lib/precio'
 import HistorialPagos from '@/components/HistorialPagos'
 import FiltroCliente from '@/components/FiltroCliente'
+import Badge, { type BadgeVariant } from '@/components/ui/Badge'
+import StatCard from '@/components/ui/StatCard'
 
 interface Cliente { id: string; nombre: string; pais: string }
 
@@ -45,23 +47,25 @@ interface Indicadores {
   deuda_china_total: number
 }
 
-const ESTADO_STYLE: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
-  borrador:            { bg: 'bg-gray-100',   text: 'text-gray-600',   icon: <FileText size={12} /> },
-  en_revision:         { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: <Clock size={12} /> },
-  aprobada:            { bg: 'bg-green-100',  text: 'text-green-700',  icon: <CheckCircle size={12} /> },
-  rechazada:           { bg: 'bg-red-100',    text: 'text-red-600',    icon: <XCircle size={12} /> },
-  enviada:             { bg: 'bg-blue-100',   text: 'text-blue-700',   icon: <Send size={12} /> },
-  facturada:           { bg: 'bg-purple-100', text: 'text-purple-700', icon: <Receipt size={12} /> },
-  cambios_solicitados: { bg: 'bg-amber-100',  text: 'text-amber-700',  icon: <AlertCircle size={12} /> },
-  anulada:             { bg: 'bg-slate-200',  text: 'text-slate-600',  icon: <Ban size={12} /> },
-  descartada:          { bg: 'bg-slate-100',  text: 'text-slate-400',  icon: <XCircle size={12} /> },
+// Colapso de 8 colores ad-hoc a los 4 tokens semánticos (+ neutral) del
+// sistema de Marta -- ver Badge.tsx. Mismo criterio que proformas/page.tsx.
+const ESTADO_STYLE: Record<string, { variant: BadgeVariant; icon: React.ReactNode }> = {
+  borrador:            { variant: 'neutral', icon: <FileText size={12} /> },
+  en_revision:         { variant: 'warning', icon: <Clock size={12} /> },
+  aprobada:            { variant: 'success', icon: <CheckCircle size={12} /> },
+  rechazada:           { variant: 'danger',  icon: <XCircle size={12} /> },
+  enviada:             { variant: 'info',    icon: <Send size={12} /> },
+  facturada:           { variant: 'info',    icon: <Receipt size={12} /> },
+  cambios_solicitados: { variant: 'warning', icon: <AlertCircle size={12} /> },
+  anulada:             { variant: 'danger',  icon: <Ban size={12} /> },
+  descartada:          { variant: 'neutral', icon: <XCircle size={12} /> },
 }
 
-const ESTADO_DEUDA_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-  sin_deuda: { bg: 'bg-gray-100',   text: 'text-gray-500',   label: 'Sin deuda' },
-  pendiente: { bg: 'bg-red-100',    text: 'text-red-600',    label: 'Pendiente' },
-  parcial:   { bg: 'bg-blue-100',   text: 'text-blue-700',   label: 'Parcial' },
-  pagado:    { bg: 'bg-green-100',  text: 'text-green-700',  label: 'Pagado' },
+const ESTADO_DEUDA_STYLE: Record<string, { variant: BadgeVariant; label: string }> = {
+  sin_deuda: { variant: 'neutral', label: 'Sin deuda' },
+  pendiente: { variant: 'danger',  label: 'Pendiente' },
+  parcial:   { variant: 'info',    label: 'Parcial' },
+  pagado:    { variant: 'success', label: 'Pagado' },
 }
 
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
@@ -117,16 +121,16 @@ export default function FinanzasPage() {
   )
 
   const kpiCards = [
-    { label: 'Facturado', value: indicadores?.facturado, icon: DollarSign, color: 'bg-emerald-100 text-emerald-700' },
-    { label: 'Ganancia',  value: indicadores?.ganancia,   icon: TrendingUp, color: 'bg-blue-100 text-blue-700' },
-    { label: 'Deuda de clientes', value: indicadores?.deuda_cliente_total, icon: AlertTriangle, color: 'bg-red-100 text-red-600' },
-    { label: 'Deuda con China',   value: indicadores?.deuda_china_total,   icon: Ship,           color: 'bg-sky-100 text-sky-700' },
+    { label: 'Facturado', value: indicadores?.facturado, icon: DollarSign, color: 'bg-success-bg text-success' },
+    { label: 'Ganancia',  value: indicadores?.ganancia,   icon: TrendingUp, color: 'bg-info-bg text-info' },
+    { label: 'Deuda de clientes', value: indicadores?.deuda_cliente_total, icon: AlertTriangle, color: 'bg-danger-bg text-danger' },
+    { label: 'Deuda con China',   value: indicadores?.deuda_china_total,   icon: Ship,           color: 'bg-info-bg text-info' },
   ]
 
   if (sinAcceso) {
     return (
       <div className="p-8">
-        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-400">
+        <div className="bg-bg-surface rounded-xl border border-border p-8 text-center text-text-subtle">
           No tienes acceso a este módulo.
         </div>
       </div>
@@ -137,47 +141,46 @@ export default function FinanzasPage() {
     <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden">
 
       {/* ── Encabezado ── */}
-      <div className="px-8 pt-7 pb-4 bg-white border-b border-gray-100 flex-shrink-0">
+      <div className="px-8 pt-7 pb-4 bg-bg-surface border-b border-border flex-shrink-0">
         <div className="mb-5">
-          <h1 className="text-2xl font-bold text-[#000d66] flex items-center gap-2">
-            <Wallet size={22} className="text-[#000d66]" />
+          <h1 className="text-2xl font-bold text-text-heading flex items-center gap-2">
+            <Wallet size={22} className="text-text-heading" />
             Finanzas
           </h1>
-          <p className="text-gray-400 text-sm mt-0.5">Registro maestro — facturación, ganancia y deuda en vivo</p>
+          <p className="text-text-subtle text-sm mt-0.5">Registro maestro — facturación, ganancia y deuda en vivo</p>
         </div>
 
         {/* Tablero de indicadores */}
         <div className="grid grid-cols-4 gap-4 mb-5">
-          {kpiCards.map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-              <div className={`inline-flex p-2 rounded-lg mb-3 ${color}`}>
-                <Icon size={20} />
-              </div>
-              <p className="text-3xl font-bold text-gray-800">
-                {loading || value == null ? '—' : formatUSD(value)}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">{label}</p>
-            </div>
+          {kpiCards.map(({ label, value, icon, color }) => (
+            <StatCard
+              key={label}
+              label={label}
+              value={value == null ? '—' : formatUSD(value)}
+              icon={icon}
+              iconClassName={color}
+              loading={loading}
+            />
           ))}
         </div>
 
         {/* Filtro de cliente */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-400 uppercase">Cliente</span>
+          <span className="text-xs font-semibold text-text-subtle uppercase">Cliente</span>
           <FiltroCliente clientes={clientes} value={clienteTab} onChange={setClienteTab} />
         </div>
       </div>
 
       {/* ── Filtros secundarios ── */}
-      <div className="px-8 py-3 bg-white border-b border-gray-100 flex items-center gap-4 flex-wrap flex-shrink-0">
+      <div className="px-8 py-3 bg-bg-surface border-b border-border flex items-center gap-4 flex-wrap flex-shrink-0">
         {/* Año */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-400 uppercase">Año</span>
+          <span className="text-xs font-semibold text-text-subtle uppercase">Año</span>
           <div className="flex gap-1">
             <button
               onClick={() => setAño('')}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                !año ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                !año ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
               }`}
             >
               Todos
@@ -187,7 +190,7 @@ export default function FinanzasPage() {
                 key={y}
                 onClick={() => setAño(a => a === y ? '' : y)}
                 className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  año === y ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  año === y ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
                 }`}
               >
                 {y}
@@ -199,12 +202,12 @@ export default function FinanzasPage() {
         {/* País */}
         {paisesDisponibles.length > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-400 uppercase">País</span>
+            <span className="text-xs font-semibold text-text-subtle uppercase">País</span>
             <div className="flex gap-1 flex-wrap">
               <button
                 onClick={() => setPais('')}
                 className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  !pais ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                  !pais ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
                 }`}
               >
                 Todos
@@ -214,7 +217,7 @@ export default function FinanzasPage() {
                   key={p}
                   onClick={() => setPais(v => v === p ? '' : p)}
                   className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                    pais === p ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                    pais === p ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
                   }`}
                 >
                   {p}
@@ -239,7 +242,7 @@ export default function FinanzasPage() {
               key={value}
               onClick={() => setEstadoDeuda(e => e === value ? '' : value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoDeuda === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                estadoDeuda === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
               }`}
             >
               {label}
@@ -251,26 +254,26 @@ export default function FinanzasPage() {
       {/* ── Tabla ── */}
       <div className="flex-1 overflow-y-auto px-8 py-4">
         {loading ? (
-          <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
+          <div className="flex items-center justify-center h-40 text-text-subtle text-sm">
             Cargando finanzas...
           </div>
         ) : filas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2">
+          <div className="flex flex-col items-center justify-center h-40 text-text-subtle gap-2">
             <FileText size={36} strokeWidth={1} />
             <p className="text-sm">No hay proformas con los filtros seleccionados</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="bg-bg-surface rounded-xl border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Proforma</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Cliente</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Estado</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Facturado</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Ganancia</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Deuda cliente</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Deuda China</th>
+                <tr className="bg-bg-subtle border-b border-border">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Proforma</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Cliente</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Estado</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Facturado</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Ganancia</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Deuda cliente</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Deuda China</th>
                   <th className="w-8 px-4 py-3" />
                 </tr>
               </thead>
@@ -281,53 +284,50 @@ export default function FinanzasPage() {
                   return (
                     <tr
                       key={f.id}
-                      className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors cursor-pointer"
+                      className="border-b border-border hover:bg-bg-subtle transition-colors cursor-pointer"
                       onClick={() => setFilaSeleccionada(f)}
                     >
                       <td className="px-4 py-3">
-                        <span className="font-mono font-bold text-[#000d66]">{f.numero}</span>
-                        <span className="block text-xs text-gray-400">{fechaCorta(f.fecha)}</span>
+                        <span className="font-mono font-bold text-text-heading">{f.numero}</span>
+                        <span className="block text-xs text-text-subtle">{fechaCorta(f.fecha)}</span>
                       </td>
-                      <td className="px-4 py-3 text-gray-700 font-medium text-xs">
+                      <td className="px-4 py-3 text-text font-medium text-xs">
                         {f.cliente?.nombre ?? '—'}
-                        {f.pais && <span className="block text-[11px] text-gray-400 font-normal">{f.pais}</span>}
+                        {f.pais && <span className="block text-[11px] text-text-subtle font-normal">{f.pais}</span>}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
-                            {st.icon}
+                          <Badge variant={st.variant} icon={st.icon}>
                             {f.estado.replace('_', ' ')}
-                          </span>
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${dst.bg} ${dst.text}`}>
-                            {dst.label}
-                          </span>
+                          </Badge>
+                          <Badge variant={dst.variant}>{dst.label}</Badge>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right font-bold text-gray-800">
-                        {f.facturado > 0 ? formatUSD(f.facturado) : <span className="text-gray-300 font-normal">—</span>}
+                      <td className="px-4 py-3 text-right font-bold text-text">
+                        {f.facturado > 0 ? formatUSD(f.facturado) : <span className="text-text-subtle font-normal">—</span>}
                       </td>
                       <td className="px-4 py-3 text-right font-medium">
                         {f.ganancia != null ? (
-                          <span className={f.ganancia >= 0 ? 'text-emerald-700' : 'text-red-600'}>{formatUSD(f.ganancia)}</span>
+                          <span className={f.ganancia >= 0 ? 'text-success' : 'text-danger'}>{formatUSD(f.ganancia)}</span>
                         ) : (
-                          <span className="text-gray-300 font-normal">—</span>
+                          <span className="text-text-subtle font-normal">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right font-medium">
                         {f.deuda_cliente_usd > 0 ? (
-                          <span className="text-red-600">{formatUSD(f.deuda_cliente_usd)}</span>
+                          <span className="text-danger">{formatUSD(f.deuda_cliente_usd)}</span>
                         ) : (
-                          <span className="text-gray-300 font-normal">—</span>
+                          <span className="text-text-subtle font-normal">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right font-medium">
                         {f.deuda_china_usd != null && f.deuda_china_usd > 0 ? (
-                          <span className="text-sky-700">{formatUSD(f.deuda_china_usd)}</span>
+                          <span className="text-info">{formatUSD(f.deuda_china_usd)}</span>
                         ) : (
-                          <span className="text-gray-300 font-normal">—</span>
+                          <span className="text-text-subtle font-normal">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-300">
+                      <td className="px-4 py-3 text-text-subtle">
                         <ChevronRight size={15} />
                       </td>
                     </tr>
@@ -335,8 +335,8 @@ export default function FinanzasPage() {
                 })}
               </tbody>
             </table>
-            <div className="px-4 py-2.5 border-t border-gray-100">
-              <p className="text-xs text-gray-400">
+            <div className="px-4 py-2.5 border-t border-border">
+              <p className="text-xs text-text-subtle">
                 {filas.length} proforma{filas.length !== 1 ? 's' : ''}
                 {año ? ` · ${año}` : ''}
                 {pais ? ` · ${pais}` : ''}
@@ -381,52 +381,49 @@ function DetalleProformaDrawer({
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-md h-full shadow-xl flex flex-col">
-        <div className="p-5 border-b border-gray-100 flex items-start justify-between flex-none">
+      <div className="relative bg-bg-surface w-full max-w-md h-full shadow-xl flex flex-col">
+        <div className="p-5 border-b border-border flex items-start justify-between flex-none">
           <div>
-            <p className="font-mono font-bold text-lg text-[#000d66]">{fila.numero}</p>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <p className="font-mono font-bold text-lg text-text-heading">{fila.numero}</p>
+            <p className="text-sm text-text-subtle mt-0.5">
               {fila.cliente?.nombre ?? '—'} · {fechaCorta(fila.fecha)}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg flex-none">
-            <X size={18} className="text-gray-500" />
+          <button onClick={onClose} className="p-1.5 hover:bg-bg-subtle rounded-lg flex-none">
+            <X size={18} className="text-text-muted" />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-5 space-y-5">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
-              {st.icon}
+            <Badge variant={st.variant} icon={st.icon}>
               {fila.estado.replace('_', ' ')}
-            </span>
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${dst.bg} ${dst.text}`}>
-              {dst.label}
-            </span>
+            </Badge>
+            <Badge variant={dst.variant}>{dst.label}</Badge>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-0.5">Facturado</p>
-              <p className="text-base font-bold text-gray-800">
+            <div className="bg-bg-subtle rounded-xl p-3 border border-border">
+              <p className="text-xs text-text-subtle mb-0.5">Facturado</p>
+              <p className="text-base font-bold text-text">
                 {fila.facturado > 0 ? formatUSD(fila.facturado) : '—'}
               </p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-0.5">Ganancia</p>
-              <p className={`text-base font-bold ${fila.ganancia != null ? (fila.ganancia >= 0 ? 'text-emerald-700' : 'text-red-600') : 'text-gray-800'}`}>
+            <div className="bg-bg-subtle rounded-xl p-3 border border-border">
+              <p className="text-xs text-text-subtle mb-0.5">Ganancia</p>
+              <p className={`text-base font-bold ${fila.ganancia != null ? (fila.ganancia >= 0 ? 'text-success' : 'text-danger') : 'text-text'}`}>
                 {fila.ganancia != null ? formatUSD(fila.ganancia) : '—'}
               </p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-0.5">Deuda cliente</p>
-              <p className={`text-base font-bold ${fila.deuda_cliente_usd > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+            <div className="bg-bg-subtle rounded-xl p-3 border border-border">
+              <p className="text-xs text-text-subtle mb-0.5">Deuda cliente</p>
+              <p className={`text-base font-bold ${fila.deuda_cliente_usd > 0 ? 'text-danger' : 'text-text'}`}>
                 {fila.deuda_cliente_usd > 0 ? formatUSD(fila.deuda_cliente_usd) : '—'}
               </p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-0.5">Deuda China</p>
-              <p className={`text-base font-bold ${fila.deuda_china_usd && fila.deuda_china_usd > 0 ? 'text-sky-700' : 'text-gray-800'}`}>
+            <div className="bg-bg-subtle rounded-xl p-3 border border-border">
+              <p className="text-xs text-text-subtle mb-0.5">Deuda China</p>
+              <p className={`text-base font-bold ${fila.deuda_china_usd && fila.deuda_china_usd > 0 ? 'text-info' : 'text-text'}`}>
                 {fila.deuda_china_usd != null && fila.deuda_china_usd > 0 ? formatUSD(fila.deuda_china_usd) : '—'}
               </p>
             </div>
@@ -437,12 +434,12 @@ function DetalleProformaDrawer({
               estado_hacia='facturada' en proforma_eventos. */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <p className="text-xs text-gray-400 mb-0.5">Fecha proforma</p>
-              <p className="text-gray-700 font-medium">{fechaCorta(fila.fecha)}</p>
+              <p className="text-xs text-text-subtle mb-0.5">Fecha proforma</p>
+              <p className="text-text font-medium">{fechaCorta(fila.fecha)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 mb-0.5">Fecha factura final</p>
-              <p className="text-gray-700 font-medium">
+              <p className="text-xs text-text-subtle mb-0.5">Fecha factura final</p>
+              <p className="text-text font-medium">
                 {fila.fecha_factura ? new Date(fila.fecha_factura).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
               </p>
             </div>
@@ -452,34 +449,34 @@ function DetalleProformaDrawer({
               ETA y llegada real). Puede no existir todavía. */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Ship size={16} className="text-gray-400" />
-              <h3 className="font-medium text-gray-800 text-sm">Despacho</h3>
+              <Ship size={16} className="text-text-subtle" />
+              <h3 className="font-medium text-text text-sm">Despacho</h3>
             </div>
             {fila.despacho ? (
-              <div className="grid grid-cols-2 gap-3 text-sm bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="grid grid-cols-2 gap-3 text-sm bg-bg-subtle rounded-xl p-3 border border-border">
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Naviera</p>
-                  <p className="text-gray-700 font-medium">{fila.despacho.naviera || '—'}</p>
+                  <p className="text-xs text-text-subtle mb-0.5">Naviera</p>
+                  <p className="text-text font-medium">{fila.despacho.naviera || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Booking No.</p>
-                  <p className="text-gray-700 font-medium">{fila.despacho.booking_no || '—'}</p>
+                  <p className="text-xs text-text-subtle mb-0.5">Booking No.</p>
+                  <p className="text-text font-medium">{fila.despacho.booking_no || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">ETA</p>
-                  <p className="text-gray-700 font-medium">{fila.despacho.fecha_llegada_estimada ? fechaCorta(fila.despacho.fecha_llegada_estimada) : '—'}</p>
+                  <p className="text-xs text-text-subtle mb-0.5">ETA</p>
+                  <p className="text-text font-medium">{fila.despacho.fecha_llegada_estimada ? fechaCorta(fila.despacho.fecha_llegada_estimada) : '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Llegada real</p>
-                  <p className="text-gray-700 font-medium">{fila.despacho.fecha_llegada_real ? fechaCorta(fila.despacho.fecha_llegada_real) : '—'}</p>
+                  <p className="text-xs text-text-subtle mb-0.5">Llegada real</p>
+                  <p className="text-text font-medium">{fila.despacho.fecha_llegada_real ? fechaCorta(fila.despacho.fecha_llegada_real) : '—'}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-xs text-gray-400 mb-0.5">Shipping fee de referencia</p>
-                  <p className="text-gray-700 font-medium">{fila.despacho.shipping_fee_usd != null ? formatUSD(fila.despacho.shipping_fee_usd) : 'No cargado'}</p>
+                  <p className="text-xs text-text-subtle mb-0.5">Shipping fee de referencia</p>
+                  <p className="text-text font-medium">{fila.despacho.shipping_fee_usd != null ? formatUSD(fila.despacho.shipping_fee_usd) : 'No cargado'}</p>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-400 bg-gray-50 rounded-xl p-3 border border-gray-100">Sin despacho</p>
+              <p className="text-sm text-text-subtle bg-bg-subtle rounded-xl p-3 border border-border">Sin despacho</p>
             )}
           </div>
 
@@ -493,8 +490,8 @@ function DetalleProformaDrawer({
           {fila.despacho && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Wallet size={16} className="text-gray-400" />
-                <h3 className="font-medium text-gray-800 text-sm">Pago de flete</h3>
+                <Wallet size={16} className="text-text-subtle" />
+                <h3 className="font-medium text-text text-sm">Pago de flete</h3>
               </div>
               <HistorialPagos
                 proformaId={fila.id}
@@ -508,28 +505,27 @@ function DetalleProformaDrawer({
               en cotizador/[id] (no editable acá, /finanzas es solo lectura). */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <FileText size={16} className="text-gray-400" />
-              <h3 className="font-medium text-gray-800 text-sm">Observaciones</h3>
+              <FileText size={16} className="text-text-subtle" />
+              <h3 className="font-medium text-text text-sm">Observaciones</h3>
             </div>
-            <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-3 border border-gray-100 whitespace-pre-wrap">
+            <p className="text-sm text-text-muted bg-bg-subtle rounded-xl p-3 border border-border whitespace-pre-wrap">
               {fila.notas_internas || 'Sin observaciones'}
             </p>
           </div>
 
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Wallet size={16} className="text-gray-400" />
-              <h3 className="font-medium text-gray-800 text-sm">Historial de pagos</h3>
+              <Wallet size={16} className="text-text-subtle" />
+              <h3 className="font-medium text-text text-sm">Historial de pagos</h3>
             </div>
             <HistorialPagos proformaId={fila.id} />
           </div>
         </div>
 
-        <div className="p-5 border-t border-gray-100 flex-none">
+        <div className="p-5 border-t border-border flex-none">
           <Link
             href={`/cotizador/${fila.id}`}
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-semibold text-sm text-white"
-            style={{ background: '#000d66' }}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-semibold text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover"
           >
             Ver proforma completa
             <ArrowRight size={15} />

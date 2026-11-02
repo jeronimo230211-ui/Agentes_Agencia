@@ -43,10 +43,9 @@ export default function DestacadosRapidos(props: ParametrosEspecificaciones) {
         <div
           key={i}
           title={texto}
-          className="flex items-center gap-1.5 flex-shrink-0 rounded-full py-[7px] px-3.5 text-[13px] font-semibold whitespace-nowrap border max-w-[260px]"
-          style={{ background: '#F8FAFC', color: 'var(--ep-navy)', borderColor: 'var(--ep-border)' }}
+          className="flex items-center gap-1.5 flex-shrink-0 rounded-full py-[7px] px-3.5 text-[13px] font-semibold whitespace-nowrap border max-w-[260px] bg-bg-subtle text-text-heading border-border"
         >
-          <Icon size={13} style={{ color: 'var(--ep-navy)' }} className="flex-shrink-0" />
+          <Icon size={13} className="flex-shrink-0 text-text-heading" />
           <span className="truncate">{texto}</span>
         </div>
       ))}

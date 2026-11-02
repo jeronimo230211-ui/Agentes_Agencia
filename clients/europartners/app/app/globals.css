@@ -1,14 +1,21 @@
+/* Tokens del sistema de diseño de Marta (oct-2026) — DEBE cargar antes de
+   las utilidades de Tailwind: varias reglas .ep-* de abajo y el preset de
+   Tailwind (tailwind.preset.js) dependen de estas variables CSS. */
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Identidad calibrada contra el archivo real de Canva de la diseñadora
-   (ver lib/pdf/templates/proforma-estandar.tsx) — navy y lila exactos,
-   sin dorado: esa identidad vieja no existe en el diseño real, solo
-   quedaba hardcodeada en la app desde antes. */
+/* Identidad vieja (navy/lila) ya migrada por completo al sistema de Marta
+   (lotes 1-3 + cierre final, oct-2026): navegación/catálogo interno, las
+   páginas públicas sin login (solicitud/[token], solicitud/[token]/
+   producto/[id], solicitud-editar/[token], SolicitudForm, ProductoDetalleModal,
+   QuantityStepper, aprobacion-token, aprobacion-cliente) y los correos/PDFs
+   (lib/email.ts, lib/pdf/templates/*). --ep-navy/--ep-lila ya no se
+   referencian en ningún lado -- quedan solo los --ep-* que SÍ siguen vivos
+   (surface, border, success/warning/danger, etc. abajo). */
 :root {
-  --ep-navy: #000d66;
-  --ep-lila: #ccc8fa;
   --ep-light: #F5F7FA;
   --ep-text: #1A1A2E;
   --background: #F5F7FA;
@@ -24,19 +31,15 @@
   --ep-warning-bg: #FFFBEB;
   --ep-danger: #EF4444;
   --ep-danger-bg: #FEF2F2;
-
-  /* Segunda vuelta de rediseño de detalle de producto (oct-2026) — el lila
-     deja de usarse como tinte translúcido y pasa a ser siempre superficie
-     sólida de marca. Estados de interacción del navy para CTAs. */
-  --ep-navy-hover: #000a52;
-  --ep-navy-press: #000844;
-  --ep-lila-on-navy: #ccc8fa;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: 'Work Sans', system-ui, -apple-system, sans-serif;
+  /* Fondo y color de texto del body quedan en app/layout.tsx como clases
+     Tailwind (bg-[var(--bg-page)] / text-[var(--text)]) -- declararlos
+     también aquí con --background/--foreground (estáticos, solo tema
+     claro) era código muerto: la clase siempre gana por especificidad y
+     nadie iba a notar si estas dos líneas quedaban desincronizadas. */
+  font-family: var(--font-body);
 }
 
 .ep-badge-activo {
@@ -62,18 +65,24 @@ body {
    Tailwind) porque el estado activo necesita ganarle al :hover de forma
    predecible; con bg/border puestos inline eso se rompía por especificidad. */
 .ep-thumb {
-  border: 1.5px solid var(--ep-border);
+  border: 1.5px solid var(--border);
   background: #fff;
 }
 .ep-thumb:hover {
-  border-color: rgba(0, 13, 102, 0.4);
+  /* Equivalente translúcido de --ultramar (#162373 = rgb(22,35,115)) --
+     no se puede usar var(--ultramar) directo porque esta regla necesita
+     alpha, y el token no trae una variante rgba. */
+  border-color: rgba(22, 35, 115, 0.4);
 }
 .ep-thumb--activa,
 .ep-thumb--activa:hover {
-  /* El fondo vuelve a blanco (igual que .ep-thumb en reposo) — Jerónimo
-     rechazó el lila sólido como fondo; el borde navy ya marcaba bien el
-     estado activo por sí solo. */
-  border: 2.5px solid var(--ep-navy);
+  /* Borde de miniatura activa -- rol explícito de cuarzo en el sistema de
+     Marta (ver docs/design-system/README.md). Se usa var(--bg-accent), no
+     var(--cuarzo) fijo, para que en tema oscuro resuelva a su variante
+     (noche-600) en vez de quedarse con el lila claro de modo claro. El
+     fondo sigue blanco (igual que .ep-thumb en reposo) — Jerónimo rechazó
+     el lila sólido como fondo; el borde ya marca bien el estado activo. */
+  border: 2.5px solid var(--bg-accent);
   background: #fff;
 }
 

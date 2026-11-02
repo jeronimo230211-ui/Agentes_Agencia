@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo, useEffect } from 'react'
+import Image from 'next/image'
 import {
   Search, Package, Plus, Trash2, Loader2, AlertCircle,
   CheckCircle, ShoppingCart, X, Eye,
@@ -76,6 +77,13 @@ interface Props {
 // lo maneja cada página wrapper; este componente solo controla el armado y
 // envío del carrito. Todo el texto visible es en inglés (clientes son
 // mayormente angloparlantes) — decisión explícita de Jero, 2026-08-05.
+//
+// Colores: los botones "Add" de la grilla y "Review and send" de la barra
+// inferior usan bg-brand (ultramar) porque son acciones repetidas/de
+// navegación -- el único bg-action-primary (indigo) de toda esta pantalla
+// es el envío real del pedido dentro del modal de carrito (botón
+// `textoBoton`), que es la acción primaria de la vista (regla del manual de
+// marca: un solo indigo por pantalla).
 export default function SolicitudForm({
   clienteNombre, categorias, productos, carritoInicial = [], notasInicial = '',
   banner, subtitulo = 'New order', tituloExito = 'Order submitted!',
@@ -211,20 +219,20 @@ export default function SolicitudForm({
 
   if (estado === 'done') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <CheckCircle size={56} className="text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">{tituloExito}</h1>
-          <p className="text-gray-500">
+      <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
+        <div className="bg-bg-surface rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <CheckCircle size={56} className="text-success mx-auto mb-4" />
+          <h1 className="font-display heading-2 text-text-heading mb-2">{tituloExito}</h1>
+          <p className="text-text-muted">
             {mensajeExito
               ? mensajeExito(totalItems)
               : `We received your order with ${totalItems} item${totalItems !== 1 ? 's' : ''}. Europartners will review it and send you the commercial proforma soon.`}
           </p>
 
           {pedirContacto && (
-            <div className="mt-6 pt-6 border-t border-gray-100 text-left">
-              <p className="text-sm font-semibold text-gray-700 mb-1">What email should we send your proforma to?</p>
-              <p className="text-xs text-gray-400 mb-3">
+            <div className="mt-6 pt-6 border-t border-border text-left">
+              <p className="text-sm font-semibold text-text mb-1">What email should we send your proforma to?</p>
+              <p className="text-caption text-text-subtle mb-3">
                 This helps us send all your order information to the right email. You can skip this and give it to us later.
               </p>
               <div className="space-y-2">
@@ -233,43 +241,42 @@ export default function SolicitudForm({
                   placeholder="Contact name"
                   value={contactoNombre}
                   onChange={e => setContactoNombre(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+                  className="w-full border border-border-control rounded-sm px-3 py-2 text-body bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
                 />
                 <input
                   type="email"
                   placeholder="Email *"
                   value={contactoEmail}
                   onChange={e => setContactoEmail(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+                  className="w-full border border-border-control rounded-sm px-3 py-2 text-body bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
                 />
                 <input
                   type="text"
                   placeholder="Phone"
                   value={contactoTelefono}
                   onChange={e => setContactoTelefono(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+                  className="w-full border border-border-control rounded-sm px-3 py-2 text-body bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
                 />
                 <input
                   type="text"
                   placeholder="Shipping/delivery address"
                   value={contactoDireccion}
                   onChange={e => setContactoDireccion(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+                  className="w-full border border-border-control rounded-sm px-3 py-2 text-body bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
                 />
               </div>
-              {errorContacto && <p className="text-xs text-red-500 mt-2">{errorContacto}</p>}
+              {errorContacto && <p className="text-caption text-danger mt-2">{errorContacto}</p>}
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => setPedirContacto(false)}
-                  className="flex-1 text-sm font-semibold py-2.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  className="flex-1 text-button h-control-md rounded-sm border border-border-control text-text-muted hover:bg-bg-subtle"
                 >
                   Not now
                 </button>
                 <button
                   onClick={guardarContacto}
                   disabled={!contactoEmail.trim() || guardandoContacto}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-sm font-bold py-2.5 rounded-lg text-white disabled:opacity-40"
-                  style={{ background: '#000d66' }}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-button h-control-md rounded-sm bg-action-primary hover:bg-action-primary-hover text-on-action-primary disabled:opacity-40"
                 >
                   {guardandoContacto && <Loader2 size={14} className="animate-spin" />}
                   Save
@@ -284,15 +291,14 @@ export default function SolicitudForm({
 
   if (estado === 'error') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Error</h1>
-          <p className="text-gray-500 mb-4">{error}</p>
+      <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
+        <div className="bg-bg-surface rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <AlertCircle size={48} className="text-danger mx-auto mb-4" />
+          <h1 className="font-display heading-3 text-text-heading mb-2">Error</h1>
+          <p className="text-text-muted mb-4">{error}</p>
           <button
             onClick={() => setEstado('form')}
-            className="px-5 py-2 rounded-lg font-medium text-white"
-            style={{ background: '#000d66' }}
+            className="px-5 h-control-md rounded-sm text-button bg-action-primary hover:bg-action-primary-hover text-on-action-primary"
           >
             Back to order
           </button>
@@ -302,22 +308,24 @@ export default function SolicitudForm({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-bg-page pb-24">
       {/* Header */}
-      <div className="bg-[#000d66] text-white px-4 py-5 sticky top-0 z-10 shadow-md">
+      <div className="bg-bg-brand text-text-on-brand px-4 py-5 sticky top-0 z-sticky shadow-md">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-[#000d66]">Europartners</h1>
-            <p className="text-sm opacity-75">{subtitulo} · {clienteNombre}</p>
+            {/* Logo real — variante blanca del sistema de Marta (mismo
+                patrón que (auth)/login). */}
+            <Image src="/brand/europartners-horizontal-blanco.svg" alt="Europartners" width={147} height={26} priority />
+            <p className="text-body-sm opacity-75 mt-1">{subtitulo} · {clienteNombre}</p>
           </div>
           <button
             onClick={() => setShowCarrito(true)}
-            className="relative flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-semibold"
+            className="relative flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-sm text-button"
           >
             <ShoppingCart size={18} />
             My order
             {totalItems > 0 && (
-              <span className="absolute -top-2 -right-2 bg-[#ccc8fa] text-[#000d66] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-2 -right-2 bg-bg-accent text-on-accent text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
               </span>
             )}
@@ -327,11 +335,11 @@ export default function SolicitudForm({
 
       <div className="max-w-5xl mx-auto px-4 pt-5">
         {banner && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex gap-3">
-            <AlertCircle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-warning-bg border border-warning rounded-md p-4 mb-5 flex gap-3">
+            <AlertCircle size={20} className="text-warning flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-amber-800 mb-1">Europartners needs to confirm something about your order</p>
-              <p className="text-sm text-amber-700">{banner}</p>
+              <p className="text-sm font-semibold text-warning mb-1">Europartners needs to confirm something about your order</p>
+              <p className="text-body-sm text-warning">{banner}</p>
             </div>
           </div>
         )}
@@ -339,11 +347,11 @@ export default function SolicitudForm({
         {/* Buscador + categorías */}
         <div className="flex items-center gap-3 mb-5 flex-wrap">
           <div className="relative flex-1 min-w-[220px] max-w-sm">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
             <input
               type="text"
               placeholder="Search product..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+              className="w-full pl-9 pr-4 h-control-md text-body border border-border-control rounded-sm bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
@@ -351,8 +359,8 @@ export default function SolicitudForm({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setCategoriaId('')}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                !categoriaId ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              className={`text-label px-3 py-1.5 rounded-pill transition-colors ${
+                !categoriaId ? 'bg-bg-accent text-on-accent' : 'bg-bg-subtle text-text-muted hover:bg-border'
               }`}
             >
               All
@@ -361,8 +369,8 @@ export default function SolicitudForm({
               <button
                 key={cat.id}
                 onClick={() => setCategoriaId(prev => prev === cat.id ? '' : cat.id)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                  categoriaId === cat.id ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                className={`text-label px-3 py-1.5 rounded-pill transition-colors ${
+                  categoriaId === cat.id ? 'bg-bg-accent text-on-accent' : 'bg-bg-subtle text-text-muted hover:bg-border'
                 }`}
               >
                 {cat.nombre}
@@ -373,7 +381,7 @@ export default function SolicitudForm({
 
         {/* Grid de productos */}
         {productosFiltrados.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-text-subtle">
             <Package size={40} className="mx-auto mb-3 opacity-30" />
             <p>No products found</p>
           </div>
@@ -386,23 +394,23 @@ export default function SolicitudForm({
                 <div
                   key={p.id}
                   onClick={() => onVerProducto ? onVerProducto(p) : setProductoDetalle(p)}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
+                  className="bg-bg-surface rounded-md border border-border shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md hover:border-border-strong transition-all group"
                 >
-                  <div className="relative bg-gray-50 h-32 flex items-center justify-center overflow-hidden">
+                  <div className="relative bg-bg-subtle h-32 flex items-center justify-center overflow-hidden">
                     {p.imagen_url ? (
                       <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-2" />
                     ) : (
-                      <Package size={28} className="text-gray-300" />
+                      <Package size={28} className="text-text-subtle" />
                     )}
-                    <div className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-1.5 shadow-sm opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                      <Eye size={13} className="text-[#000d66]" />
+                    <div className="absolute top-1.5 right-1.5 bg-bg-surface/90 rounded-full p-1.5 shadow-sm opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <Eye size={13} className="text-text-heading" />
                     </div>
                   </div>
                   <div className="p-3 flex flex-col gap-1 flex-1">
-                    <p className="font-mono text-xs font-bold text-[#000d66]">{p.codigo}</p>
-                    <p className="text-sm text-gray-800 font-medium leading-tight line-clamp-2 flex-1">{p.nombre}</p>
+                    <p className="text-code text-text-heading">{p.codigo}</p>
+                    <p className="text-sm text-text font-medium leading-tight line-clamp-2 flex-1">{p.nombre}</p>
                     {p.precio_cliente != null && (
-                      <p className="text-sm font-bold" style={{ color: '#000d66' }}>{formatUSD(p.precio_cliente)}</p>
+                      <p className="text-sm font-bold text-text-heading" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatUSD(p.precio_cliente)}</p>
                     )}
                     {cantidad > 0 ? (
                       <div className="mt-2 flex justify-center">
@@ -411,8 +419,7 @@ export default function SolicitudForm({
                     ) : (
                       <button
                         onClick={e => { e.stopPropagation(); agregarProducto(p) }}
-                        className="mt-2 text-xs font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-white"
-                        style={{ background: '#000d66' }}
+                        className="mt-2 text-button py-2 rounded-sm flex items-center justify-center gap-1.5 transition-colors bg-bg-brand text-text-on-brand"
                       >
                         <Plus size={13} />
                         Add
@@ -438,13 +445,13 @@ export default function SolicitudForm({
         <div className="mb-6" />
 
         {/* No lo encuentro */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4 mb-8">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Can&apos;t find what you&apos;re looking for?</p>
+        <div className="bg-bg-surface rounded-md border border-border p-4 mb-8">
+          <p className="text-sm font-semibold text-text mb-2">Can&apos;t find what you&apos;re looking for?</p>
           <div className="flex gap-2">
             <input
               type="text"
               placeholder="Describe the product..."
-              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+              className="flex-1 px-3 h-control-md text-body border border-border-control rounded-sm bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
               value={descLibre}
               onChange={e => setDescLibre(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && agregarLibre()}
@@ -452,8 +459,7 @@ export default function SolicitudForm({
             <button
               onClick={agregarLibre}
               disabled={!descLibre.trim()}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40"
-              style={{ background: '#000d66' }}
+              className="px-4 h-control-md rounded-sm text-button bg-bg-brand text-text-on-brand disabled:opacity-40"
             >
               Add
             </button>
@@ -463,18 +469,17 @@ export default function SolicitudForm({
 
       {/* Barra inferior fija cuando hay items */}
       {totalItems > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg p-4 z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-bg-surface border-t border-border shadow-lg p-4 z-sticky">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              <strong>{totalItems}</strong> item{totalItems !== 1 ? 's' : ''} in your order
+            <p className="text-text-muted text-body-sm">
+              <strong className="text-text">{totalItems}</strong> item{totalItems !== 1 ? 's' : ''} in your order
               {totalPedido > 0 && (
-                <> · <strong style={{ color: '#000d66' }}>{formatUSD(totalPedido)}</strong>{hayItemsSinPrecio ? '+' : ''}</>
+                <> · <strong className="text-text-heading" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatUSD(totalPedido)}</strong>{hayItemsSinPrecio ? '+' : ''}</>
               )}
             </p>
             <button
               onClick={() => setShowCarrito(true)}
-              className="px-5 py-2.5 rounded-lg font-bold text-sm"
-              style={{ background: '#ccc8fa', color: '#000d66' }}
+              className="px-5 h-control-md rounded-sm text-button bg-bg-brand text-text-on-brand"
             >
               Review and send →
             </button>
@@ -484,68 +489,67 @@ export default function SolicitudForm({
 
       {/* Modal carrito */}
       {showCarrito && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800">Your order</h2>
-              <button onClick={() => setShowCarrito(false)} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-modal p-0 sm:p-4">
+          <div className="bg-bg-surface rounded-t-lg sm:rounded-lg shadow-lg w-full max-w-lg max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h2 className="font-display heading-3 text-text-heading">Your order</h2>
+              <button onClick={() => setShowCarrito(false)} className="text-text-subtle hover:text-text">
                 <X size={20} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5">
               {carrito.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">You haven&apos;t added any products yet</p>
+                <p className="text-text-subtle text-sm text-center py-8">You haven&apos;t added any products yet</p>
               ) : (
                 <div className="space-y-3 mb-5">
                   {carrito.map(l => (
-                    <div key={l.key} className="flex items-center gap-3 border-b border-gray-50 pb-3">
+                    <div key={l.key} className="flex items-center gap-3 border-b border-border pb-3">
                       <div className="flex-1 min-w-0">
-                        {l.codigo && <p className="font-mono text-xs text-gray-400">{l.codigo}</p>}
-                        <p className="text-sm text-gray-800 font-medium truncate">{l.nombre}</p>
-                        <p className="text-xs text-gray-400">
+                        {l.codigo && <p className="text-code text-text-subtle">{l.codigo}</p>}
+                        <p className="text-sm text-text font-medium truncate">{l.nombre}</p>
+                        <p className="text-text-subtle text-body-sm">
                           {l.precio_cliente != null
-                            ? <>{formatUSD(l.precio_cliente)} × {l.cantidad} = <strong className="text-gray-600">{formatUSD(l.precio_cliente * l.cantidad)}</strong></>
+                            ? <>{formatUSD(l.precio_cliente)} × {l.cantidad} = <strong className="text-text-muted" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatUSD(l.precio_cliente * l.cantidad)}</strong></>
                             : 'Price to be confirmed'}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <QuantityStepper value={l.cantidad} onChange={v => fijarCantidadCarrito(l.key, v)} />
-                        <button onClick={() => quitar(l.key)} className="text-red-400 hover:text-red-600 ml-1">
+                        <button onClick={() => quitar(l.key)} className="text-danger hover:opacity-80 ml-1">
                           <Trash2 size={15} />
                         </button>
                       </div>
                     </div>
                   ))}
                   <div className="flex items-center justify-between pt-1">
-                    <p className="text-sm font-semibold text-gray-700">
+                    <p className="text-sm font-semibold text-text">
                       {hayItemsSinPrecio ? 'Estimated total' : 'Total'}
                     </p>
-                    <p className="text-lg font-bold" style={{ color: '#000d66' }}>{formatUSD(totalPedido)}</p>
+                    <p className="text-lg font-bold text-text-heading" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatUSD(totalPedido)}</p>
                   </div>
                   {hayItemsSinPrecio && (
-                    <p className="text-xs text-gray-400 -mt-2">
+                    <p className="text-caption text-text-subtle -mt-2">
                       Some items don&apos;t have a listed price yet — Europartners will confirm it in your proforma.
                     </p>
                   )}
                 </div>
               )}
 
-              <label className="text-xs font-semibold text-gray-500 uppercase">Notes for Europartners (optional)</label>
+              <label className="text-label text-text-muted uppercase">Notes for Europartners (optional)</label>
               <textarea
                 value={notasCliente}
                 onChange={e => setNotasCliente(e.target.value)}
                 placeholder="E.g.: I need the order before August 30..."
-                className="w-full mt-1.5 border border-gray-200 rounded-lg p-3 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+                className="w-full mt-1.5 border border-border-control rounded-sm p-3 text-body h-20 resize-none bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
               />
             </div>
 
-            <div className="p-5 border-t border-gray-100">
+            <div className="p-5 border-t border-border">
               <button
                 onClick={enviar}
                 disabled={carrito.length === 0 || estado === 'sending'}
-                className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: '#000d66' }}
+                className="w-full h-control-lg rounded-sm text-button bg-action-primary hover:bg-action-primary-hover text-on-action-primary disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {estado === 'sending' ? <Loader2 className="animate-spin" size={18} /> : null}
                 {textoBoton}

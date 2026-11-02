@@ -32,17 +32,17 @@ export default function Paginacion({
         type="button"
         onClick={() => onCambiar(Math.max(1, pagina - 1))}
         disabled={pagina === 1}
-        className="flex items-center gap-1 px-4 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-1 px-4 rounded-lg text-sm font-medium border border-border text-text-muted disabled:opacity-40 disabled:cursor-not-allowed hover:bg-bg-subtle transition-colors"
         style={{ minHeight: 44 }}
       >
         <ChevronLeft size={16} /> {textoAnterior}
       </button>
-      <span className="text-sm text-gray-500 px-1 whitespace-nowrap">{textoPagina(pagina, totalPaginas)}</span>
+      <span className="text-sm text-text-muted px-1 whitespace-nowrap">{textoPagina(pagina, totalPaginas)}</span>
       <button
         type="button"
         onClick={() => onCambiar(Math.min(totalPaginas, pagina + 1))}
         disabled={pagina === totalPaginas}
-        className="flex items-center gap-1 px-4 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-1 px-4 rounded-lg text-sm font-medium border border-border text-text-muted disabled:opacity-40 disabled:cursor-not-allowed hover:bg-bg-subtle transition-colors"
         style={{ minHeight: 44 }}
       >
         {textoSiguiente} <ChevronRight size={16} />

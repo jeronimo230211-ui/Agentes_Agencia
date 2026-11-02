@@ -59,8 +59,8 @@ const FOOTER_DECO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/ass
 
 // Colores EXACTOS leídos del PDF de Canva (page.get_text("dict") para texto,
 // page.get_drawings() para los fondos de las cajas) — no son aproximaciones.
-const NAVY = '#000d66'
-const LILA = '#ccc8fa'
+const NAVY = '#162373'
+const LILA = '#d2cff7'
 
 const styles = StyleSheet.create({
   page: {

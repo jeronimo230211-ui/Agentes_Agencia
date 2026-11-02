@@ -1,0 +1,158 @@
+/**
+ * Europartners — tokens de diseño (generados a partir de
+ * docs/design-system/tokens.json, sistema de Marta, oct-2026).
+ *
+ * No editar a mano: si cambia tokens.json, regenerar este archivo.
+ * Tema oscuro vía [data-theme="dark"] en <html> (ver app/layout.tsx,
+ * script inline anti-flash + components/ThemeToggle.tsx).
+ */
+
+:root {
+  /* ---- Paleta base (no son tokens semánticos, solo los valores crudos
+     del manual; los componentes deben usar los tokens semánticos de abajo,
+     nunca estos directamente, salvo que el token semántico no exista). ---- */
+  --ultramar: #162373;
+  --ultramar-ink: #000e67;
+  --indigo: #5a57d8;
+  --indigo-deep: #3f41b6;
+  --cuarzo: #d2cff7;
+  --cuarzo-soft: #ecebfc;
+  --marmol: #f8f8f8;
+  --gris-manual: #e8e8e8;
+  --neutral-0: #ffffff;
+  --neutral-100: #f0f0f4;
+  --neutral-200: #e4e4ec;
+  --neutral-300: #cfd0dc;
+  --neutral-400: #8f92a8;
+  --neutral-500: #6e7189;
+  --neutral-600: #555872;
+  --neutral-900: #151729;
+  --noche-900: #0b0f2e;
+  --noche-800: #141a45;
+  --noche-700: #1c2357;
+  --noche-600: #262b6e;
+  --indigo-light: #8b88e6;
+  --indigo-pale: #aeacf3;
+
+  /* ---- Tokens semánticos — tema claro (default) ---- */
+  --bg-page: var(--marmol);
+  --bg-surface: var(--neutral-0);
+  --bg-subtle: var(--neutral-100);
+  --bg-brand: var(--ultramar);
+  --bg-accent: var(--cuarzo);
+  --bg-selected: var(--cuarzo-soft);
+
+  --text: var(--neutral-900);
+  --text-heading: var(--ultramar);
+  --text-muted: var(--neutral-600);
+  --text-subtle: var(--neutral-500);
+  --text-link: var(--indigo-deep);
+  --text-on-brand: #ffffff;
+  --text-on-accent: var(--ultramar);
+
+  --border: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --border-control: var(--neutral-400);
+  --focus-ring: var(--indigo);
+
+  --action-primary: var(--indigo);
+  --action-primary-hover: var(--indigo-deep);
+  --on-action-primary: #ffffff;
+
+  --success: #17663f;
+  --success-bg: #e3f4ea;
+  --warning: #7a4f00;
+  --warning-bg: #fdf0d5;
+  --danger: #b42318;
+  --danger-bg: #fde8e6;
+  --on-danger: #ffffff;
+  --info: var(--indigo-deep);
+  --info-bg: var(--cuarzo-soft);
+
+  --shadow-sm: 0 1px 2px rgba(22, 35, 115, 0.08);
+  --shadow-md: 0 4px 16px rgba(22, 35, 115, 0.1);
+  --shadow-lg: 0 16px 40px rgba(22, 35, 115, 0.16);
+
+  /* ---- Tipografía ----
+     El token del manual pide la fuente por su nombre literal, pero las
+     fuentes se autohospedan con next/font/google en modo "variable"
+     (ver app/layout.tsx), que genera un nombre de fuente interno -- el
+     string "Quicksand"/"Work Sans" a secas no existe en el navegador.
+     Por eso encadenamos a --font-quicksand/--font-work-sans (definidas
+     por next/font en <body>) antes de los mismos alternos de respaldo. */
+  --font-display: var(--font-quicksand), 'Avenir Next', system-ui, sans-serif;
+  --font-body: var(--font-work-sans), 'Segoe UI', system-ui, sans-serif;
+
+  /* ---- Espaciado (base 4px) ---- */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* ---- Radios ---- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 28px;
+  --radius-2xl: 64px;
+  --radius-pill: 999px;
+
+  /* ---- Tamaños de control / fila ---- */
+  --control-sm: 32px;
+  --control-md: 40px;
+  --control-lg: 48px;
+  --row-compact: 36px;
+  --row-default: 48px;
+  --content-max: 1280px;
+}
+
+/* ---- Tema oscuro — mismas variables semánticas, valores distintos.
+   Se activa con <html data-theme="dark">, ver script anti-flash en
+   app/layout.tsx y components/ThemeToggle.tsx. ---- */
+:root[data-theme='dark'] {
+  --bg-page: var(--noche-900);
+  --bg-surface: var(--noche-800);
+  --bg-subtle: var(--noche-700);
+  --bg-brand: var(--ultramar-ink);
+  --bg-accent: var(--noche-600);
+  --bg-selected: var(--noche-600);
+
+  --text: #eef0fa;
+  --text-heading: #ffffff;
+  --text-muted: #b4b7d4;
+  --text-subtle: #9396b8;
+  --text-link: var(--indigo-pale);
+  --text-on-brand: #ffffff;
+  --text-on-accent: #eef0fa;
+
+  --border: #2a3163;
+  --border-strong: #3a4280;
+  --border-control: #686fa6;
+  --focus-ring: var(--indigo-pale);
+
+  --action-primary: var(--indigo-light);
+  --action-primary-hover: var(--indigo-pale);
+  --on-action-primary: var(--noche-900);
+
+  --success: #7dd3a6;
+  --success-bg: #12301f;
+  --warning: #f5c46b;
+  --warning-bg: #33260a;
+  --danger: #ff9b8f;
+  --danger-bg: #3a1512;
+  --on-danger: var(--noche-900);
+  --info: #c4c2f7;
+  --info-bg: #30368f;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}

@@ -111,31 +111,34 @@ export default function HistorialPage() {
     <div className="flex h-[calc(100vh-64px)] overflow-hidden">
 
       {/* ── PANEL IZQUIERDO ── */}
-      <aside className="w-72 flex-shrink-0 border-r border-gray-100 bg-white flex flex-col">
+      {/* BUG-007: era bg-white fijo -- en modo oscuro el texto del SKU
+          (text-text-heading, token) se vuelve blanco y quedaba blanco sobre
+          blanco, invisible. bg-bg-surface sí cambia con el tema. */}
+      <aside className="w-72 flex-shrink-0 border-r border-border bg-bg-surface flex flex-col">
 
         {/* Buscador */}
-        <div className="p-3 border-b border-gray-100">
+        <div className="p-3 border-b border-border">
           <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-subtle" />
             <input
               ref={filtroRef}
               type="text"
               placeholder="Código o descripción..."
               value={filtro}
               onChange={e => setFiltro(e.target.value)}
-              className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#000d66]/20 bg-gray-50"
+              className="w-full pl-7 pr-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-focus-ring bg-bg-subtle text-text"
               autoFocus
             />
           </div>
         </div>
 
         {/* Selector de cliente — siempre visible, no depende de tener un producto elegido */}
-        <div className="px-3 py-2.5 border-b border-gray-100">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Cliente</p>
+        <div className="px-3 py-2.5 border-b border-border">
+          <p className="text-[10px] font-semibold text-text-subtle uppercase tracking-wide mb-1.5">Cliente</p>
           <select
             value={clienteId}
             onChange={e => setClienteId(e.target.value)}
-            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+            className="w-full text-xs border border-border rounded-lg px-2 py-1.5 bg-bg-subtle text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
           >
             <option value="">Todos los clientes</option>
             {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -144,17 +147,18 @@ export default function HistorialPage() {
 
         {/* Selector de categorías */}
         {!cargandoRefs && categorias.length > 0 && (
-          <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/60">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+          <div className="px-3 py-2.5 border-b border-border bg-bg-subtle/60">
+            <p className="text-[10px] font-semibold text-text-subtle uppercase tracking-wide mb-2 flex items-center gap-1">
               <Tag size={10} /> Categoría
             </p>
             <div className="flex flex-wrap gap-1.5">
+              {/* Chips de filtro -- cuarzo (bg-accent), igual que en /catalogo. */}
               <button
                 onClick={() => setCatFiltro(null)}
                 className={`text-[11px] px-2 py-0.5 rounded-full border font-medium transition-colors ${
                   !categoriaFiltro
-                    ? 'bg-[#000d66] text-white border-[#000d66]'
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                    ? 'bg-bg-accent text-text-on-accent border-bg-accent'
+                    : 'bg-bg-surface text-text-muted border-border hover:border-border-strong'
                 }`}
               >
                 Todas
@@ -169,8 +173,8 @@ export default function HistorialPage() {
                   }}
                   className={`text-[11px] px-2 py-0.5 rounded-full border font-medium transition-colors ${
                     categoriaFiltro === id
-                      ? 'bg-[#000d66] text-white border-[#000d66]'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-[#000d66] hover:text-[#000d66]'
+                      ? 'bg-bg-accent text-text-on-accent border-bg-accent'
+                      : 'bg-bg-surface text-text-muted border-border hover:border-ultramar hover:text-ultramar'
                   }`}
                 >
                   {nombre}
@@ -181,8 +185,8 @@ export default function HistorialPage() {
         )}
 
         {/* Contador */}
-        <div className="px-3 py-1.5 border-b border-gray-50 flex items-center justify-between">
-          <p className="text-[11px] text-gray-400">
+        <div className="px-3 py-1.5 border-b border-border flex items-center justify-between">
+          <p className="text-[11px] text-text-subtle">
             {cargandoRefs
               ? 'Cargando...'
               : `${refsFiltradas.length} referencia${refsFiltradas.length !== 1 ? 's' : ''}${categoriaFiltro ? '' : ''}`
@@ -191,7 +195,7 @@ export default function HistorialPage() {
           {seleccionado && (
             <button
               onClick={() => setSeleccionado(null)}
-              className="text-[11px] font-medium text-[#000d66] hover:underline"
+              className="text-[11px] font-medium text-text-link hover:underline"
             >
               Todos
             </button>
@@ -201,27 +205,30 @@ export default function HistorialPage() {
         {/* Lista de referencias */}
         <div className="flex-1 overflow-y-auto">
           {cargandoRefs ? (
-            <div className="p-4 text-xs text-gray-400 text-center">Cargando...</div>
+            <div className="p-4 text-xs text-text-subtle text-center">Cargando...</div>
           ) : refsFiltradas.length === 0 ? (
-            <div className="p-4 text-xs text-gray-400 text-center">Sin resultados</div>
+            <div className="p-4 text-xs text-text-subtle text-center">Sin resultados</div>
           ) : (
             refsFiltradas.map(r => (
+              // Fila seleccionada -- bg-selected (cuarzo-soft), el rol que el
+              // sistema de Marta define para "fila seleccionada en tablas,
+              // opción activa de menús" (antes era un bloque navy sólido).
               <button
                 key={r.codigo_pdf}
                 onClick={() => setSeleccionado(r)}
-                className={`w-full text-left px-3 py-2.5 border-b border-gray-50 transition-colors ${
+                className={`w-full text-left px-3 py-2.5 border-b border-border transition-colors ${
                   seleccionado?.codigo_pdf === r.codigo_pdf
-                    ? 'bg-[#000d66]'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-bg-selected'
+                    : 'hover:bg-bg-subtle'
                 }`}
               >
-                <p className={`font-mono text-xs font-semibold ${
-                  seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-blue-200' : 'text-[#000d66]'
+                <p className={`text-text-code ${
+                  seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-text-on-accent' : 'text-text-heading'
                 }`}>
                   {r.codigo_pdf}
                 </p>
                 <p className={`text-xs mt-0.5 line-clamp-1 ${
-                  seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-blue-100' : 'text-gray-500'
+                  seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-text-muted' : 'text-text-muted'
                 }`}>
                   {r.descripcion_pdf || '—'}
                 </p>
@@ -239,11 +246,11 @@ export default function HistorialPage() {
       </aside>
 
       {/* ── PANEL DERECHO ── */}
-      <main className="flex-1 overflow-y-auto bg-gray-50">
+      <main className="flex-1 overflow-y-auto bg-bg-page">
         {!seleccionado && !clienteId ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-300 gap-3">
+          <div className="flex flex-col items-center justify-center h-full text-text-subtle gap-3">
             <Search size={44} strokeWidth={1} />
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-text-subtle">
               {categoriaFiltro
                 ? 'Selecciona una referencia de la categoría'
                 : 'Selecciona una referencia o un cliente en el panel izquierdo'}
@@ -256,7 +263,7 @@ export default function HistorialPage() {
               <div>
                 {seleccionado ? (
                   <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-xl font-bold text-[#000d66] font-mono">{seleccionado.codigo_pdf}</h2>
+                    <h2 className="text-heading-2 font-display text-text-heading">{seleccionado.codigo_pdf}</h2>
                     {seleccionado.categoria_nombre && (
                       <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${catColor}`}>
                         {seleccionado.categoria_nombre}
@@ -264,25 +271,25 @@ export default function HistorialPage() {
                     )}
                   </div>
                 ) : (
-                  <h2 className="text-xl font-bold text-[#000d66]">{clienteSeleccionado?.nombre}</h2>
+                  <h2 className="text-heading-2 font-display text-text-heading">{clienteSeleccionado?.nombre}</h2>
                 )}
-                <p className="text-gray-500 text-sm">
+                <p className="text-text-muted text-sm">
                   {seleccionado
                     ? seleccionado.descripcion_pdf
                     : `Historial de todas las referencias compradas por este cliente`}
                 </p>
               </div>
               {seleccionado && clienteSeleccionado && (
-                <span className="text-xs px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600">
-                  Filtrado por <span className="font-semibold text-[#000d66]">{clienteSeleccionado.nombre}</span>
+                <span className="text-xs px-3 py-1.5 rounded-lg bg-bg-surface border border-border text-text-muted">
+                  Filtrado por <span className="font-semibold text-text-heading">{clienteSeleccionado.nombre}</span>
                 </span>
               )}
             </div>
 
             {cargandoDetalle ? (
-              <div className="text-center p-10 text-gray-400 text-sm">Cargando historial...</div>
+              <div className="text-center p-10 text-text-subtle text-sm">Cargando historial...</div>
             ) : filas.length === 0 ? (
-              <div className="text-center p-10 text-gray-400 text-sm">
+              <div className="text-center p-10 text-text-subtle text-sm">
                 {seleccionado ? 'Sin registros para esta referencia' : 'Sin registros para este cliente'}
               </div>
             ) : (
@@ -290,34 +297,34 @@ export default function HistorialPage() {
                 {/* Stats — solo tienen sentido mirando una referencia puntual */}
                 {seleccionado && stats && (
                   <div className="grid grid-cols-4 gap-3 mb-5">
-                    <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-                      <p className="text-xs text-gray-400 mb-1">Último precio</p>
-                      <p className="font-bold text-[#000d66] text-base">
+                    <div className="bg-bg-surface rounded-xl border border-border p-3 text-center">
+                      <p className="text-xs text-text-subtle mb-1">Último precio</p>
+                      <p className="font-bold tabular-nums text-text-heading text-base">
                         {filas[0].precio_cliente_usd ? formatUSD(filas[0].precio_cliente_usd) : '—'}
                       </p>
                       {tendencia !== null && (
                         <p className={`text-xs mt-0.5 flex items-center justify-center gap-0.5 ${
-                          tendencia > 0 ? 'text-red-500' : tendencia < 0 ? 'text-green-600' : 'text-gray-400'
+                          tendencia > 0 ? 'text-red-500' : tendencia < 0 ? 'text-green-600' : 'text-text-subtle'
                         }`}>
                           {tendencia > 0 ? <TrendingUp size={11} /> : tendencia < 0 ? <TrendingDown size={11} /> : <Minus size={11} />}
                           {tendencia !== 0 ? formatUSD(Math.abs(tendencia)) : 'Sin cambio'}
                         </p>
                       )}
                     </div>
-                    <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-                      <p className="text-xs text-gray-400 mb-1">Rango precios</p>
-                      <p className="font-semibold text-gray-700 text-sm">
+                    <div className="bg-bg-surface rounded-xl border border-border p-3 text-center">
+                      <p className="text-xs text-text-subtle mb-1">Rango precios</p>
+                      <p className="font-semibold text-text text-sm">
                         {formatUSD(stats.precioMin)} – {formatUSD(stats.precioMax)}
                       </p>
                     </div>
-                    <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-                      <p className="text-xs text-gray-400 mb-1">Último costo China</p>
-                      <p className="font-semibold text-gray-600 text-sm">
+                    <div className="bg-bg-surface rounded-xl border border-border p-3 text-center">
+                      <p className="text-xs text-text-subtle mb-1">Último costo China</p>
+                      <p className="font-semibold text-text-muted text-sm">
                         {filas[0].precio_costo_usd ? formatUSD(filas[0].precio_costo_usd) : '—'}
                       </p>
                     </div>
-                    <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-                      <p className="text-xs text-gray-400 mb-1">Margen promedio</p>
+                    <div className="bg-bg-surface rounded-xl border border-border p-3 text-center">
+                      <p className="text-xs text-text-subtle mb-1">Margen promedio</p>
                       <p className={`font-bold text-sm ${
                         stats.margenProm < 0.08 ? 'text-red-500' :
                         stats.margenProm < 0.12 ? 'text-amber-500' : 'text-green-600'
@@ -328,27 +335,29 @@ export default function HistorialPage() {
                   </div>
                 )}
 
-                {/* Tabla */}
-                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                {/* Tabla -- BUG-007: el contenedor era bg-white fijo; el número de
+                    proforma y "Precio cliente" usan text-text-heading (token, se
+                    vuelve blanco en modo oscuro) y quedaban invisibles. */}
+                <div className="bg-bg-surface rounded-xl border border-border overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-gray-50 border-b border-gray-100">
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Fecha</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Proforma</th>
+                      <tr className="bg-bg-subtle border-b border-border">
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Fecha</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Proforma</th>
                         {seleccionado ? (
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Cliente</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Cliente</th>
                         ) : (
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Código</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Código</th>
                         )}
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Costo China</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Precio cliente</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Margen</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Costo China</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Precio cliente</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Margen</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filas.map((f, i) => (
-                        <tr key={f.id} className={`border-b border-gray-50 ${i === 0 ? 'bg-blue-50/40' : ''}`}>
-                          <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        <tr key={f.id} className={`border-b border-border ${i === 0 ? 'bg-bg-selected/40' : ''}`}>
+                          <td className="px-4 py-3 text-xs text-text-muted whitespace-nowrap">
                             {f.fecha_proforma
                               ? new Date(f.fecha_proforma + 'T00:00:00').toLocaleDateString('es-PA', {
                                   day: '2-digit', month: 'short', year: 'numeric'
@@ -360,26 +369,26 @@ export default function HistorialPage() {
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs font-semibold text-[#000d66]">
+                          <td className="px-4 py-3 text-text-code text-text-heading">
                             {f.proforma_numero}
                           </td>
                           {seleccionado ? (
-                            <td className="px-4 py-3 text-xs text-gray-600">
+                            <td className="px-4 py-3 text-xs text-text-muted">
                               {f.clientes?.nombre || '—'}
                             </td>
                           ) : (
-                            <td className="px-4 py-3 font-mono text-xs text-gray-600">
+                            <td className="px-4 py-3 text-text-code text-text-muted">
                               {f.codigo_pdf}
                             </td>
                           )}
-                          <td className="px-4 py-3 text-right text-xs text-gray-500">
+                          <td className="px-4 py-3 text-right text-xs text-text-muted">
                             {f.precio_costo_usd != null ? formatUSD(f.precio_costo_usd) : '—'}
                           </td>
-                          <td className="px-4 py-3 text-right font-bold text-[#000d66]">
+                          <td className="px-4 py-3 text-right font-bold tabular-nums text-text-heading">
                             {f.precio_cliente_usd != null ? formatUSD(f.precio_cliente_usd) : '—'}
                           </td>
                           <td className={`px-4 py-3 text-right text-xs font-semibold ${
-                            f.margen_pct == null ? 'text-gray-300' :
+                            f.margen_pct == null ? 'text-text-subtle' :
                             f.margen_pct < 0.08 ? 'text-red-500' :
                             f.margen_pct < 0.12 ? 'text-amber-500' : 'text-green-600'
                           }`}>
@@ -389,7 +398,7 @@ export default function HistorialPage() {
                       ))}
                     </tbody>
                   </table>
-                  <div className="px-4 py-2 border-t border-gray-100 text-xs text-gray-400">
+                  <div className="px-4 py-2 border-t border-border text-xs text-text-subtle">
                     {filas.length} proforma{filas.length !== 1 ? 's' : ''} · más reciente primero
                   </div>
                 </div>

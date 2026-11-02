@@ -103,34 +103,36 @@ export default function NotifBell() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setAbierto(v => !v)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className="relative p-2 rounded-lg hover:bg-bg-subtle transition-colors"
         aria-label="Notificaciones"
       >
-        <Bell size={19} className="text-gray-600" />
+        <Bell size={19} className="text-text-muted" />
         {noLeidas > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 bg-danger text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
             {noLeidas > 9 ? '9+' : noLeidas}
           </span>
         )}
       </button>
 
       {abierto && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 max-h-96 overflow-y-auto">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-[#000d66]">Notificaciones</p>
+        <div className="absolute right-0 mt-2 w-80 bg-bg-surface rounded-xl shadow-lg border border-border z-50 max-h-96 overflow-y-auto">
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-sm font-semibold text-text-heading font-display">Notificaciones</p>
           </div>
           {notifs.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-8">Sin notificaciones</p>
+            <p className="text-xs text-text-subtle text-center py-8">Sin notificaciones</p>
           ) : (
             notifs.map(n => (
               <Link
                 key={n.id}
                 href={n.proforma_id ? '/proformas' : '#'}
                 onClick={() => !n.leida && marcarLeida(n.id)}
-                className={`block px-4 py-3 border-b border-gray-50 hover:bg-gray-50 ${!n.leida ? 'bg-blue-50/40' : ''}`}
+                className={`block px-4 py-3 border-b border-border hover:bg-bg-subtle ${!n.leida ? 'bg-bg-selected/40' : ''}`}
               >
-                <p className="text-xs text-gray-700">{n.mensaje}</p>
-                <p className="text-[10px] text-gray-400 mt-1">{tiempoRelativo(n.created_at)}</p>
+                {/* BUG-007: text-gray-700 (fijo) sobre este contenedor
+                    bg-bg-surface -- en modo oscuro casi invisible. */}
+                <p className="text-xs text-text">{n.mensaje}</p>
+                <p className="text-[10px] text-text-subtle mt-1">{tiempoRelativo(n.created_at)}</p>
               </Link>
             ))
           )}

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Inbox, Package, Link as LinkIcon, Check, X, ChevronRight,
+  Package, Link as LinkIcon, Check, X, ChevronRight,
   Copy, CheckCircle2, Undo2, Clock, Plus, Loader2, Mail, Pencil,
   TrendingUp, TrendingDown, Minus, History, Users, Tag,
 } from 'lucide-react'
@@ -10,6 +10,8 @@ import { formatUSD, formatPct } from '@/lib/precio'
 import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS } from '@/types/europartners'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
+import Badge, { type BadgeVariant } from '@/components/ui/Badge'
+import DataTable from '@/components/ui/DataTable'
 
 interface Cliente {
   id: string
@@ -78,12 +80,15 @@ interface LineaComparacion {
   precio_especial: PrecioEspecialResumen | null
 }
 
-const ESTADO_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-  pendiente:  { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pendiente' },
-  revisada:   { bg: 'bg-blue-100',   text: 'text-blue-700',   label: 'Revisada' },
-  convertida: { bg: 'bg-green-100',  text: 'text-green-700',  label: 'Convertida' },
-  descartada: { bg: 'bg-gray-100',   text: 'text-gray-500',   label: 'Descartada' },
-  devuelta:   { bg: 'bg-amber-100',  text: 'text-amber-700',  label: 'Devuelta al cliente' },
+// Colapso de colores ad-hoc a los 4 tokens semánticos (+ neutral) del
+// sistema de Marta -- ver Badge.tsx. Este es el estado de la SOLICITUD
+// (distinto del estado de la proforma en proformas/page.tsx).
+const ESTADO_STYLE: Record<string, { variant: BadgeVariant; label: string }> = {
+  pendiente:  { variant: 'warning', label: 'Pendiente' },
+  revisada:   { variant: 'info',    label: 'Revisada' },
+  convertida: { variant: 'success', label: 'Convertida' },
+  descartada: { variant: 'neutral', label: 'Descartada' },
+  devuelta:   { variant: 'warning', label: 'Devuelta al cliente' },
 }
 
 function fechaCorta(iso: string) {
@@ -272,15 +277,15 @@ export default function SolicitudesPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden">
       {/* Encabezado */}
-      <div className="px-8 pt-7 pb-4 bg-white border-b border-gray-100 flex-shrink-0">
+      <div className="px-8 pt-7 pb-4 bg-bg-surface border-b border-border flex-shrink-0">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold text-[#000d66]">Solicitudes de Clientes</h1>
-            <p className="text-gray-400 text-sm mt-0.5">Pedidos entrantes antes de convertirlos en proforma</p>
+            <h1 className="text-2xl font-bold text-text-heading">Solicitudes de Clientes</h1>
+            <p className="text-text-subtle text-sm mt-0.5">Pedidos entrantes antes de convertirlos en proforma</p>
           </div>
           <button
             onClick={() => setShowLinks(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm border border-border bg-bg-surface text-text-muted hover:bg-bg-subtle"
           >
             <LinkIcon size={15} /> Links de pedido por cliente
           </button>
@@ -292,7 +297,7 @@ export default function SolicitudesPage() {
               key={value}
               onClick={() => setEstadoFiltro(value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                estadoFiltro === value ? 'bg-[#000d66] text-white border-[#000d66]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                estadoFiltro === value ? 'bg-bg-accent text-text-on-accent border-bg-accent' : 'bg-bg-surface text-text-muted border-border hover:border-border-control'
               }`}
             >
               {label}
@@ -303,66 +308,45 @@ export default function SolicitudesPage() {
 
       {/* Lista */}
       <div className="flex-1 overflow-y-auto px-8 py-4">
-        {loading ? (
-          <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Cargando solicitudes...</div>
-        ) : solicitudes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2">
-            <Inbox size={36} strokeWidth={1} />
-            <p className="text-sm">No hay solicitudes en este estado</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Cliente</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Fecha</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">Artículos</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Estado</th>
-                  <th className="w-8 px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {solicitudes.map(s => {
-                  const st = ESTADO_STYLE[s.estado]
-                  return (
-                    <tr
-                      key={s.id}
-                      className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors cursor-pointer"
-                      onClick={() => setSeleccionada(s)}
-                    >
-                      <td className="px-4 py-3 font-medium text-gray-800">{s.cliente?.nombre ?? '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{fechaCorta(s.created_at)}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                          {s.lineas?.length ?? 0}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
-                          {st.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-300"><ChevronRight size={15} /></td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          loading={loading}
+          emptyMessage="No hay solicitudes en este estado"
+          rows={solicitudes}
+          rowKey={s => s.id}
+          onRowClick={s => setSeleccionada(s)}
+          columns={[
+            { key: 'cliente', header: 'Cliente', cellClassName: 'font-medium text-text', render: s => s.cliente?.nombre ?? '—' },
+            { key: 'fecha', header: 'Fecha', cellClassName: 'text-text-muted text-xs', render: s => fechaCorta(s.created_at) },
+            {
+              key: 'articulos',
+              header: 'Artículos',
+              align: 'center',
+              render: s => (
+                <span className="text-xs font-semibold text-text-muted bg-bg-subtle px-2 py-0.5 rounded-full">
+                  {s.lineas?.length ?? 0}
+                </span>
+              ),
+            },
+            {
+              key: 'estado',
+              header: 'Estado',
+              render: s => <Badge variant={ESTADO_STYLE[s.estado].variant}>{ESTADO_STYLE[s.estado].label}</Badge>,
+            },
+            { key: 'chevron', header: '', thClassName: 'w-8', cellClassName: 'text-text-subtle', render: () => <ChevronRight size={15} /> },
+          ]}
+        />
       </div>
 
       {/* Modal detalle */}
       {seleccionada && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <div>
-                <h2 className="text-lg font-bold text-gray-800">{seleccionada.cliente?.nombre}</h2>
-                <p className="text-xs text-gray-400">{fechaCorta(seleccionada.created_at)}</p>
+                <h2 className="text-lg font-bold text-text">{seleccionada.cliente?.nombre}</h2>
+                <p className="text-xs text-text-subtle">{fechaCorta(seleccionada.created_at)}</p>
               </div>
-              <button onClick={() => setSeleccionada(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSeleccionada(null)} className="text-text-subtle hover:text-text-muted">
                 <X size={20} />
               </button>
             </div>
@@ -372,24 +356,24 @@ export default function SolicitudesPage() {
                 {seleccionada.lineas.map(l => {
                   const comp = comparacion?.[l.id]
                   return (
-                    <div key={l.id} className="flex items-center gap-3 border-b border-gray-50 pb-3">
-                      <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                    <div key={l.id} className="flex items-center gap-3 border-b border-border pb-3">
+                      <div className="w-9 h-9 rounded-lg bg-bg-subtle flex items-center justify-center flex-shrink-0">
                         {l.producto?.imagen_url ? (
                           <img src={l.producto.imagen_url} alt="" className="w-full h-full object-contain rounded-lg" />
                         ) : (
-                          <Package size={16} className="text-gray-300" />
+                          <Package size={16} className="text-text-subtle" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        {l.producto?.codigo && <p className="font-mono text-xs text-gray-400">{l.producto.codigo}</p>}
-                        <p className="text-sm text-gray-800 truncate">{l.producto?.nombre || l.descripcion_libre}</p>
+                        {l.producto?.codigo && <p className="font-mono text-xs text-text-subtle">{l.producto.codigo}</p>}
+                        <p className="text-sm text-text truncate">{l.producto?.nombre || l.descripcion_libre}</p>
 
                         {l.producto_id && (
                           cargandoComparacion ? (
-                            <p className="text-[11px] text-gray-300 mt-0.5 animate-pulse">Consultando historial...</p>
+                            <p className="text-[11px] text-text-subtle mt-0.5 animate-pulse">Consultando historial...</p>
                           ) : comp?.tiene_historial ? (
                             <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5 text-[11px]">
-                              <span className="flex items-center gap-1 text-gray-400">
+                              <span className="flex items-center gap-1 text-text-subtle">
                                 <History size={10} />
                                 Antes {formatUSD(comp.ultimo_precio_cliente!)}
                                 {comp.ultima_fecha && ` · ${fechaCorta(comp.ultima_fecha)}`}
@@ -397,7 +381,7 @@ export default function SolicitudesPage() {
                               </span>
                               {comp.precio_catalogo_actual != null && comp.diferencia_pct != null && (
                                 <span className={`flex items-center gap-0.5 font-semibold ${
-                                  comp.tendencia === 'subio' ? 'text-green-600' : comp.tendencia === 'bajo' ? 'text-red-500' : 'text-gray-400'
+                                  comp.tendencia === 'subio' ? 'text-success' : comp.tendencia === 'bajo' ? 'text-danger' : 'text-text-subtle'
                                 }`}>
                                   {comp.tendencia === 'subio' && <TrendingUp size={10} />}
                                   {comp.tendencia === 'bajo' && <TrendingDown size={10} />}
@@ -409,22 +393,22 @@ export default function SolicitudesPage() {
                           ) : comp && !comp.tiene_historial ? (
                             <div className="mt-0.5 space-y-0.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-[11px] text-gray-300">Sin historial de precio con este cliente</p>
+                                <p className="text-[11px] text-text-subtle">Sin historial de precio con este cliente</p>
                                 {l.producto?.codigo && (
                                   <button
                                     onClick={() => setAgregandoPrecioCodigo(l.producto!.codigo)}
-                                    className="text-[11px] text-[#000d66] hover:underline font-medium"
+                                    className="text-[11px] text-action-primary hover:underline font-medium"
                                   >
                                     + Agregar precio de referencia
                                   </button>
                                 )}
                               </div>
                               {comp.otros_clientes.length > 0 && (
-                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-gray-400">
+                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-text-subtle">
                                   <Users size={10} className="flex-shrink-0" />
                                   {comp.otros_clientes.map((oc, i) => (
                                     <span key={i}>
-                                      {oc.cliente_nombre}: <strong className="text-gray-500">{formatUSD(oc.precio_cliente_usd)}</strong>
+                                      {oc.cliente_nombre}: <strong className="text-text-muted">{formatUSD(oc.precio_cliente_usd)}</strong>
                                       {oc.fecha_proforma && ` (${fechaCorta(oc.fecha_proforma)})`}
                                       {i < comp.otros_clientes.length - 1 && ' ·'}
                                     </span>
@@ -438,16 +422,16 @@ export default function SolicitudesPage() {
                           <div className="mt-0.5">
                             {comp?.precio_especial ? (
                               <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
-                                <Tag size={10} className="text-amber-500 flex-shrink-0" />
-                                <span className="text-amber-600 font-semibold">
+                                <Tag size={10} className="text-warning flex-shrink-0" />
+                                <span className="text-warning font-semibold">
                                   Precio especial: {formatUSD(comp.precio_especial.precio_usd)}
                                 </span>
                                 {comp.precio_especial.motivo && (
-                                  <span className="text-gray-400">— {comp.precio_especial.motivo}</span>
+                                  <span className="text-text-subtle">— {comp.precio_especial.motivo}</span>
                                 )}
                                 <button
                                   onClick={() => quitarPrecioEspecial(comp.precio_especial!.id)}
-                                  className="text-gray-400 hover:text-red-500 hover:underline"
+                                  className="text-text-subtle hover:text-danger hover:underline"
                                 >
                                   Quitar
                                 </button>
@@ -455,7 +439,7 @@ export default function SolicitudesPage() {
                             ) : (
                               <button
                                 onClick={() => setFijandoPrecioCodigo(l.producto!.codigo)}
-                                className="text-[11px] text-amber-600 hover:underline font-medium"
+                                className="text-[11px] text-warning hover:underline font-medium"
                               >
                                 + Fijar precio especial para este cliente
                               </button>
@@ -463,23 +447,23 @@ export default function SolicitudesPage() {
                           </div>
                         )}
                       </div>
-                      <span className="text-sm font-semibold text-gray-600 flex-shrink-0">×{l.cantidad}</span>
+                      <span className="text-sm font-semibold text-text-muted flex-shrink-0">×{l.cantidad}</span>
                     </div>
                   )
                 })}
               </div>
 
               {seleccionada.notas_cliente && (
-                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 mb-3">
-                  <p className="text-xs font-semibold text-yellow-700 mb-1">Notas del cliente</p>
-                  <p className="text-sm text-yellow-800">{seleccionada.notas_cliente}</p>
+                <div className="bg-warning-bg border border-warning rounded-lg p-3 mb-3">
+                  <p className="text-xs font-semibold text-warning mb-1">Notas del cliente</p>
+                  <p className="text-sm text-warning">{seleccionada.notas_cliente}</p>
                 </div>
               )}
 
               {seleccionada.motivo_devolucion && seleccionada.estado === 'devuelta' && (
-                <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 mb-3">
-                  <p className="text-xs font-semibold text-amber-700 mb-1">Observación enviada al cliente</p>
-                  <p className="text-sm text-amber-800 mb-2">{seleccionada.motivo_devolucion}</p>
+                <div className="bg-warning-bg border border-warning rounded-lg p-3 mb-3">
+                  <p className="text-xs font-semibold text-warning mb-1">Observación enviada al cliente</p>
+                  <p className="text-sm text-warning mb-2">{seleccionada.motivo_devolucion}</p>
                   {seleccionada.token_edicion && (
                     <button
                       onClick={() => {
@@ -487,10 +471,10 @@ export default function SolicitudesPage() {
                         setCopiadoId(seleccionada.id)
                         setTimeout(() => setCopiadoId(null), 2000)
                       }}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-amber-200 hover:bg-amber-100 text-amber-700"
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-bg-surface border border-warning hover:bg-warning-bg text-warning"
                     >
                       {copiadoId === seleccionada.id ? (
-                        <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                        <><CheckCircle2 size={13} className="text-success" /> Copiado</>
                       ) : (
                         <><Copy size={13} /> Copiar link para el cliente</>
                       )}
@@ -500,18 +484,18 @@ export default function SolicitudesPage() {
               )}
 
               {seleccionada.eventos && seleccionada.eventos.length > 0 && (
-                <div className="border border-gray-100 rounded-lg p-3">
-                  <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                <div className="border border-border rounded-lg p-3">
+                  <p className="text-xs font-semibold text-text-muted mb-2 flex items-center gap-1.5">
                     <Clock size={12} /> Historial
                   </p>
                   <div className="space-y-2">
                     {[...seleccionada.eventos]
                       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                       .map(ev => (
-                        <div key={ev.id} className="text-xs text-gray-600">
+                        <div key={ev.id} className="text-xs text-text-muted">
                           <span className="font-semibold">{ev.tipo === 'devuelta' ? 'Devuelta al cliente' : 'Cliente reenvió'}</span>
                           {' · '}{fechaCorta(ev.created_at)}
-                          {ev.comentario && <p className="text-gray-500 mt-0.5">{ev.comentario}</p>}
+                          {ev.comentario && <p className="text-text-muted mt-0.5">{ev.comentario}</p>}
                         </div>
                       ))}
                   </div>
@@ -520,25 +504,24 @@ export default function SolicitudesPage() {
             </div>
 
             {puedeEditar && (seleccionada.estado === 'pendiente' || seleccionada.estado === 'revisada') && (
-              <div className="p-5 border-t border-gray-100 flex gap-3">
+              <div className="p-5 border-t border-border flex gap-3">
                 <button
                   onClick={() => convertir(seleccionada)}
                   disabled={convirtiendo}
-                  className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                  style={{ background: '#000d66' }}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover disabled:opacity-40 flex items-center justify-center gap-2"
                 >
                   <Check size={16} />
                   {convirtiendo ? 'Convirtiendo...' : 'Convertir a proforma'}
                 </button>
                 <button
                   onClick={() => setShowDevolver(true)}
-                  className="px-4 py-2.5 rounded-xl border border-amber-200 text-sm text-amber-700 hover:bg-amber-50 flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-xl border border-warning text-sm text-warning hover:bg-warning-bg flex items-center gap-1.5"
                 >
                   <Undo2 size={15} /> Devolver
                 </button>
                 <button
                   onClick={() => descartar(seleccionada)}
-                  className="px-4 py-2.5 rounded-xl border text-sm text-gray-500 hover:bg-gray-50"
+                  className="px-4 py-2.5 rounded-xl border text-sm text-text-muted hover:bg-bg-subtle"
                 >
                   Descartar
                 </button>
@@ -570,15 +553,15 @@ export default function SolicitudesPage() {
       {/* Modal devolver con observación */}
       {showDevolver && seleccionada && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800">Devolver pedido al cliente</h2>
-              <button onClick={() => setShowDevolver(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h2 className="text-lg font-bold text-text">Devolver pedido al cliente</h2>
+              <button onClick={() => setShowDevolver(false)} className="text-text-subtle hover:text-text-muted">
                 <X size={20} />
               </button>
             </div>
             <div className="p-5">
-              <p className="text-sm text-gray-500 mb-3">
+              <p className="text-sm text-text-muted mb-3">
                 {seleccionada.cliente?.nombre} recibirá un link para revisar y editar su pedido con tu observación.
               </p>
               <textarea
@@ -586,15 +569,14 @@ export default function SolicitudesPage() {
                 value={comentarioDevolver}
                 onChange={e => setComentarioDevolver(e.target.value)}
                 placeholder="Ej: ¿confirmas el color blanco para el modelo TZ-0425HS?"
-                className="w-full border border-gray-200 rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-amber-200"
+                className="bg-bg-surface w-full border border-border rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-warning"
               />
             </div>
-            <div className="p-5 border-t border-gray-100 flex gap-3">
+            <div className="p-5 border-t border-border flex gap-3">
               <button
                 onClick={devolver}
                 disabled={devolviendo || !comentarioDevolver.trim()}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: '#ccc8fa', color: '#000d66' }}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {devolviendo ? 'Enviando...' : 'Devolver con observación'}
               </button>
@@ -606,15 +588,15 @@ export default function SolicitudesPage() {
       {/* Modal links de pedido */}
       {showLinks && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800">Links de pedido por cliente</h2>
-              <button onClick={() => setShowLinks(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h2 className="text-lg font-bold text-text">Links de pedido por cliente</h2>
+              <button onClick={() => setShowLinks(false)} className="text-text-subtle hover:text-text-muted">
                 <X size={20} />
               </button>
             </div>
             <div className="p-5 space-y-2 max-h-[70vh] overflow-y-auto">
-              <p className="text-xs text-gray-400 mb-3">
+              <p className="text-xs text-text-subtle mb-3">
                 Cada cliente tiene 2 links fijos — uno con precio mayorista y otro con precio
                 detallista, según cuál le quieras compartir. Cada uno siempre lleva a su
                 formulario de pedido con esos precios.
@@ -623,19 +605,19 @@ export default function SolicitudesPage() {
               {!puedeEditar ? null : !showNuevoCliente ? (
                 <button
                   onClick={() => setShowNuevoCliente(true)}
-                  className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-lg border border-dashed border-gray-200 text-gray-500 hover:border-[#000d66] hover:text-[#000d66] mb-3"
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-lg border border-dashed border-border text-text-muted hover:border-action-primary hover:text-action-primary mb-3"
                 >
                   <Plus size={14} /> Nuevo cliente
                 </button>
               ) : (
-                <div className="border border-gray-200 rounded-lg p-3 mb-3 space-y-2 bg-gray-50">
+                <div className="border border-border rounded-lg p-3 mb-3 space-y-2 bg-bg-subtle">
                   <input
                     autoFocus
                     type="text"
                     placeholder="Nombre del cliente"
                     value={nombreNuevo}
                     onChange={e => setNombreNuevo(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                    className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                   />
                   <div className="flex gap-2">
                     <input
@@ -643,30 +625,29 @@ export default function SolicitudesPage() {
                       placeholder="País (opcional)"
                       value={paisNuevo}
                       onChange={e => setPaisNuevo(e.target.value)}
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                      className="bg-bg-surface flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                     />
                     <select
                       value={tipoNuevo}
                       onChange={e => setTipoNuevo(e.target.value as 'mayorista' | 'detallista')}
-                      className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                      className="bg-bg-surface border border-border rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                     >
                       <option value="mayorista">Mayorista</option>
                       <option value="detallista">Detallista</option>
                     </select>
                   </div>
-                  {errorNuevoCliente && <p className="text-xs text-red-500">{errorNuevoCliente}</p>}
+                  {errorNuevoCliente && <p className="text-xs text-danger">{errorNuevoCliente}</p>}
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => { setShowNuevoCliente(false); setErrorNuevoCliente('') }}
-                      className="flex-1 text-xs font-semibold py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100"
+                      className="flex-1 text-xs font-semibold py-2 rounded-lg border border-border text-text-muted hover:bg-bg-subtle"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={crearCliente}
                       disabled={!nombreNuevo.trim() || creandoCliente}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg text-white disabled:opacity-40"
-                      style={{ background: '#000d66' }}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg bg-action-primary text-on-action-primary hover:bg-action-primary-hover disabled:opacity-40"
                     >
                       {creandoCliente && <Loader2 size={13} className="animate-spin" />}
                       Crear cliente
@@ -676,22 +657,22 @@ export default function SolicitudesPage() {
               )}
 
               {clientes.map(c => (
-                <div key={c.id} className="border border-gray-100 rounded-lg px-3 py-2.5">
+                <div key={c.id} className="border border-border rounded-lg px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-gray-700">{c.nombre}</span>
+                      <span className="text-sm font-medium text-text">{c.nombre}</span>
                       <div className="flex items-center gap-1 mt-0.5">
                         {c.contacto_email ? (
-                          <span className="flex items-center gap-1 text-[11px] text-green-600 truncate">
+                          <span className="flex items-center gap-1 text-[11px] text-success truncate">
                             <Mail size={10} /> {c.contacto_email}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-amber-500">Sin correo de contacto</span>
+                          <span className="text-[11px] text-warning">Sin correo de contacto</span>
                         )}
                         {puedeEditar && (
                           <button
                             onClick={() => editandoContactoId === c.id ? setEditandoContactoId(null) : abrirEditarContacto(c)}
-                            className="text-gray-300 hover:text-[#000d66] flex-shrink-0"
+                            className="text-text-subtle hover:text-action-primary flex-shrink-0"
                             title="Ver/editar contacto"
                           >
                             <Pencil size={11} />
@@ -702,20 +683,20 @@ export default function SolicitudesPage() {
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button
                         onClick={() => copiarLink(c, 'mayorista')}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
+                        className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-bg-subtle hover:bg-bg-subtle text-text-muted"
                       >
                         {copiadoId === c.id && copiadoTipo === 'mayorista' ? (
-                          <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                          <><CheckCircle2 size={13} className="text-success" /> Copiado</>
                         ) : (
                           <><Copy size={13} /> Mayorista</>
                         )}
                       </button>
                       <button
                         onClick={() => copiarLink(c, 'detallista')}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600"
+                        className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-bg-subtle hover:bg-bg-subtle text-text-muted"
                       >
                         {copiadoId === c.id && copiadoTipo === 'detallista' ? (
-                          <><CheckCircle2 size={13} className="text-green-600" /> Copiado</>
+                          <><CheckCircle2 size={13} className="text-success" /> Copiado</>
                         ) : (
                           <><Copy size={13} /> Detallista</>
                         )}
@@ -724,20 +705,20 @@ export default function SolicitudesPage() {
                   </div>
 
                   {editandoContactoId === c.id && (
-                    <div className="mt-2.5 pt-2.5 border-t border-gray-100 space-y-2">
+                    <div className="mt-2.5 pt-2.5 border-t border-border space-y-2">
                       <input
                         type="text"
                         placeholder="Nombre de contacto"
                         value={contactoForm.contacto_nombre}
                         onChange={e => setContactoForm(f => ({ ...f, contacto_nombre: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                        className="bg-bg-surface w-full border border-border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
                       />
                       <input
                         type="email"
                         placeholder="Correo"
                         value={contactoForm.contacto_email}
                         onChange={e => setContactoForm(f => ({ ...f, contacto_email: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                        className="bg-bg-surface w-full border border-border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
                       />
                       <div className="flex gap-2">
                         <input
@@ -745,21 +726,21 @@ export default function SolicitudesPage() {
                           placeholder="Teléfono"
                           value={contactoForm.contacto_telefono}
                           onChange={e => setContactoForm(f => ({ ...f, contacto_telefono: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                          className="bg-bg-surface flex-1 border border-border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
                         />
                         <input
                           type="text"
                           placeholder="Dirección"
                           value={contactoForm.direccion}
                           onChange={e => setContactoForm(f => ({ ...f, direccion: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                          className="bg-bg-surface flex-1 border border-border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
                         />
                       </div>
 
-                      <p className="text-[11px] font-semibold text-gray-400 uppercase pt-1.5">
+                      <p className="text-[11px] font-semibold text-text-subtle uppercase pt-1.5">
                         Condiciones comerciales por defecto
                       </p>
-                      <p className="text-[11px] text-gray-400 -mt-1.5">
+                      <p className="text-[11px] text-text-subtle -mt-1.5">
                         Se usan al crear una proforma nueva para este cliente — siguen siendo
                         editables por proforma individual.
                       </p>
@@ -770,7 +751,7 @@ export default function SolicitudesPage() {
                           placeholder="Incoterm (ej. FOB)"
                           value={contactoForm.incoterm_default}
                           onChange={e => setContactoForm(f => ({ ...f, incoterm_default: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                          className="bg-bg-surface flex-1 border border-border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
                         />
                         <datalist id={`incoterm-cliente-${c.id}`}>
                           {INCOTERM_SUGERENCIAS.map(op => <option key={op} value={op} />)}
@@ -781,7 +762,7 @@ export default function SolicitudesPage() {
                           placeholder="Freight (ej. FOB)"
                           value={contactoForm.freight_default}
                           onChange={e => setContactoForm(f => ({ ...f, freight_default: e.target.value }))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                          className="bg-bg-surface flex-1 border border-border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
                         />
                       </div>
                       <div>
@@ -791,26 +772,25 @@ export default function SolicitudesPage() {
                           placeholder="Insurance (ej. COLLECT)"
                           value={contactoForm.insurance_default}
                           onChange={e => setContactoForm(f => ({ ...f, insurance_default: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                          className="bg-bg-surface w-full border border-border rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
                         />
                         <datalist id={`insurance-cliente-${c.id}`}>
                           {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
                         </datalist>
                       </div>
 
-                      {errorContacto && <p className="text-[11px] text-red-500">{errorContacto}</p>}
+                      {errorContacto && <p className="text-[11px] text-danger">{errorContacto}</p>}
                       <div className="flex gap-2 pt-0.5">
                         <button
                           onClick={() => setEditandoContactoId(null)}
-                          className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100"
+                          className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-border text-text-muted hover:bg-bg-subtle"
                         >
                           Cancelar
                         </button>
                         <button
                           onClick={() => guardarContactoCliente(c.id)}
                           disabled={guardandoContactoId === c.id}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg text-white disabled:opacity-40"
-                          style={{ background: '#000d66' }}
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg bg-action-primary text-on-action-primary hover:bg-action-primary-hover disabled:opacity-40"
                         >
                           {guardandoContactoId === c.id && <Loader2 size={12} className="animate-spin" />}
                           Guardar

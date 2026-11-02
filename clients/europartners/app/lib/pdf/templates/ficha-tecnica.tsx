@@ -41,8 +41,8 @@ Font.register({
 const LOGO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/logo.png'))
 const FOOTER_DECO_BUFFER = fs.readFileSync(path.join(process.cwd(), 'lib/pdf/assets/footer-decoracion.png'))
 
-const NAVY = '#000d66'
-const LILA = '#ccc8fa'
+const NAVY = '#162373'
+const LILA = '#d2cff7'
 // Tono claro de fondo para superficies grandes (franja superior, caja de
 // encabezado de especificaciones) — del archivo real de Canva de Marta
 // ("Plantilla ficha tecnica.pdf", 2026-10-18), más claro que el LILA que

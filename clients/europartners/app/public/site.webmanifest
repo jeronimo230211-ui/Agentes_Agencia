@@ -1,0 +1,12 @@
+{
+  "name": "Europartners",
+  "short_name": "Europartners",
+  "theme_color": "#162373",
+  "background_color": "#F8F8F8",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    { "src": "/brand/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/brand/favicon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

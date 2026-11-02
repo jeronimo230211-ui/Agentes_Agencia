@@ -36,7 +36,7 @@ export default function QuantityStepper({ value, onChange, size = 'sm', min = 0 
       <button
         type="button"
         onClick={() => onChange(Math.max(min, value - 1))}
-        className={`${dims.btn} rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors flex-shrink-0`}
+        className={`${dims.btn} rounded-full bg-bg-subtle flex items-center justify-center hover:bg-border active:bg-border-strong transition-colors flex-shrink-0`}
         aria-label="Remove one"
       >
         <Minus size={dims.icon} />
@@ -49,13 +49,13 @@ export default function QuantityStepper({ value, onChange, size = 'sm', min = 0 
         onBlur={commit}
         onKeyDown={e => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
         onClick={e => e.stopPropagation()}
-        className={`${dims.input} text-center font-semibold text-gray-800 border border-gray-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-[#000d66]/20`}
+        className={`${dims.input} text-center font-semibold text-text bg-bg-surface border border-border rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-focus-ring`}
         aria-label="Quantity"
       />
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className={`${dims.btn} rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors flex-shrink-0`}
+        className={`${dims.btn} rounded-full bg-bg-subtle flex items-center justify-center hover:bg-border active:bg-border-strong transition-colors flex-shrink-0`}
         aria-label="Add one"
       >
         <Plus size={dims.icon} />

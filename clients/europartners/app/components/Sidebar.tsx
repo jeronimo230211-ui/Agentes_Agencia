@@ -69,7 +69,14 @@ const navCategories: NavCategory[] = [
 
 const EXPANDED_STORAGE_KEY = 'ep_sidebar_expanded_categories'
 
-export default function Sidebar() {
+type SidebarProps = {
+  // En mobile (<md) el sidebar es un drawer superpuesto, no un panel que
+  // empuja el contenido -- onClose lo cierra al tocar el fondo o un link
+  // (en desktop no se usa: ahí sigue siendo AppLayout quien desmonta).
+  onClose: () => void
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [usuario, setUsuario] = useState<Usuario | null>(null)
@@ -138,18 +145,20 @@ export default function Sidebar() {
       <Link
         key={href}
         href={href}
+        // En mobile, navegar cierra el drawer -- si no, la página de destino
+        // queda tapada por el overlay hasta que el usuario lo toque aparte.
+        onClick={onClose}
+        // Opción activa de menú -- el token del sistema de Marta para este
+        // rol es bg-selected (cuarzo-soft), no cuarzo sólido (ese es para
+        // badges, ver abajo).
         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-          active ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/10'
+          active ? 'bg-bg-selected text-text-on-accent' : 'text-white/60 hover:text-white hover:bg-white/10'
         }`}
-        style={active ? { background: '#ccc8fa', color: '#000d66' } : {}}
       >
         <Icon size={18} />
         <span className="flex-1">{label}</span>
         {badge && !active && (
-          <span
-            className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full"
-            style={{ background: '#ccc8fa', color: '#000d66' }}
-          >
+          <span className="bg-bg-accent text-text-on-accent text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full">
             {badge}
           </span>
         )}
@@ -158,72 +167,86 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col sticky top-0" style={{ background: '#000d66', height: '100vh' }}>
-      {/* Logo — el logo real tiene texto navy, así que necesita una base
-          clara para leerse sobre el fondo navy del sidebar (antes era un
-          círculo "EP" + texto, sin logo real). */}
-      <div className="px-6 py-6 border-b border-white/10 flex-none">
-        <div className="bg-white rounded-lg px-3 py-2.5 inline-block">
-          <Image src="/logo.png" alt="Europartners" width={140} height={79} priority />
+    <>
+      {/* Backdrop -- solo en mobile (<md), para cerrar el drawer tocando
+          fuera. En desktop el sidebar nunca es "fixed" así que esto no
+          aplica (md:hidden). */}
+      <div
+        className="fixed inset-0 bg-black/50 z-dropdown md:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-dropdown w-60 flex-shrink-0 flex flex-col bg-bg-brand
+          shadow-lg md:shadow-none
+          md:sticky md:top-0 md:left-auto md:h-screen md:z-auto
+        `}
+      >
+        {/* Logo — el sistema de Marta ya trae una variante blanca real del
+            logo (europartners-horizontal-blanco.svg), no hace falta la base
+            blanca de wrapper que usaba /logo.png (logo con texto navy). */}
+        <div className="px-6 py-6 border-b border-white/10 flex-none">
+          <Image src="/brand/europartners-horizontal-blanco.svg" alt="Europartners" width={150} height={26} priority />
+          <p className="text-white/50 text-xs mt-2">Sistema de Operaciones</p>
         </div>
-        <p className="text-white/50 text-xs mt-2">Sistema de Operaciones</p>
-      </div>
 
-      {/* Nav */}
-      <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
-        {dashboardVisible && renderItem(dashboardItem)}
+        {/* Nav */}
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
+          {dashboardVisible && renderItem(dashboardItem)}
 
-        {navCategories.map(cat => {
-          const visibleItems = cat.items.filter(item => !usuario || item.roles.includes(usuario.rol))
-          if (visibleItems.length === 0) return null
+          {navCategories.map(cat => {
+            const visibleItems = cat.items.filter(item => !usuario || item.roles.includes(usuario.rol))
+            if (visibleItems.length === 0) return null
 
-          const isExpanded = !!expanded[cat.key]
-          const CategoryIcon = cat.icon
+            const isExpanded = !!expanded[cat.key]
+            const CategoryIcon = cat.icon
 
-          return (
-            <div key={cat.key} className="pt-1">
-              <button
-                type="button"
-                onClick={() => toggleCategory(cat.key)}
-                aria-expanded={isExpanded}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide text-white/50 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <CategoryIcon size={16} />
-                <span className="flex-1 text-left">{cat.label}</span>
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                />
-              </button>
-              <div
-                className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-              >
-                <div className="space-y-1 pt-1">
-                  {visibleItems.map(renderItem)}
+            return (
+              <div key={cat.key} className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => toggleCategory(cat.key)}
+                  aria-expanded={isExpanded}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide text-white/50 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <CategoryIcon size={16} />
+                  <span className="flex-1 text-left">{cat.label}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                <div
+                  className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                >
+                  <div className="space-y-1 pt-1">
+                    {visibleItems.map(renderItem)}
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </nav>
+            )
+          })}
+        </nav>
 
-      {/* Usuario y logout */}
-      <div className="px-4 py-4 border-t border-white/10 flex-none">
-        {usuario && (
-          <div className="mb-3">
-            <p className="text-white text-sm font-medium">{usuario.nombre}</p>
-            <p className="text-white/40 text-xs capitalize">{usuario.rol}</p>
-          </div>
-        )}
-        <button
-          onClick={cerrarSesion}
-          className="flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors w-full"
-        >
-          <LogOut size={16} />
-          Cerrar sesión
-        </button>
-        <p className="text-white/20 text-xs mt-3">Nexora IA · v1.0</p>
-      </div>
-    </aside>
+        {/* Usuario y logout */}
+        <div className="px-4 py-4 border-t border-white/10 flex-none">
+          {usuario && (
+            <div className="mb-3">
+              <p className="text-white text-sm font-medium">{usuario.nombre}</p>
+              <p className="text-white/40 text-xs capitalize">{usuario.rol}</p>
+            </div>
+          )}
+          <button
+            onClick={cerrarSesion}
+            className="flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors w-full"
+          >
+            <LogOut size={16} />
+            Cerrar sesión
+          </button>
+          <p className="text-white/20 text-xs mt-3">Nexora IA · v1.0</p>
+        </div>
+      </aside>
+    </>
   )
 }

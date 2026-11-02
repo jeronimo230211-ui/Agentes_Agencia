@@ -4,7 +4,7 @@
 // EspecificacionesPrincipales (caja de viñetas, pedida por Jerónimo viendo
 // la referencia de Homecenter) — y no queremos que el orden de prioridad se
 // desincronice entre los dos si alguien edita solo uno.
-export interface CampoFichaTecnica { label: string; valor: string }
+export interface CampoFichaTecnica { label: string; valor: string; label_en?: string | null; valor_en?: string | null }
 
 export interface EspecificacionSeleccionada {
   clave: 'color' | 'dimensiones' | 'moq' | 'cbm' | 'ficha'
@@ -21,9 +21,11 @@ export interface ParametrosEspecificaciones {
   // 'es' (default) para el catálogo interno, 'en' para la vista pública del
   // cliente. Jerónimo (2026-10-26): todo el contenido que ve el cliente debe
   // estar en inglés. Las 4 etiquetas fijas (Color/Dimensiones/MOQ/CBM) se
-  // traducen acá; los campos sueltos de ficha_tecnica.campos NO (esa columna
-  // todavía no es bilingüe, ver prompt-generacion.md del content-pipeline),
-  // así que en inglés se omiten en vez de mostrar texto en español.
+  // traducen acá. Los campos sueltos de ficha_tecnica.campos ya traen
+  // label_en/valor_en (2026-10-29, los 15 productos con ficha cargada hoy
+  // los tienen completos) -- en inglés se usa esa traducción; si un campo
+  // puntual todavía no la tiene (fichas futuras sin traducir), se omite solo
+  // ese campo en vez de mostrar texto en español mezclado con la página.
   idioma?: 'es' | 'en'
 }
 
@@ -43,11 +45,15 @@ export function seleccionarEspecificaciones(
   if (moq != null && moq !== '') items.push({ clave: 'moq', label: 'MOQ', valor: String(moq) })
   if (cbmUnitario != null) items.push({ clave: 'cbm', label: 'CBM', valor: `${cbmUnitario} CBM` })
 
-  if (idioma === 'es') {
-    for (const campo of camposFicha) {
-      if (items.length >= max) break
+  for (const campo of camposFicha) {
+    if (items.length >= max) break
+    if (idioma === 'es') {
       items.push({ clave: 'ficha', label: campo.label, valor: campo.valor })
+    } else if (campo.label_en && campo.valor_en) {
+      items.push({ clave: 'ficha', label: campo.label_en, valor: campo.valor_en })
     }
+    // si idioma === 'en' y el campo no tiene traducción todavía, se omite
+    // (no se cuenta -- no hay por qué "gastar" un slot del máximo en nada).
   }
 
   return items.slice(0, max)

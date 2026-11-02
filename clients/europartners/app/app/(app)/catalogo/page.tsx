@@ -59,12 +59,12 @@ function ProductCard({ p, onClick }: { p: Producto; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className={`group bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col cursor-pointer ${
-        oculto ? 'border-amber-200 opacity-70' : 'border-gray-100 hover:border-gray-200'
+      className={`group bg-bg-surface rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col cursor-pointer ${
+        oculto ? 'border-amber-200 opacity-70' : 'border-border hover:border-border-strong'
       }`}
     >
       {/* Imagen */}
-      <div className="relative bg-gray-50 h-40 flex items-center justify-center overflow-hidden">
+      <div className="relative bg-bg-subtle h-40 flex items-center justify-center overflow-hidden">
         {p.imagen_url && !imgError ? (
           <img
             src={p.imagen_url}
@@ -73,25 +73,28 @@ function ProductCard({ p, onClick }: { p: Producto; onClick: () => void }) {
             onError={() => setImgError(true)}
           />
         ) : (
-          <Package size={32} className="text-gray-300" />
+          <Package size={32} className="text-text-subtle" />
         )}
         {oculto && (
           <span className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
             <EyeOff size={10} /> Oculto
           </span>
         )}
-        <div className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-          <Eye size={13} className="text-[#000d66]" />
+        {/* bg-bg-surface, no bg-white: en modo oscuro bg-surface es oscuro y el
+            ícono (text-text-heading) se vuelve blanco -- con bg-white fijo quedaba
+            blanco sobre blanco e invisible (BUG-007). */}
+        <div className="absolute top-1.5 right-1.5 bg-bg-surface/90 rounded-full p-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+          <Eye size={13} className="text-text-heading" />
         </div>
       </div>
 
       {/* Info */}
       <div className="p-3 flex flex-col gap-0.5">
-        <p className="font-mono text-xs font-bold text-[#000d66]">{p.codigo}</p>
-        <p className="text-sm text-gray-800 font-medium leading-tight line-clamp-2">{p.nombre}</p>
-        <p className="text-xs text-gray-400">{p.categoria?.nombre || '—'}</p>
+        <p className="text-text-code text-text-heading">{p.codigo}</p>
+        <p className="text-sm text-text font-medium leading-tight line-clamp-2">{p.nombre}</p>
+        <p className="text-xs text-text-subtle">{p.categoria?.nombre || '—'}</p>
         {p.precio_mayorista != null ? (
-          <p className="text-sm font-bold text-[#000d66] mt-1">{formatUSD(p.precio_mayorista)}</p>
+          <p className="text-sm font-bold text-text-heading tabular-nums mt-1">{formatUSD(p.precio_mayorista)}</p>
         ) : p.precio_fob_usd != null ? (
           <p className="text-xs text-gray-400 mt-1">FOB {formatUSD(p.precio_fob_usd)}</p>
         ) : (
@@ -187,19 +190,21 @@ export default function CatalogoPage() {
         />
       )}
 
-      {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
+      {/* Header -- BUG-012: en mobile el botón compartía fila con el h1 sin wrap
+          (justify-between sin flex-col), el título quedaba confinado a ~154px y se
+          partía en 3 líneas. flex-col en mobile baja el botón debajo del título. */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#000d66] mb-1">Catálogo de Productos</h1>
-          <p className="text-gray-500 text-sm">
+          <h1 className="text-heading-1 font-display text-text-heading mb-1">Catálogo de Productos</h1>
+          <p className="text-text-muted text-sm">
             {cargando ? 'Cargando...' : `${total} referencia${total !== 1 ? 's' : ''}`}
           </p>
         </div>
         {puedeEditar && (
+          // Única acción primaria de esta pantalla -- bg-action-primary (indigo).
           <button
             onClick={() => setMostrarNuevo(true)}
-            className="flex items-center gap-1.5 text-sm font-medium text-white px-4 py-2 rounded-lg flex-none"
-            style={{ background: '#000d66' }}
+            className="flex items-center gap-1.5 text-button text-on-action-primary bg-action-primary hover:bg-action-primary-hover px-4 py-2 rounded-lg flex-none"
           >
             <Plus size={16} /> Nuevo producto
           </button>
@@ -209,22 +214,23 @@ export default function CatalogoPage() {
       {/* Filtros */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
           <input
             type="text"
             placeholder="Código, nombre o descripción..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-xl bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
             value={busqueda}
             onChange={e => cambiarBusqueda(e.target.value)}
           />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Filter size={14} className="text-gray-400" />
+          <Filter size={14} className="text-text-subtle" />
+          {/* Chips de filtro -- cuarzo (bg-accent), nunca el color de acción primaria. */}
           <button
             onClick={() => cambiarCategoria('')}
             className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-              !categoriaId ? 'bg-[#000d66] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              !categoriaId ? 'bg-bg-accent text-text-on-accent' : 'bg-bg-subtle text-text-muted hover:bg-border'
             }`}
           >
             Todas
@@ -234,9 +240,9 @@ export default function CatalogoPage() {
               key={cat.id}
               className={`flex items-center gap-1 text-xs rounded-full font-medium transition-colors pl-3 pr-1.5 py-1.5 ${
                 categoriaId === cat.id
-                  ? 'bg-[#000d66] text-white'
+                  ? 'bg-bg-accent text-text-on-accent'
                   : cat.activo
-                    ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-bg-subtle text-text-muted hover:bg-border'
                     : 'bg-amber-50 text-amber-600 border border-amber-200'
               }`}
             >
@@ -262,7 +268,7 @@ export default function CatalogoPage() {
               type="checkbox"
               checked={mostrarOcultos}
               onChange={e => cambiarMostrarOcultos(e.target.checked)}
-              className="rounded accent-[#000d66]"
+              className="rounded accent-action-primary"
             />
             Mostrar ocultos
           </label>

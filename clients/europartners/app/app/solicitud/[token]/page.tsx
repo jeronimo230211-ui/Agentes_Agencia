@@ -45,19 +45,19 @@ export default function SolicitudPage({ params }: { params: { token: string } })
 
   if (estado === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#000d66]" size={40} />
+      <div className="min-h-screen bg-bg-page flex items-center justify-center">
+        <Loader2 className="animate-spin text-action-primary" size={40} />
       </div>
     )
   }
 
   if (estado === 'invalid') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Invalid link</h1>
-          <p className="text-gray-500 text-sm">
+      <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
+        <div className="bg-bg-surface rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <AlertCircle size={48} className="text-danger mx-auto mb-4" />
+          <h1 className="font-display heading-3 text-text-heading mb-2">Invalid link</h1>
+          <p className="text-text-muted text-body">
             This order link is not valid. Please contact Europartners to get your correct link.
           </p>
         </div>

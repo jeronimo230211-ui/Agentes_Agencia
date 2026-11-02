@@ -19,14 +19,16 @@ export default function EspecificacionesPrincipales({ titulo = 'Especificaciones
   if (items.length === 0) return null
 
   return (
-    <div className="rounded-xl p-4 border" style={{ background: '#F8FAFC', borderColor: 'var(--ep-border)' }}>
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{titulo}</p>
+    // BUG-007: contenedor bg-bg-subtle (token) + texto gray-700/800 (fijo) --
+    // en modo oscuro bg-subtle se vuelve oscuro y ese texto casi invisible.
+    <div className="rounded-xl p-4 border bg-bg-subtle border-border">
+      <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">{titulo}</p>
       <ul className="space-y-1.5">
         {items.map(({ label, valor }, i) => (
-          <li key={i} className="flex gap-2 text-sm text-gray-700">
-            <span className="mt-[7px] h-1 w-1 rounded-full flex-shrink-0" style={{ background: 'var(--ep-navy)' }} />
+          <li key={i} className="flex gap-2 text-sm text-text">
+            <span className="mt-[7px] h-1 w-1 rounded-full flex-shrink-0 bg-text-heading" />
             <span>
-              <span className="font-semibold text-gray-800">{label}:</span> {valor}
+              <span className="font-semibold text-text-heading">{label}:</span> {valor}
             </span>
           </li>
         ))}

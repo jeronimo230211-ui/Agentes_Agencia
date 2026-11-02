@@ -107,11 +107,13 @@ export default function NuevoProductoModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col" style={{ maxHeight: '90vh' }}>
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#000d66]">{editando ? 'Editar Producto' : 'Nuevo Producto'}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
-            <X size={18} className="text-gray-500" />
+      {/* BUG-007: era bg-white fijo -- cualquier modal nuevo debe usar el
+          token (ver grep de QA), no un fondo fijo que no reacciona al tema. */}
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-2xl flex flex-col" style={{ maxHeight: '90vh' }}>
+        <div className="p-4 border-b border-border flex items-center justify-between flex-none">
+          <h3 className="font-bold font-display text-text-heading">{editando ? 'Editar Producto' : 'Nuevo Producto'}</h3>
+          <button onClick={onClose} className="p-1 hover:bg-bg-subtle rounded-lg">
+            <X size={18} className="text-text-subtle" />
           </button>
         </div>
 
@@ -126,12 +128,12 @@ export default function NuevoProductoModal({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-24 h-24 flex-none rounded-lg border-2 border-dashed border-gray-200 hover:border-[#000d66] flex items-center justify-center overflow-hidden bg-gray-50"
+              className="w-24 h-24 flex-none rounded-lg border-2 border-dashed border-border hover:border-ultramar flex items-center justify-center overflow-hidden bg-bg-subtle"
             >
               {previewUrl ? (
                 <img src={previewUrl} alt="" className="w-full h-full object-contain" />
               ) : (
-                <ImagePlus size={22} className="text-gray-300" />
+                <ImagePlus size={22} className="text-text-subtle" />
               )}
             </button>
             <input
@@ -143,20 +145,20 @@ export default function NuevoProductoModal({
             />
             <div className="flex-1 grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-gray-500">Código *</label>
+                <label className="text-xs font-medium text-text-muted">Código *</label>
                 <input
                   value={codigo}
                   onChange={e => setCodigo(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                  className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring"
                   placeholder="ej. TZ-1234"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Categoría</label>
+                <label className="text-xs font-medium text-text-muted">Categoría</label>
                 <select
                   value={categoriaId}
                   onChange={e => setCategoriaId(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                  className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring"
                 >
                   <option value="">Sin categoría</option>
                   {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -166,92 +168,91 @@ export default function NuevoProductoModal({
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Nombre *</label>
+            <label className="text-xs font-medium text-text-muted">Nombre *</label>
             <input
               value={nombre}
               onChange={e => setNombre(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring"
               placeholder="ej. Vessel Sink Round White"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Descripción</label>
+            <label className="text-xs font-medium text-text-muted">Descripción</label>
             <textarea
               value={descripcion}
               onChange={e => setDescripcion(e.target.value)}
               rows={2}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500">FOB China (USD)</label>
+              <label className="text-xs font-medium text-text-muted">FOB China (USD)</label>
               <input type="number" step="0.01" value={precioFob} onChange={e => setPrecioFob(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring" />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Precio Mayorista</label>
+              <label className="text-xs font-medium text-text-muted">Precio Mayorista</label>
               <input type="number" step="0.01" value={precioMayorista} onChange={e => setPrecioMayorista(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring" />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Precio Detallista</label>
+              <label className="text-xs font-medium text-text-muted">Precio Detallista</label>
               <input type="number" step="0.01" value={precioDetallista} onChange={e => setPrecioDetallista(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500">MOQ</label>
+              <label className="text-xs font-medium text-text-muted">MOQ</label>
               <input type="number" value={moq} onChange={e => setMoq(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring" />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">CBM unitario</label>
+              <label className="text-xs font-medium text-text-muted">CBM unitario</label>
               <input type="number" step="0.0001" value={cbm} onChange={e => setCbm(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Dimensiones (mm)</label>
+            <label className="text-xs font-medium text-text-muted">Dimensiones (mm)</label>
             <div className="grid grid-cols-3 gap-3 mt-1">
               <input type="number" placeholder="Largo" value={largoMm} onChange={e => setLargoMm(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring" />
               <input type="number" placeholder="Ancho" value={anchoMm} onChange={e => setAnchoMm(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring" />
               <input type="number" placeholder="Alto" value={altoMm} onChange={e => setAltoMm(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]" />
+                className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Notas internas</label>
+            <label className="text-xs font-medium text-text-muted">Notas internas</label>
             <textarea
               value={notas}
               onChange={e => setNotas(e.target.value)}
               rows={2}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-focus-ring"
             />
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 flex-none">
+        <div className="p-4 border-t border-border flex justify-end gap-3 flex-none">
           <button
             onClick={onClose}
             disabled={guardando}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-text-muted hover:bg-bg-subtle"
           >
             Cancelar
           </button>
           <button
             onClick={guardar}
             disabled={guardando}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white flex items-center gap-2 disabled:opacity-60"
-            style={{ background: '#000d66' }}
+            className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-60 bg-action-primary text-on-action-primary hover:bg-action-primary-hover"
           >
             {guardando && <Loader2 size={14} className="animate-spin" />}
             {editando ? 'Guardar cambios' : 'Crear producto'}

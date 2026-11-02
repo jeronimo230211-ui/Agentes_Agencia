@@ -21,7 +21,7 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
 
   const { data: productosRaw } = await adminClient
     .from('productos')
-    .select('id, categoria_id, codigo, nombre, descripcion, imagen_url, imagenes_urls, dimensiones, color_variante, moq, cbm_unitario, precio_mayorista, precio_detallista, descripcion_corta_en, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado')
+    .select('id, categoria_id, codigo, nombre, descripcion, imagen_url, imagenes_urls, dimensiones, color_variante, moq, cbm_unitario, precio_mayorista, precio_detallista, descripcion_corta_es, descripcion_corta_en, descripcion_larga_es, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado')
     .eq('estado', 'activo')
     .order('categoria_id', { ascending: true })
     .order('codigo', { ascending: true })
@@ -40,19 +40,27 @@ export async function getCatalogoPublico(adminClient: ReturnType<typeof createAd
   )
 
   const productos = productosVisibles.map(p => {
-    const { precio_mayorista, precio_detallista, dimensiones, descripcion_corta_en, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado, ...resto } = p
+    const {
+      precio_mayorista, precio_detallista, dimensiones,
+      descripcion_corta_es, descripcion_corta_en, descripcion_larga_es, descripcion_larga_en,
+      ficha_tecnica, ficha_tecnica_estado, ...resto
+    } = p
     const override = overrides.get(p.id)
     // La ficha técnica generada por IA (ver migración 014) solo se expone al
     // cliente una vez aprobada a mano desde el catálogo interno — nunca
     // confiar en el frontend para ocultar contenido sin revisar. La
     // descripción corta (migración 028) es una condensación de esa misma
-    // ficha, así que queda detrás de la misma puerta.
+    // ficha, así que queda detrás de la misma puerta. Se exponen ambos
+    // idiomas (antes solo _en): Jerónimo (2026-10-29) pidió reactivar el
+    // selector ES/EN también en la página pública.
     const aprobada = ficha_tecnica_estado === 'aprobada'
     return {
       ...resto,
       dimensiones: formatDimensiones(dimensiones),
       precio_cliente: override?.precio_usd ?? precioPorTipo(precio_mayorista, precio_detallista, tipoCliente) ?? null,
+      descripcion_corta_es: aprobada ? descripcion_corta_es : null,
       descripcion_corta_en: aprobada ? descripcion_corta_en : null,
+      descripcion_larga_es: aprobada ? descripcion_larga_es : null,
       descripcion_larga_en: aprobada ? descripcion_larga_en : null,
       ficha_tecnica: aprobada ? ficha_tecnica : null,
     }

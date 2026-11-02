@@ -17,6 +17,7 @@ import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProdu
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 import HistorialPagos from '@/components/HistorialPagos'
+import Badge from '@/components/ui/Badge'
 
 interface OtroClienteReferencia {
   cliente_nombre: string
@@ -109,42 +110,42 @@ function SelectorProductoModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
         {/* Header */}
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#000d66]">Seleccionar Producto</h3>
+        <div className="p-4 border-b border-border flex items-center justify-between flex-none">
+          <h3 className="font-bold text-text-heading">Seleccionar Producto</h3>
           <div className="flex items-center gap-3">
             <button
               onClick={onNuevoProducto}
-              className="flex items-center gap-1 text-sm font-medium text-[#000d66] hover:underline"
+              className="flex items-center gap-1 text-sm font-medium text-action-primary hover:underline"
             >
               <Plus size={14} /> Nuevo producto
             </button>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
-              <X size={18} className="text-gray-500" />
+            <button onClick={onClose} className="p-1 hover:bg-bg-subtle rounded-lg">
+              <X size={18} className="text-text-muted" />
             </button>
           </div>
         </div>
 
         {/* Filtros */}
-        <div className="p-4 border-b border-gray-100 flex gap-3 flex-none">
+        <div className="p-4 border-b border-border flex gap-3 flex-none">
           <select
             value={categoriaId}
             onChange={e => setCategoriaId(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66] w-44"
+            className="bg-bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring w-44"
           >
             <option value="">Todas las categorías</option>
             {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
             <input
               autoFocus
               type="text"
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
               placeholder="Código o descripción..."
-              className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface w-full border border-border rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
             />
           </div>
         </div>
@@ -153,28 +154,28 @@ function SelectorProductoModal({
         <div className="overflow-y-auto flex-1">
           {cargando ? (
             <div className="p-10 text-center">
-              <Loader2 size={24} className="animate-spin mx-auto text-gray-400" />
+              <Loader2 size={24} className="animate-spin mx-auto text-text-subtle" />
             </div>
           ) : productos.length === 0 ? (
             <div className="p-10 text-center">
-              <Package size={36} className="mx-auto text-gray-200 mb-3" />
-              <p className="text-gray-500 text-sm font-medium">Sin productos que coincidan</p>
+              <Package size={36} className="mx-auto text-text-subtle mb-3" />
+              <p className="text-text-muted text-sm font-medium">Sin productos que coincidan</p>
               <button
                 onClick={onNuevoProducto}
-                className="mt-4 inline-flex items-center gap-1 text-sm text-[#000d66] underline"
+                className="mt-4 inline-flex items-center gap-1 text-sm text-action-primary underline"
               >
                 <Plus size={14} /> Crear un producto nuevo
               </button>
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-gray-50">
+              <thead className="sticky top-0 bg-bg-subtle">
                 <tr>
                   <th className="p-3 w-12"></th>
-                  <th className="text-left p-3 font-medium text-gray-500">Código</th>
-                  <th className="text-left p-3 font-medium text-gray-500">Descripción</th>
-                  <th className="text-right p-3 font-medium text-gray-500">FOB China</th>
-                  <th className="text-right p-3 font-medium text-gray-500">
+                  <th className="text-left p-3 font-medium text-text-muted">Código</th>
+                  <th className="text-left p-3 font-medium text-text-muted">Descripción</th>
+                  <th className="text-right p-3 font-medium text-text-muted">FOB China</th>
+                  <th className="text-right p-3 font-medium text-text-muted">
                     P. Cliente ({labelTipo(tipoPrecio)})
                   </th>
                 </tr>
@@ -186,23 +187,23 @@ function SelectorProductoModal({
                     <tr
                       key={p.id}
                       onClick={() => onSelect(p)}
-                      className="border-b border-gray-50 hover:bg-blue-50 cursor-pointer transition-colors"
+                      className="border-b border-border hover:bg-info-bg cursor-pointer transition-colors"
                     >
                       <td className="p-2 pl-3">
-                        <div className="w-9 h-9 rounded-md bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <div className="w-9 h-9 rounded-md bg-bg-subtle flex items-center justify-center overflow-hidden flex-shrink-0">
                           {p.imagen_url ? (
                             <img src={p.imagen_url} alt="" loading="lazy" className="w-full h-full object-contain" />
                           ) : (
-                            <Package size={14} className="text-gray-300" />
+                            <Package size={14} className="text-text-subtle" />
                           )}
                         </div>
                       </td>
-                      <td className="p-3 font-mono text-xs text-gray-600">
+                      <td className="p-3 font-mono text-xs text-text-muted">
                         {p.codigo || '—'}
                       </td>
                       <td className="p-3">{textoProducto(p.nombre, p.descripcion)}</td>
-                      <td className="p-3 text-right text-gray-500">{formatUSD(p.precio_fob_usd || 0)}</td>
-                      <td className="p-3 text-right font-medium text-[#000d66]">
+                      <td className="p-3 text-right text-text-muted">{formatUSD(p.precio_fob_usd || 0)}</td>
+                      <td className="p-3 text-right font-medium text-text-heading">
                         {precioSugerido !== undefined ? formatUSD(precioSugerido) : '—'}
                       </td>
                     </tr>
@@ -248,10 +249,10 @@ function ModalCambioTipoPrecio({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{ maxHeight: '80vh' }}>
-        <div className="p-4 border-b border-gray-100 flex-none">
-          <h3 className="font-bold text-[#000d66]">Cambiar tipo de precio</h3>
-          <p className="text-sm text-gray-500 mt-1">
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-lg flex flex-col" style={{ maxHeight: '80vh' }}>
+        <div className="p-4 border-b border-border flex-none">
+          <h3 className="font-bold text-text-heading">Cambiar tipo de precio</h3>
+          <p className="text-sm text-text-muted mt-1">
             Estás a punto de cambiar de <strong>{labelTipo(actual)}</strong> a <strong>{labelTipo(nuevo)}</strong>.
             {paso === 'alcance'
               ? ' ¿Vas a cambiar toda la proforma o deseas cambiar productos específicos?'
@@ -264,24 +265,24 @@ function ModalCambioTipoPrecio({
             <div className="p-4 flex flex-col gap-2">
               <button
                 onClick={() => onConfirmar('todas')}
-                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#000d66] hover:bg-blue-50 transition-colors"
+                className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-action-primary hover:bg-info-bg transition-colors"
               >
-                <p className="font-medium text-gray-800 text-sm">Cambiar toda la proforma</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="font-medium text-text text-sm">Cambiar toda la proforma</p>
+                <p className="text-xs text-text-muted mt-0.5">
                   Recalcula el precio de todas las líneas con producto vinculado
                   {lineasSinProducto > 0 ? ` (${lineasSinProducto} sin producto no se tocan)` : ''}.
                 </p>
               </button>
               <button
                 onClick={() => setPaso('seleccion')}
-                className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-[#000d66] hover:bg-blue-50 transition-colors"
+                className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-action-primary hover:bg-info-bg transition-colors"
               >
-                <p className="font-medium text-gray-800 text-sm">Seleccionar productos específicos</p>
-                <p className="text-xs text-gray-500 mt-0.5">Elige uno a uno cuáles líneas actualizar.</p>
+                <p className="font-medium text-text text-sm">Seleccionar productos específicos</p>
+                <p className="text-xs text-text-muted mt-0.5">Elige uno a uno cuáles líneas actualizar.</p>
               </button>
             </div>
-            <div className="p-4 border-t border-gray-100 flex justify-end flex-none">
-              <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+            <div className="p-4 border-t border-border flex justify-end flex-none">
+              <button onClick={onCancel} className="text-sm text-text-muted hover:text-text">
                 Cancelar
               </button>
             </div>
@@ -290,14 +291,14 @@ function ModalCambioTipoPrecio({
           <>
             <div className="overflow-y-auto flex-1 p-2">
               {lineasConProducto.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center p-6">
+                <p className="text-sm text-text-subtle text-center p-6">
                   Ninguna línea tiene un producto del catálogo vinculado.
                 </p>
               ) : (
                 lineasConProducto.map(l => (
                   <label
                     key={l._key}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bg-subtle cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -305,34 +306,33 @@ function ModalCambioTipoPrecio({
                       onChange={() => toggle(l._key)}
                       className="flex-none"
                     />
-                    <span className="font-mono text-xs text-gray-500 w-20 flex-none">{l.codigo_pdf || '—'}</span>
-                    <span className="text-sm text-gray-700 flex-1 truncate">{l.descripcion_pdf}</span>
-                    <span className="text-sm font-medium text-gray-600 flex-none">
+                    <span className="font-mono text-xs text-text-muted w-20 flex-none">{l.codigo_pdf || '—'}</span>
+                    <span className="text-sm text-text flex-1 truncate">{l.descripcion_pdf}</span>
+                    <span className="text-sm font-medium text-text-muted flex-none">
                       {formatUSD(l.precio_cliente_usd || 0)}
                     </span>
                   </label>
                 ))
               )}
               {lineasSinProducto > 0 && (
-                <p className="text-xs text-gray-400 px-3 pt-2">
+                <p className="text-xs text-text-subtle px-3 pt-2">
                   {lineasSinProducto} línea{lineasSinProducto > 1 ? 's' : ''} sin producto vinculado — edítalas a mano si aplica.
                 </p>
               )}
             </div>
-            <div className="p-4 border-t border-gray-100 flex justify-between flex-none">
+            <div className="p-4 border-t border-border flex justify-between flex-none">
               <div className="flex gap-4">
-                <button onClick={() => setPaso('alcance')} className="text-sm text-gray-500 hover:text-gray-700">
+                <button onClick={() => setPaso('alcance')} className="text-sm text-text-muted hover:text-text">
                   Atrás
                 </button>
-                <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+                <button onClick={onCancel} className="text-sm text-text-muted hover:text-text">
                   Cancelar
                 </button>
               </div>
               <button
                 onClick={() => onConfirmar(Array.from(seleccionadas))}
                 disabled={seleccionadas.size === 0}
-                className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-40"
-                style={{ background: '#000d66' }}
+                className="px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-40"
               >
                 Aplicar a seleccionados ({seleccionadas.size})
               </button>
@@ -393,25 +393,24 @@ function RegistrarPagoModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '90vh' }}>
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#000d66]">Registrar pago</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
-            <X size={18} className="text-gray-500" />
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: '90vh' }}>
+        <div className="p-4 border-b border-border flex items-center justify-between flex-none">
+          <h3 className="font-bold text-text-heading">Registrar pago</h3>
+          <button onClick={onClose} className="p-1 hover:bg-bg-subtle rounded-lg">
+            <X size={18} className="text-text-muted" />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-4 space-y-3">
           <div>
-            <label className="text-xs font-medium text-gray-500">Tipo de pago</label>
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm mt-1">
+            <label className="text-xs font-medium text-text-muted">Tipo de pago</label>
+            <div className="flex rounded-lg border border-border overflow-hidden text-sm mt-1">
               {(['cliente', 'china'] as TipoPago[]).map(t => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setTipo(t)}
-                  className={`flex-1 py-2 transition-colors ${tipo === t ? 'text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
-                  style={tipo === t ? { background: '#000d66' } : undefined}
+                  className={`flex-1 py-2 transition-colors ${tipo === t ? 'bg-bg-accent text-text-on-accent' : 'bg-bg-surface text-text-muted hover:bg-bg-subtle'}`}
                 >
                   {t === 'cliente' ? 'Cobro al cliente' : 'Pago a China'}
                 </button>
@@ -421,86 +420,85 @@ function RegistrarPagoModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500">Monto (USD)</label>
+              <label className="text-xs font-medium text-text-muted">Monto (USD)</label>
               <input
                 type="number"
                 step="0.01"
                 value={monto}
                 onChange={e => setMonto(e.target.value)}
                 placeholder="0.00"
-                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Comisión bancaria</label>
+              <label className="text-xs font-medium text-text-muted">Comisión bancaria</label>
               <input
                 type="number"
                 step="0.01"
                 value={comision}
                 onChange={e => setComision(e.target.value)}
                 placeholder="0.00"
-                className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Referencia</label>
+            <label className="text-xs font-medium text-text-muted">Referencia</label>
             <input
               type="text"
               value={referencia}
               onChange={e => setReferencia(e.target.value)}
               placeholder="No. de transferencia, wire, etc."
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Fecha</label>
+            <label className="text-xs font-medium text-text-muted">Fecha</label>
             <input
               type="date"
               value={fecha}
               onChange={e => setFecha(e.target.value)}
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Nota</label>
+            <label className="text-xs font-medium text-text-muted">Nota</label>
             <textarea
               value={nota}
               onChange={e => setNota(e.target.value)}
               placeholder="Observaciones (opcional)"
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-focus-ring"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Comprobante (opcional)</label>
+            <label className="text-xs font-medium text-text-muted">Comprobante (opcional)</label>
             <input
               type="file"
               accept="image/*,.pdf"
               onChange={e => setArchivo(e.target.files?.[0] || null)}
-              className="w-full mt-1 text-sm text-gray-500"
+              className="w-full mt-1 text-sm text-text-muted"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-2.5 text-xs">
+            <div className="bg-danger-bg border border-danger text-danger rounded-lg p-2.5 text-xs">
               {error}
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 flex-none">
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700">
+        <div className="p-4 border-t border-border flex justify-end gap-3 flex-none">
+          <button onClick={onClose} className="text-sm text-text-muted hover:text-text">
             Cancelar
           </button>
           <button
             onClick={guardar}
             disabled={guardando}
-            className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-            style={{ background: '#000d66' }}
+            className="px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
           >
             {guardando ? 'Guardando...' : 'Registrar pago'}
           </button>
@@ -545,15 +543,15 @@ function ModalNuevoPaymentTerm({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none">
-          <h3 className="font-bold text-[#000d66]">Nueva opción de Payment Terms</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
-            <X size={18} className="text-gray-500" />
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md flex flex-col">
+        <div className="p-4 border-b border-border flex items-center justify-between flex-none">
+          <h3 className="font-bold text-text-heading">Nueva opción de Payment Terms</h3>
+          <button onClick={onClose} className="p-1 hover:bg-bg-subtle rounded-lg">
+            <X size={18} className="text-text-muted" />
           </button>
         </div>
         <div className="p-4 space-y-2">
-          <label className="text-xs font-medium text-gray-500">Texto de la opción</label>
+          <label className="text-xs font-medium text-text-muted">Texto de la opción</label>
           <input
             autoFocus
             type="text"
@@ -561,19 +559,18 @@ function ModalNuevoPaymentTerm({
             onChange={e => setValor(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') guardar() }}
             placeholder="Ej. 50% in advance, 50% before shipment"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+            className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
           />
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-danger">{error}</p>}
         </div>
-        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 flex-none">
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700">
+        <div className="p-4 border-t border-border flex justify-end gap-3 flex-none">
+          <button onClick={onClose} className="text-sm text-text-muted hover:text-text">
             Cancelar
           </button>
           <button
             onClick={guardar}
             disabled={guardando || !valor.trim()}
-            className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-            style={{ background: '#000d66' }}
+            className="px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
           >
             {guardando ? 'Guardando...' : 'Guardar'}
           </button>
@@ -972,13 +969,13 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-full">
-        <Loader2 size={32} className="animate-spin text-[#000d66]" />
+        <Loader2 size={32} className="animate-spin text-text-heading" />
       </div>
     )
   }
 
   if (!proforma) {
-    return <div className="p-8 text-red-500">Proforma no encontrada</div>
+    return <div className="p-8 text-danger">Proforma no encontrada</div>
   }
 
   return (
@@ -1061,19 +1058,19 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/cotizador" className="p-2 hover:bg-gray-100 rounded-lg">
-            <ArrowLeft size={18} className="text-gray-600" />
+          <Link href="/cotizador" className="p-2 hover:bg-bg-subtle rounded-lg">
+            <ArrowLeft size={18} className="text-text-muted" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[#000d66]">
+            <h1 className="text-2xl font-bold text-text-heading">
               {proforma.numero || 'Nueva Proforma'}
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-text-muted mt-0.5">
               {proforma.cliente?.nombre} · {proforma.incoterm} ·{' '}
               <span className={`font-medium ${
-                proforma.estado === 'aprobada'    ? 'text-green-600' :
-                proforma.estado === 'rechazada'  ? 'text-red-600' :
-                proforma.estado === 'en_revision'? 'text-yellow-600' : 'text-gray-600'
+                proforma.estado === 'aprobada'    ? 'text-success' :
+                proforma.estado === 'rechazada'  ? 'text-danger' :
+                proforma.estado === 'en_revision'? 'text-warning' : 'text-text-muted'
               }`}>
                 {proforma.estado.replace('_', ' ')}
               </span>
@@ -1084,7 +1081,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         <div className="flex gap-2 items-center">
           {/* Toast guardado */}
           {guardadoOk && (
-            <span className="flex items-center gap-1.5 text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium">
+            <span className="flex items-center gap-1.5 text-success bg-success-bg border border-success rounded-lg px-3 py-1.5 text-sm font-medium">
               <CheckCircle size={14} />
               Guardado
             </span>
@@ -1094,7 +1091,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             <a
               href={`/api/proformas/${proforma.id}/pdf`}
               target="_blank"
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm text-text hover:bg-bg-subtle"
             >
               <Eye size={16} />
               Ver PDF
@@ -1106,7 +1103,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               <button
                 onClick={guardar}
                 disabled={guardando}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="px-4 py-2 border border-border rounded-lg text-sm text-text hover:bg-bg-subtle disabled:opacity-50"
               >
                 {guardando ? 'Guardando...' : 'Guardar'}
               </button>
@@ -1114,8 +1111,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 <button
                   onClick={enviarRevision}
                   disabled={!puedeEnviarRevision || enviando}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-                  style={{ background: '#000d66' }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
                 >
                   <Send size={16} />
                   {enviando ? 'Enviando...' : 'Enviar a Marta'}
@@ -1124,8 +1120,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 <button
                   onClick={aprobarDirecto}
                   disabled={!puedeAprobarDirecto || aprobando}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-                  style={{ background: '#000d66' }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
                 >
                   <CheckCircle size={16} />
                   {aprobando ? 'Aprobando...' : 'Aprobar'}
@@ -1138,7 +1133,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             <button
               onClick={enviarCliente}
               disabled={enviando}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white font-medium bg-green-600 hover:bg-green-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-on-action-primary font-medium bg-action-primary hover:bg-action-primary-hover disabled:opacity-50"
             >
               <Send size={16} />
               {enviando ? 'Enviando...' : 'Enviar al Cliente'}
@@ -1149,8 +1144,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
       {/* Tipo de precio */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-xs text-gray-400 font-medium">Tipo de precio:</span>
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+        <span className="text-xs text-text-subtle font-medium">Tipo de precio:</span>
+        <div className="flex rounded-lg border border-border overflow-hidden text-xs font-medium">
           {(['mayorista', 'detallista'] as TipoPrecio[]).map(t => (
             <button
               key={t}
@@ -1158,9 +1153,8 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               disabled={!puedeEditar}
               onClick={() => solicitarCambioTipoPrecio(t)}
               className={`px-3 py-1.5 transition-colors ${
-                tipoPrecio === t ? 'text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                tipoPrecio === t ? 'bg-bg-accent text-text-on-accent' : 'bg-bg-surface text-text-muted hover:bg-bg-subtle'
               } ${!puedeEditar ? 'opacity-60 cursor-not-allowed' : ''}`}
-              style={tipoPrecio === t ? { background: '#000d66' } : undefined}
             >
               {labelTipo(t)}
             </button>
@@ -1171,21 +1165,21 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       {/* Datos de envío para el PDF */}
       <div className="flex items-center flex-wrap gap-x-6 gap-y-2 mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 font-medium">Order No:</span>
+          <span className="text-xs text-text-subtle font-medium">Order No:</span>
           {puedeEditar ? (
             <input
               type="text"
               value={proforma.numero_cliente || ''}
               onChange={e => setProforma(prev => prev ? { ...prev, numero_cliente: e.target.value } : prev)}
               placeholder="Ej. EMAIL 12/08/2026"
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+              className="bg-bg-surface border border-border rounded-lg px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-1 focus:ring-focus-ring"
             />
           ) : (
-            <span className="text-sm text-gray-700">{proforma.numero_cliente || '—'}</span>
+            <span className="text-sm text-text">{proforma.numero_cliente || '—'}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 font-medium">Incoterm:</span>
+          <span className="text-xs text-text-subtle font-medium">Incoterm:</span>
           {puedeEditar ? (
             <>
               <input
@@ -1203,18 +1197,18 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 }}
                 placeholder="Ej. FOB"
                 title="Al elegir FOB/CFR/CIF, Freight e Insurance se autocompletan según la regla de Marta (editable después)"
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                className="bg-bg-surface border border-border rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-focus-ring"
               />
               <datalist id="incoterm-opciones">
                 {INCOTERM_SUGERENCIAS.map(op => <option key={op} value={op} />)}
               </datalist>
             </>
           ) : (
-            <span className="text-sm text-gray-700">{proforma.incoterm || '—'}</span>
+            <span className="text-sm text-text">{proforma.incoterm || '—'}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 font-medium">Freight:</span>
+          <span className="text-xs text-text-subtle font-medium">Freight:</span>
           {puedeEditar ? (
             <>
               <input
@@ -1223,18 +1217,18 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 value={proforma.freight ?? ''}
                 onChange={e => setProforma(prev => prev ? { ...prev, freight: e.target.value } : prev)}
                 placeholder="Ej. COLLECT"
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                className="bg-bg-surface border border-border rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-focus-ring"
               />
               <datalist id="freight-opciones">
                 {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
               </datalist>
             </>
           ) : (
-            <span className="text-sm text-gray-700">{proforma.freight || '—'}</span>
+            <span className="text-sm text-text">{proforma.freight || '—'}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 font-medium">Insurance:</span>
+          <span className="text-xs text-text-subtle font-medium">Insurance:</span>
           {puedeEditar ? (
             <>
               <input
@@ -1243,24 +1237,24 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 value={proforma.insurance || ''}
                 onChange={e => setProforma(prev => prev ? { ...prev, insurance: e.target.value } : prev)}
                 placeholder="Ej. COLLECT"
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                className="bg-bg-surface border border-border rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-1 focus:ring-focus-ring"
               />
               <datalist id="insurance-opciones">
                 {INSURANCE_SUGERENCIAS.map(op => <option key={op} value={op} />)}
               </datalist>
             </>
           ) : (
-            <span className="text-sm text-gray-700">{proforma.insurance || 'COLLECT'}</span>
+            <span className="text-sm text-text">{proforma.insurance || 'COLLECT'}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 font-medium">Payment Terms:</span>
+          <span className="text-xs text-text-subtle font-medium">Payment Terms:</span>
           {puedeEditar ? (
             <>
               <select
                 value={proforma.payment_terms || ''}
                 onChange={e => setProforma(prev => prev ? { ...prev, payment_terms: e.target.value || null } : prev)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm max-w-xs focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                className="bg-bg-surface border border-border rounded-lg px-3 py-1.5 text-sm max-w-xs focus:outline-none focus:ring-1 focus:ring-focus-ring"
               >
                 <option value="">—</option>
                 {paymentTermsOpciones.map(op => (
@@ -1270,71 +1264,69 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               <button
                 type="button"
                 onClick={() => setMostrarNuevoPaymentTerm(true)}
-                className="text-xs font-medium text-[#000d66] hover:underline whitespace-nowrap"
+                className="text-xs font-medium text-action-primary hover:underline whitespace-nowrap"
               >
                 + agregar
               </button>
             </>
           ) : (
-            <span className="text-sm text-gray-700">{proforma.payment_terms || '—'}</span>
+            <span className="text-sm text-text">{proforma.payment_terms || '—'}</span>
           )}
         </div>
       </div>
 
       {/* Alertas de estado */}
       {proforma.estado === 'rechazada' && proforma.motivo_rechazo && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex gap-3">
-          <XCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+        <div className="bg-danger-bg border border-danger rounded-xl p-4 mb-4 flex gap-3">
+          <XCircle size={18} className="text-danger flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-red-800 text-sm">Proforma rechazada</p>
-            <p className="text-red-700 text-sm mt-0.5">{proforma.motivo_rechazo}</p>
+            <p className="font-medium text-danger text-sm">Proforma rechazada</p>
+            <p className="text-danger text-sm mt-0.5">{proforma.motivo_rechazo}</p>
           </div>
         </div>
       )}
       {proforma.estado === 'en_revision' && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 flex gap-3">
-          <AlertCircle size={18} className="text-yellow-600 flex-shrink-0 mt-0.5" />
-          <p className="text-yellow-800 text-sm">Esta proforma está esperando aprobación de Marta.</p>
+        <div className="bg-warning-bg border border-warning rounded-xl p-4 mb-4 flex gap-3">
+          <AlertCircle size={18} className="text-warning flex-shrink-0 mt-0.5" />
+          <p className="text-warning text-sm">Esta proforma está esperando aprobación de Marta.</p>
         </div>
       )}
       {proforma.estado === 'aprobada' && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4 flex gap-3">
-          <CheckCircle size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-          <p className="text-green-800 text-sm">Proforma aprobada. Puedes enviarla al cliente.</p>
+        <div className="bg-success-bg border border-success rounded-xl p-4 mb-4 flex gap-3">
+          <CheckCircle size={18} className="text-success flex-shrink-0 mt-0.5" />
+          <p className="text-success text-sm">Proforma aprobada. Puedes enviarla al cliente.</p>
         </div>
       )}
       {proforma.estado === 'cambios_solicitados' && proforma.comentario_cliente && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex gap-3">
-          <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-warning-bg border border-warning rounded-xl p-4 mb-4 flex gap-3">
+          <AlertCircle size={18} className="text-warning flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-amber-800 text-sm">El cliente pidió cambios en esta proforma</p>
-            <p className="text-amber-700 text-sm mt-0.5">{proforma.comentario_cliente}</p>
-            <p className="text-amber-600 text-xs mt-1">Ajusta las líneas y vuelve a enviarla al cliente.</p>
+            <p className="font-medium text-warning text-sm">El cliente pidió cambios en esta proforma</p>
+            <p className="text-warning text-sm mt-0.5">{proforma.comentario_cliente}</p>
+            <p className="text-warning text-xs mt-1">Ajusta las líneas y vuelve a enviarla al cliente.</p>
           </div>
         </div>
       )}
 
       {/* Comprobante de pago subido por el cliente */}
       {proforma.comprobante_url && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+        <div className="bg-bg-surface border border-border rounded-xl p-4 mb-4">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="font-medium text-gray-800 text-sm">Comprobante de pago</p>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  proforma.estado_pago === 'pagado' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                }`}>
+                <p className="font-medium text-text text-sm">Comprobante de pago</p>
+                <Badge variant={proforma.estado_pago === 'pagado' ? 'success' : 'info'}>
                   {proforma.estado_pago === 'pagado' ? 'Pagado' : 'Abonado — pendiente de confirmar'}
-                </span>
+                </Badge>
               </div>
-              <p className="text-gray-500 text-sm">
+              <p className="text-text-muted text-sm">
                 Monto abonado:{' '}
-                <span className="font-semibold text-gray-800">
+                <span className="font-semibold text-text">
                   {proforma.monto_abono_recibido != null ? formatUSD(proforma.monto_abono_recibido) : 'No especificado por el cliente'}
                 </span>
               </p>
               {proforma.fecha_abono && (
-                <p className="text-gray-400 text-xs mt-0.5">Subido el {proforma.fecha_abono}</p>
+                <p className="text-text-subtle text-xs mt-0.5">Subido el {proforma.fecha_abono}</p>
               )}
             </div>
             <a
@@ -1344,18 +1336,18 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               className="flex-shrink-0 flex flex-col items-center gap-1 group"
             >
               {proforma.comprobante_url.toLowerCase().endsWith('.pdf') ? (
-                <div className="w-20 h-20 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center group-hover:bg-gray-100">
-                  <FileText size={26} className="text-gray-400" />
+                <div className="w-20 h-20 rounded-lg border border-border bg-bg-subtle flex items-center justify-center group-hover:bg-bg-subtle">
+                  <FileText size={26} className="text-text-subtle" />
                 </div>
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={proforma.comprobante_url}
                   alt="Comprobante de pago"
-                  className="w-20 h-20 object-cover rounded-lg border border-gray-200 group-hover:opacity-80"
+                  className="w-20 h-20 object-cover rounded-lg border border-border group-hover:opacity-80"
                 />
               )}
-              <span className="text-xs text-blue-600 underline">Ver comprobante</span>
+              <span className="text-xs text-info underline">Ver comprobante</span>
             </a>
           </div>
         </div>
@@ -1371,25 +1363,21 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         />
       )}
 
-      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+      <div className="bg-bg-surface border border-border rounded-xl p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Wallet size={16} className="text-gray-400" />
-            <h3 className="font-medium text-gray-800 text-sm">Pagos</h3>
+            <Wallet size={16} className="text-text-subtle" />
+            <h3 className="font-medium text-text text-sm">Pagos</h3>
             {proforma.estado_pago && (
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                proforma.estado_pago === 'pagado' ? 'bg-green-100 text-green-700' :
-                proforma.estado_pago === 'parcial' ? 'bg-blue-100 text-blue-700' :
-                'bg-gray-100 text-gray-600'
-              }`}>
+              <Badge variant={proforma.estado_pago === 'pagado' ? 'success' : proforma.estado_pago === 'parcial' ? 'info' : 'neutral'}>
                 {proforma.estado_pago === 'pagado' ? 'Pagado' : proforma.estado_pago === 'parcial' ? 'Parcial' : 'Pendiente'}
-              </span>
+              </Badge>
             )}
           </div>
           {rolPuedeEditar && (
             <button
               onClick={() => setMostrarModalPago(true)}
-              className="flex items-center gap-1.5 text-sm text-[#000d66] font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-1.5 text-sm text-action-primary font-medium hover:bg-info-bg px-3 py-1.5 rounded-lg"
             >
               <Plus size={16} />
               Registrar pago
@@ -1401,19 +1389,19 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4 text-sm flex items-center gap-2">
+        <div className="bg-danger-bg border border-danger text-danger rounded-xl p-3 mb-4 text-sm flex items-center gap-2">
           <XCircle size={16} className="flex-none" />
           {error}
         </div>
       )}
 
       {/* Tabla de líneas */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+      <div className="bg-bg-surface rounded-xl shadow-sm border border-border mb-4">
+        <div className="p-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-gray-800">Líneas de la proforma</h2>
+            <h2 className="font-bold text-text">Líneas de la proforma</h2>
             {puedeEditar && (
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-text-subtle mt-0.5">
                 Haz clic en <Package size={11} className="inline" /> para buscar del catálogo, o escribe directamente
               </p>
             )}
@@ -1421,7 +1409,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           {puedeEditar && (
             <button
               onClick={agregarLinea}
-              className="flex items-center gap-1.5 text-sm text-[#000d66] font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-1.5 text-sm text-action-primary font-medium hover:bg-info-bg px-3 py-1.5 rounded-lg"
             >
               <Plus size={16} />
               Agregar línea
@@ -1432,29 +1420,29 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left p-3 font-medium text-gray-500 w-8">#</th>
-                <th className="text-left p-3 font-medium text-gray-500 w-28">Código</th>
-                <th className="text-left p-3 font-medium text-gray-500">Descripción</th>
-                <th className="text-center p-3 font-medium text-gray-500 w-20">Qty</th>
-                <th className="text-right p-3 font-medium text-gray-500 w-28">Costo China</th>
-                <th className="text-right p-3 font-medium text-gray-500 w-28">P. Cliente</th>
-                <th className="text-right p-3 font-medium text-gray-500 w-20">Margen</th>
-                <th className="text-right p-3 font-medium text-gray-500 w-28">Total</th>
+              <tr className="bg-bg-subtle border-b border-border">
+                <th className="text-left p-3 font-medium text-text-muted w-8">#</th>
+                <th className="text-left p-3 font-medium text-text-muted w-28">Código</th>
+                <th className="text-left p-3 font-medium text-text-muted">Descripción</th>
+                <th className="text-center p-3 font-medium text-text-muted w-20">Qty</th>
+                <th className="text-right p-3 font-medium text-text-muted w-28">Costo China</th>
+                <th className="text-right p-3 font-medium text-text-muted w-28">P. Cliente</th>
+                <th className="text-right p-3 font-medium text-text-muted w-20">Margen</th>
+                <th className="text-right p-3 font-medium text-text-muted w-28">Total</th>
                 {puedeEditar && <th className="w-10" />}
               </tr>
             </thead>
             <tbody>
               {lineas.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center p-8 text-gray-400">
+                  <td colSpan={9} className="text-center p-8 text-text-subtle">
                     {puedeEditar ? 'Agrega productos con el botón de arriba.' : 'Sin líneas.'}
                   </td>
                 </tr>
               )}
               {lineas.map((linea, i) => (
-                <tr key={linea._key} className={`border-b border-gray-50 ${i % 2 === 0 ? '' : 'bg-gray-50/50'}`}>
-                  <td className="p-3 text-gray-400 text-xs">{i + 1}</td>
+                <tr key={linea._key} className={`border-b border-border ${i % 2 === 0 ? '' : 'bg-bg-subtle'}`}>
+                  <td className="p-3 text-text-subtle text-xs">{i + 1}</td>
 
                   {/* Código */}
                   <td className="p-3">
@@ -1463,7 +1451,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         <button
                           title="Buscar en catálogo"
                           onClick={() => abrirSelector(linea._key)}
-                          className="p-1 rounded hover:bg-blue-50 text-gray-400 hover:text-[#000d66] flex-none"
+                          className="p-1 rounded hover:bg-info-bg text-text-subtle hover:text-action-primary flex-none"
                         >
                           <Package size={14} />
                         </button>
@@ -1471,12 +1459,12 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                           type="text"
                           value={linea.codigo_pdf || ''}
                           onChange={e => actualizarLinea(linea._key, 'codigo_pdf', e.target.value)}
-                          className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                          className="bg-bg-surface w-full border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                           placeholder="TZ-3430"
                         />
                       </div>
                     ) : (
-                      <span className="font-mono text-xs text-gray-600">{linea.codigo_pdf}</span>
+                      <span className="font-mono text-xs text-text-muted">{linea.codigo_pdf}</span>
                     )}
                   </td>
 
@@ -1487,7 +1475,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         type="text"
                         value={linea.descripcion_pdf || ''}
                         onChange={e => actualizarLinea(linea._key, 'descripcion_pdf', e.target.value)}
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                        className="bg-bg-surface w-full border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                         placeholder="Descripción del producto"
                       />
                     ) : (
@@ -1499,7 +1487,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         <>
                           {comp.tiene_historial ? (
                             <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-[11px]">
-                              <span className="flex items-center gap-1 text-gray-400">
+                              <span className="flex items-center gap-1 text-text-subtle">
                                 <History size={10} />
                                 Antes {formatUSD(comp.ultimo_precio_cliente!)}
                                 {comp.ultima_fecha && ` · ${fechaCorta(comp.ultima_fecha)}`}
@@ -1507,7 +1495,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                               </span>
                               {comp.precio_catalogo_actual != null && comp.diferencia_pct != null && (
                                 <span className={`flex items-center gap-0.5 font-semibold ${
-                                  comp.tendencia === 'subio' ? 'text-green-600' : comp.tendencia === 'bajo' ? 'text-red-500' : 'text-gray-400'
+                                  comp.tendencia === 'subio' ? 'text-success' : comp.tendencia === 'bajo' ? 'text-danger' : 'text-text-subtle'
                                 }`}>
                                   {comp.tendencia === 'subio' && <TrendingUp size={10} />}
                                   {comp.tendencia === 'bajo' && <TrendingDown size={10} />}
@@ -1519,21 +1507,21 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                           ) : (
                             <div className="mt-1 space-y-0.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-[11px] text-gray-300">Sin historial de precio con este cliente</p>
+                                <p className="text-[11px] text-text-subtle">Sin historial de precio con este cliente</p>
                                 <button
                                   type="button"
                                   onClick={() => setAgregandoPrecioCodigo(linea.codigo_pdf!)}
-                                  className="text-[11px] text-[#000d66] hover:underline font-medium"
+                                  className="text-[11px] text-action-primary hover:underline font-medium"
                                 >
                                   + Agregar precio de referencia
                                 </button>
                               </div>
                               {comp.otros_clientes.length > 0 && (
-                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-gray-400">
+                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-text-subtle">
                                   <Users size={10} className="flex-shrink-0" />
                                   {comp.otros_clientes.map((oc, i) => (
                                     <span key={i}>
-                                      {oc.cliente_nombre}: <strong className="text-gray-500">{formatUSD(oc.precio_cliente_usd)}</strong>
+                                      {oc.cliente_nombre}: <strong className="text-text-muted">{formatUSD(oc.precio_cliente_usd)}</strong>
                                       {oc.fecha_proforma && ` (${fechaCorta(oc.fecha_proforma)})`}
                                       {i < comp.otros_clientes.length - 1 && ' ·'}
                                     </span>
@@ -1545,17 +1533,17 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                           <div className="mt-1">
                             {comp.precio_especial ? (
                               <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
-                                <Tag size={10} className="text-amber-500 flex-shrink-0" />
-                                <span className="text-amber-600 font-semibold">
+                                <Tag size={10} className="text-warning flex-shrink-0" />
+                                <span className="text-warning font-semibold">
                                   Precio especial aplicado: {formatUSD(comp.precio_especial.precio_usd)}
                                 </span>
                                 {comp.precio_especial.motivo && (
-                                  <span className="text-gray-400">— {comp.precio_especial.motivo}</span>
+                                  <span className="text-text-subtle">— {comp.precio_especial.motivo}</span>
                                 )}
                                 <button
                                   type="button"
                                   onClick={() => quitarPrecioEspecial(comp.precio_especial!.id)}
-                                  className="text-gray-400 hover:text-red-500 hover:underline"
+                                  className="text-text-subtle hover:text-danger hover:underline"
                                 >
                                   Quitar
                                 </button>
@@ -1564,7 +1552,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                               <button
                                 type="button"
                                 onClick={() => { setFijandoPrecioCodigo(linea.codigo_pdf!); setFijandoPrecioProductoId(linea.producto_id ?? null) }}
-                                className="text-[11px] text-amber-600 hover:underline font-medium"
+                                className="text-[11px] text-warning hover:underline font-medium"
                               >
                                 + Fijar precio especial para este cliente
                               </button>
@@ -1584,7 +1572,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         value={linea._cantidadStr}
                         onChange={e => actualizarCantidadStr(linea._key, e.target.value.replace(/\D/g, ''))}
                         onBlur={() => fijarCantidad(linea._key)}
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                        className="bg-bg-surface w-full border border-border rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-focus-ring"
                       />
                     ) : (
                       <span className="text-center block">{linea.cantidad}</span>
@@ -1604,10 +1592,10 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         }}
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                        className="bg-bg-surface w-full border border-border rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-focus-ring"
                       />
                     ) : (
-                      <span className="text-right block text-gray-500">{formatUSD(linea.precio_costo_usd || 0)}</span>
+                      <span className="text-right block text-text-muted">{formatUSD(linea.precio_costo_usd || 0)}</span>
                     )}
                   </td>
 
@@ -1624,7 +1612,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                         }}
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm text-right font-medium focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                        className="bg-bg-surface w-full border border-border rounded px-2 py-1 text-sm text-right font-medium focus:outline-none focus:ring-1 focus:ring-focus-ring"
                       />
                     ) : (
                       <span className="text-right block font-medium">{formatUSD(linea.precio_cliente_usd || 0)}</span>
@@ -1641,13 +1629,13 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                           onChange={e => actualizarLinea(linea._key, 'margen_pct', (parseFloat(e.target.value) || 0) / 100)}
                           step="1"
                           placeholder="15"
-                          className="w-12 border border-gray-200 rounded px-1 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                          className="bg-bg-surface w-12 border border-border rounded px-1 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-focus-ring"
                         />
-                        <span className="text-gray-400 text-xs">%</span>
+                        <span className="text-text-subtle text-xs">%</span>
                       </div>
                     ) : (
                       <span className={`text-right block text-xs font-medium ${
-                        (linea.margen_pct || 0) < 0.10 ? 'text-red-600' : 'text-green-600'
+                        (linea.margen_pct || 0) < 0.10 ? 'text-danger' : 'text-success'
                       }`}>
                         {formatPct(linea.margen_pct || 0)}
                       </span>
@@ -1655,7 +1643,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                   </td>
 
                   {/* Total */}
-                  <td className="p-3 text-right font-medium text-[#000d66]">
+                  <td className="p-3 text-right font-medium text-text-heading">
                     {formatUSD((linea.precio_cliente_usd || 0) * (linea.cantidad || 1))}
                   </td>
 
@@ -1663,7 +1651,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     <td className="p-3">
                       <button
                         onClick={() => eliminarLinea(linea._key)}
-                        className="p-1 text-gray-300 hover:text-red-500 transition-colors"
+                        className="p-1 text-text-subtle hover:text-danger transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1676,10 +1664,10 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         </div>
 
         {lineas.length > 0 && (
-          <div className="p-4 border-t border-gray-100 flex justify-end">
+          <div className="p-4 border-t border-border flex justify-end">
             <div className="text-right">
-              <p className="text-sm text-gray-500">TOTAL {proforma.incoterm || 'FOB'}</p>
-              <p className="text-2xl font-bold text-[#000d66]">{formatUSD(totalFob)}</p>
+              <p className="text-sm text-text-muted">TOTAL {proforma.incoterm || 'FOB'}</p>
+              <p className="text-2xl font-bold text-text-heading">{formatUSD(totalFob)}</p>
             </div>
           </div>
         )}
@@ -1687,15 +1675,15 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
       {/* Notas internas + requiere revisión */}
       {puedeEditar && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h3 className="font-medium text-gray-700 mb-2 text-sm">Notas internas (no aparecen en el PDF)</h3>
+        <div className="bg-bg-surface rounded-xl shadow-sm border border-border p-4">
+          <h3 className="font-medium text-text mb-2 text-sm">Notas internas (no aparecen en el PDF)</h3>
           <textarea
             value={proforma.notas_internas || ''}
             onChange={e => setProforma(prev => prev ? { ...prev, notas_internas: e.target.value } : prev)}
             placeholder="Comentarios para Marta..."
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+            className="bg-bg-surface w-full border border-border rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-1 focus:ring-focus-ring"
           />
-          <label className="flex items-center gap-2 mt-3 text-sm text-gray-600 cursor-pointer">
+          <label className="flex items-center gap-2 mt-3 text-sm text-text-muted cursor-pointer">
             <input
               type="checkbox"
               checked={!!proforma.requiere_revision}
@@ -1710,33 +1698,33 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
           defecto para no saturar la pantalla principal: son 4 campos de uso
           puntual (total_china_usd es el que más se carga, cada vez que llega
           la factura de China; los otros 3 son casos excepcionales). */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-4">
+      <div className="bg-bg-surface rounded-xl shadow-sm border border-border mt-4">
         <button
           type="button"
           onClick={() => setMostrarFinancieros(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors rounded-xl"
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-subtle transition-colors rounded-xl"
         >
           <div className="flex items-center gap-2">
-            <Wallet size={16} className="text-gray-400" />
-            <h3 className="font-medium text-gray-800 text-sm">Datos financieros adicionales</h3>
+            <Wallet size={16} className="text-text-subtle" />
+            <h3 className="font-medium text-text text-sm">Datos financieros adicionales</h3>
             {proforma.total_china_usd != null && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-text-subtle">
                 · Total China {formatUSD(proforma.total_china_usd)}
               </span>
             )}
           </div>
           {mostrarFinancieros ? (
-            <ChevronUp size={16} className="text-gray-400" />
+            <ChevronUp size={16} className="text-text-subtle" />
           ) : (
-            <ChevronDown size={16} className="text-gray-400" />
+            <ChevronDown size={16} className="text-text-subtle" />
           )}
         </button>
 
         {mostrarFinancieros && (
-          <div className="border-t border-gray-100 p-4 space-y-4">
+          <div className="border-t border-border p-4 space-y-4">
             <div>
-              <label className="text-xs font-medium text-gray-500">Total China (USD)</label>
-              <p className="text-[11px] text-gray-400 mt-0.5 mb-1">
+              <label className="text-xs font-medium text-text-muted">Total China (USD)</label>
+              <p className="text-[11px] text-text-subtle mt-0.5 mb-1">
                 Total facturado por el proveedor chino para este embarque. Sin este dato la
                 deuda con China (módulo Finanzas) siempre queda en &quot;—&quot;.
               </p>
@@ -1751,32 +1739,32 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     setProforma(prev => prev ? { ...prev, total_china_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
                   }}
                   placeholder="0.00"
-                  className="w-full max-w-xs border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                  className="bg-bg-surface w-full max-w-xs border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                 />
               ) : (
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-text">
                   {proforma.total_china_usd != null ? formatUSD(proforma.total_china_usd) : '—'}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-500">Acuerdo de pago</label>
+              <label className="text-xs font-medium text-text-muted">Acuerdo de pago</label>
               {rolPuedeEditar ? (
                 <textarea
                   value={proforma.acuerdo_pago || ''}
                   onChange={e => setProforma(prev => prev ? { ...prev, acuerdo_pago: e.target.value } : prev)}
                   placeholder="Ej. 50% anticipo, 50% contra BL..."
-                  className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                  className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm h-16 resize-none focus:outline-none focus:ring-1 focus:ring-focus-ring"
                 />
               ) : (
-                <p className="text-sm text-gray-700 mt-1">{proforma.acuerdo_pago || '—'}</p>
+                <p className="text-sm text-text mt-1">{proforma.acuerdo_pago || '—'}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500">Pérdida (USD)</label>
+                <label className="text-xs font-medium text-text-muted">Pérdida (USD)</label>
                 {rolPuedeEditar ? (
                   <input
                     type="number"
@@ -1788,33 +1776,33 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                       setProforma(prev => prev ? { ...prev, perdida_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
                     }}
                     placeholder="0.00"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                    className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                   />
                 ) : (
-                  <p className="text-sm text-gray-700 mt-1">
+                  <p className="text-sm text-text mt-1">
                     {proforma.perdida_usd != null ? formatUSD(proforma.perdida_usd) : '—'}
                   </p>
                 )}
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Motivo de la pérdida</label>
+                <label className="text-xs font-medium text-text-muted">Motivo de la pérdida</label>
                 {rolPuedeEditar ? (
                   <input
                     type="text"
                     value={proforma.motivo_perdida || ''}
                     onChange={e => setProforma(prev => prev ? { ...prev, motivo_perdida: e.target.value } : prev)}
                     placeholder="Ej. producto dañado en tránsito"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                    className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                   />
                 ) : (
-                  <p className="text-sm text-gray-700 mt-1">{proforma.motivo_perdida || '—'}</p>
+                  <p className="text-sm text-text mt-1">{proforma.motivo_perdida || '—'}</p>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500">Nota crédito (USD)</label>
+                <label className="text-xs font-medium text-text-muted">Nota crédito (USD)</label>
                 {rolPuedeEditar ? (
                   <input
                     type="number"
@@ -1826,48 +1814,47 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                       setProforma(prev => prev ? { ...prev, nota_credito_usd: raw === '' || isNaN(parsed) ? null : parsed } : prev)
                     }}
                     placeholder="0.00"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                    className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                   />
                 ) : (
-                  <p className="text-sm text-gray-700 mt-1">
+                  <p className="text-sm text-text mt-1">
                     {proforma.nota_credito_usd != null ? formatUSD(proforma.nota_credito_usd) : '—'}
                   </p>
                 )}
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Motivo nota crédito</label>
+                <label className="text-xs font-medium text-text-muted">Motivo nota crédito</label>
                 {rolPuedeEditar ? (
                   <input
                     type="text"
                     value={proforma.motivo_nota_credito || ''}
                     onChange={e => setProforma(prev => prev ? { ...prev, motivo_nota_credito: e.target.value } : prev)}
                     placeholder="Ej. descuento comercial acordado"
-                    className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#000d66]"
+                    className="bg-bg-surface w-full mt-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
                   />
                 ) : (
-                  <p className="text-sm text-gray-700 mt-1">{proforma.motivo_nota_credito || '—'}</p>
+                  <p className="text-sm text-text mt-1">{proforma.motivo_nota_credito || '—'}</p>
                 )}
               </div>
             </div>
 
             {rolPuedeEditar && (
-              <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+              <div className="flex items-center gap-3 pt-2 border-t border-border">
                 <button
                   onClick={guardarFinancieros}
                   disabled={guardandoFinancieros}
-                  className="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50"
-                  style={{ background: '#000d66' }}
+                  className="px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
                 >
                   {guardandoFinancieros ? 'Guardando...' : 'Guardar datos financieros'}
                 </button>
                 {financierosGuardadoOk && (
-                  <span className="flex items-center gap-1.5 text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium">
+                  <span className="flex items-center gap-1.5 text-success bg-success-bg border border-success rounded-lg px-3 py-1.5 text-sm font-medium">
                     <CheckCircle size={14} />
                     Guardado
                   </span>
                 )}
                 {errorFinancieros && (
-                  <span className="text-red-600 text-sm">{errorFinancieros}</span>
+                  <span className="text-danger text-sm">{errorFinancieros}</span>
                 )}
               </div>
             )}

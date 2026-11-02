@@ -18,7 +18,7 @@ import SeleccionarClienteModal, { type ClienteOpcion } from '@/components/Selecc
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 
 interface Dimensiones { largo_mm?: number; ancho_mm?: number; alto_mm?: number }
-interface FichaTecnica { campos: { label: string; valor: string }[] }
+interface FichaTecnica { campos: { label: string; valor: string; label_en?: string | null; valor_en?: string | null }[] }
 
 interface ProductoDetalle {
   id: string
@@ -177,13 +177,13 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
     return (
       <div className="p-8 max-w-6xl mx-auto">
         <Migas catalogoHref="/catalogo" nombreProducto="" />
-        <div className="flex flex-col items-center justify-center text-center py-20 bg-white rounded-2xl border" style={{ borderColor: 'var(--ep-border)' }}>
-          <AlertCircle size={40} className="mb-3" style={{ color: 'var(--ep-danger)' }} />
-          <p className="text-gray-600 font-medium mb-4">No pudimos cargar este producto</p>
+        <div className="flex flex-col items-center justify-center text-center py-20 bg-bg-surface rounded-2xl border border-border">
+          <AlertCircle size={40} className="mb-3 text-danger" />
+          <p className="text-text-muted font-medium mb-4">No pudimos cargar este producto</p>
+          {/* Única acción de esta pantalla de error -- acción primaria (indigo). */}
           <button
             onClick={cargar}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
-            style={{ background: 'var(--ep-navy)' }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-on-action-primary bg-action-primary hover:bg-action-primary-hover"
           >
             <RefreshCw size={14} /> Reintentar
           </button>
@@ -205,6 +205,15 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
   const hayFicha = (producto.ficha_tecnica?.campos?.length ?? 0) > 0
   const hayContenidoFicha = hayFicha || !!producto.descripcion_larga_es || !!producto.descripcion_larga_en
   const modelo = extraerModelo(producto.ficha_tecnica?.campos)
+  // Mismo criterio que la vista pública equivalente
+  // (solicitud/[token]/producto/[id]/page.tsx): en EN usa label_en/valor_en
+  // por campo si existen, omite solo ese campo si todavía no tiene
+  // traducción (en vez de ocultar toda la tabla o mezclar idiomas).
+  const camposFichaIdioma = (producto.ficha_tecnica?.campos ?? [])
+    .map(c => (idiomaFicha === 'es'
+      ? { label: c.label, valor: c.valor }
+      : (c.label_en && c.valor_en) ? { label: c.label_en, valor: c.valor_en } : null))
+    .filter((c): c is { label: string; valor: string } => c !== null)
 
   return (
     <div className="p-4 sm:p-6 lg:p-10 pb-24 lg:pb-8 max-w-6xl mx-auto">
@@ -259,8 +268,8 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
         <div className="space-y-5 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-mono text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--ep-navy)' }}>{producto.codigo}</p>
-              <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-800 leading-tight mt-0.5">{producto.nombre}</h1>
+              <p className="text-text-code text-text-heading uppercase">{producto.codigo}</p>
+              <h1 className="text-heading-1 font-display text-text-heading leading-tight mt-0.5">{producto.nombre}</h1>
               <p className="text-xs text-gray-500 mt-1">
                 {modelo ? `Modelo ${modelo} | Código ${producto.codigo}` : `Código: ${producto.codigo}`}
               </p>
@@ -285,21 +294,24 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-xl p-3 border" style={{ background: '#F8FAFC', borderColor: 'var(--ep-border)' }}>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">FOB China</p>
-              <p className="text-sm font-bold text-gray-800">
+            <div className="rounded-xl p-3 border bg-bg-subtle border-border">
+              <p className="text-[11px] font-semibold text-text-subtle uppercase tracking-wide mb-0.5">FOB China</p>
+              {/* BUG-007: era text-gray-800 (fijo) sobre bg-bg-subtle -- en modo
+                  oscuro ese contenedor se vuelve oscuro y el texto oscuro fijo
+                  quedaba casi invisible. text-text-heading sí cambia con el tema. */}
+              <p className="text-sm font-bold text-text-heading tabular-nums">
                 {producto.precio_fob_usd != null ? formatUSD(producto.precio_fob_usd) : '—'}
               </p>
             </div>
-            <div className="rounded-xl p-3 border" style={{ background: '#F8FAFC', borderColor: 'var(--ep-border)' }}>
-              <p className="text-[11px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,13,102,0.6)' }}>Mayorista</p>
-              <p className="text-lg font-extrabold" style={{ color: 'var(--ep-navy)' }}>
+            <div className="rounded-xl p-3 border bg-bg-subtle border-border">
+              <p className="text-[11px] font-semibold uppercase tracking-wide mb-0.5 text-text-muted">Mayorista</p>
+              <p className="text-lg font-extrabold tabular-nums text-text-heading">
                 {producto.precio_mayorista != null ? formatUSD(producto.precio_mayorista) : '—'}
               </p>
             </div>
-            <div className="rounded-xl p-3 border" style={{ background: '#F8FAFC', borderColor: 'var(--ep-border)' }}>
-              <p className="text-[11px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,13,102,0.6)' }}>Detallista</p>
-              <p className="text-lg font-extrabold" style={{ color: 'var(--ep-navy)' }}>
+            <div className="rounded-xl p-3 border bg-bg-subtle border-border">
+              <p className="text-[11px] font-semibold uppercase tracking-wide mb-0.5 text-text-muted">Detallista</p>
+              <p className="text-lg font-extrabold tabular-nums text-text-heading">
                 {producto.precio_detallista != null ? formatUSD(producto.precio_detallista) : '—'}
               </p>
             </div>
@@ -322,7 +334,7 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
           />
 
           {producto.descripcion && (
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
+            <p className="text-sm text-text leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
           )}
 
           <div>
@@ -347,27 +359,31 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
 
           {(puedeEditar || preciosEspeciales.length > 0) && (
             <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+              <p className="text-xs font-semibold text-text-subtle uppercase tracking-wide mb-1">
                 Precios especiales por cliente
               </p>
               {cargandoPrecios ? (
-                <Loader2 size={16} className="animate-spin text-gray-300" />
+                <Loader2 size={16} className="animate-spin text-text-subtle" />
               ) : (
                 <div className="space-y-1.5">
+                  {/* BUG-007: era bg-amber-50/border-amber-100/text-amber-* fijos --
+                      bg-warning-bg/border-warning/text-warning SÍ cambian con el tema
+                      (ver tokens.css) y son el par ya usado en el resto de la app para
+                      callouts de advertencia. */}
                   {preciosEspeciales.map(fila => (
-                    <div key={fila.id} className="flex items-center justify-between gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    <div key={fila.id} className="flex items-center justify-between gap-2 bg-warning-bg border border-warning rounded-lg px-3 py-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <Tag size={12} className="text-amber-500 flex-shrink-0" />
-                        <span className="text-sm text-gray-800 truncate">
-                          {fila.cliente?.nombre || 'Cliente'}: <strong className="text-amber-700">{formatUSD(fila.precio_usd)}</strong>
-                          {fila.motivo && <span className="text-gray-400"> — {fila.motivo}</span>}
+                        <Tag size={12} className="text-warning flex-shrink-0" />
+                        <span className="text-sm text-warning truncate">
+                          {fila.cliente?.nombre || 'Cliente'}: <strong>{formatUSD(fila.precio_usd)}</strong>
+                          {fila.motivo && <span> — {fila.motivo}</span>}
                         </span>
                       </div>
                       {puedeEditar && (
                         <button
                           onClick={() => quitarPrecioEspecial(fila)}
                           disabled={quitando === fila.id}
-                          className="text-xs text-gray-400 hover:text-red-500 hover:underline flex-shrink-0 disabled:opacity-50"
+                          className="text-xs text-warning hover:text-red-500 hover:underline flex-shrink-0 disabled:opacity-50"
                         >
                           {quitando === fila.id ? 'Quitando...' : 'Quitar'}
                         </button>
@@ -375,10 +391,10 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
                     </div>
                   ))}
                   {puedeEditar && (
+                    // Enlace de texto -- text-link (indigo-deep), no la acción primaria de la pantalla.
                     <button
                       onClick={() => setProductoParaPrecioEspecial(true)}
-                      className="flex items-center gap-1.5 text-sm font-medium hover:underline mt-1"
-                      style={{ color: 'var(--ep-navy)' }}
+                      className="flex items-center gap-1.5 text-sm font-medium hover:underline mt-1 text-text-link"
                     >
                       <Plus size={14} /> Fijar precio especial para otro cliente
                     </button>
@@ -388,8 +404,11 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
             </div>
           )}
 
-          {/* Acciones — sticky en móvil */}
-          <div className="fixed bottom-0 left-0 right-0 lg:static bg-white lg:bg-transparent border-t lg:border-t-0 p-4 lg:p-0 z-20 flex gap-2" style={{ borderColor: 'var(--ep-border)' }}>
+          {/* Acciones — sticky en móvil. Dos botones, una sola acción primaria
+              por pantalla (regla del sistema de Marta): "Editar producto" es
+              la constructiva y lleva bg-action-primary; "Ocultar/Mostrar" ya
+              era secundaria (borde, sin relleno) y se mantiene así. */}
+          <div className="fixed bottom-0 left-0 right-0 lg:static bg-bg-surface lg:bg-transparent border-t lg:border-t-0 border-border p-4 lg:p-0 z-20 flex gap-2">
             {puedeEditar && (
               <button
                 onClick={toggleVisibilidad}
@@ -406,8 +425,8 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
             {puedeEditar && (
               <button
                 onClick={() => setMostrarEditar(true)}
-                className="flex-1 py-3 rounded-lg font-bold text-white text-sm flex items-center justify-center gap-2"
-                style={{ background: 'var(--ep-navy)', minHeight: 48 }}
+                className="flex-1 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 bg-action-primary text-on-action-primary hover:bg-action-primary-hover"
+                style={{ minHeight: 48 }}
               >
                 <Pencil size={14} /> Editar producto
               </button>
@@ -426,9 +445,13 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
 
       {/* Ficha técnica */}
       {hayContenidoFicha ? (
-        <div className="rounded-2xl mt-2 mb-8 overflow-hidden border" style={{ borderColor: 'var(--ep-border)' }}>
-          {/* Cabecera — barra navy sólida, ancho completo de la tarjeta */}
-          <div className="h-12 px-4 flex items-center justify-between gap-2 flex-wrap" style={{ background: 'var(--ep-navy)' }}>
+        <div className="rounded-2xl mt-2 mb-8 overflow-hidden border border-border">
+          {/* Cabecera — barra sólida de marca (bg-brand = ultramar), ancho
+              completo de la tarjeta. El texto del tab seleccionado usa
+              var(--bg-brand) directo (no "ultramar" fijo) para que siga
+              coincidiendo con el color real de esta barra también en tema
+              oscuro (ahí bg-brand es ultramar-ink, no ultramar). */}
+          <div className="h-12 px-4 flex items-center justify-between gap-2 flex-wrap bg-bg-brand">
             <p className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 text-white">
               <Sparkles size={12} /> Ficha técnica
             </p>
@@ -437,12 +460,12 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
                 <button
                   onClick={() => setIdiomaFicha('es')}
                   className="px-2.5 py-1 transition-colors"
-                  style={idiomaFicha === 'es' ? { background: '#fff', color: 'var(--ep-navy)' } : { color: '#fff' }}
+                  style={idiomaFicha === 'es' ? { background: '#fff', color: 'var(--bg-brand)' } : { color: '#fff' }}
                 >ES</button>
                 <button
                   onClick={() => setIdiomaFicha('en')}
                   className="px-2.5 py-1 transition-colors"
-                  style={idiomaFicha === 'en' ? { background: '#fff', color: 'var(--ep-navy)' } : { color: '#fff' }}
+                  style={idiomaFicha === 'en' ? { background: '#fff', color: 'var(--bg-brand)' } : { color: '#fff' }}
                 >EN</button>
               </div>
               <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${
@@ -454,15 +477,15 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
           </div>
 
           <div className="p-4">
-            {descripcionCorta && <p className="text-sm font-semibold italic text-gray-600 mb-1.5">{descripcionCorta}</p>}
-            {descripcionLarga && <p className="text-sm text-gray-700 leading-relaxed mb-3">{descripcionLarga}</p>}
+            {descripcionCorta && <p className="text-sm font-semibold italic text-text-muted mb-1.5">{descripcionCorta}</p>}
+            {descripcionLarga && <p className="text-sm text-text leading-relaxed mb-3">{descripcionLarga}</p>}
 
-            {hayFicha && (
+            {camposFichaIdioma.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                {producto.ficha_tecnica!.campos.map((c, i) => (
-                  <div key={i} className="rounded-xl p-3 border" style={{ background: '#F8FAFC', borderColor: 'var(--ep-border)' }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ep-navy)' }}>{c.label}</p>
-                    <p className="text-xs font-medium text-gray-800">{c.valor}</p>
+                {camposFichaIdioma.map((c, i) => (
+                  <div key={i} className="rounded-xl p-3 border bg-bg-subtle border-border">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-heading">{c.label}</p>
+                    <p className="text-xs font-medium text-text">{c.valor}</p>
                   </div>
                 ))}
               </div>
@@ -479,12 +502,14 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
                   {aprobando ? 'Aprobando...' : 'Aprobar — mostrar al cliente'}
                 </button>
               )}
+              {/* Mismo botón real (no link subrayado) que la página pública
+                  equivalente (solicitud/[token]/producto/[id]/page.tsx), para
+                  consistencia visual entre catálogo interno y público. */}
               <a
                 href={`/api/productos/${producto.id}/ficha-pdf?idioma=${idiomaFicha}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 text-xs font-semibold hover:underline"
-                style={{ color: 'var(--ep-navy)' }}
+                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl border border-border-strong bg-bg-surface text-xs font-semibold text-text-heading hover:bg-bg-subtle transition-colors"
               >
                 <Download size={13} /> Descargar ficha técnica (PDF)
               </a>
@@ -492,7 +517,7 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
           </div>
         </div>
       ) : (
-        <div className="border border-dashed rounded-xl p-4 mt-2 mb-8 text-center" style={{ borderColor: 'var(--ep-border)' }}>
+        <div className="border border-dashed rounded-xl p-4 mt-2 mb-8 text-center border-border">
           <p className="text-sm text-gray-400">Sin ficha técnica — campos pendientes de carga</p>
         </div>
       )}

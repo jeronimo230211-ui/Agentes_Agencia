@@ -23,8 +23,8 @@ interface Props {
 const STAGE_BASE = 'rounded-[20px] md:rounded-3xl overflow-hidden'
 const STAGE_ESTILO: React.CSSProperties = {
   background: '#FFFFFF',
-  border: '1px solid rgba(0,13,102,0.12)',
-  boxShadow: '0 1px 3px rgba(0,13,102,0.06)',
+  border: '1px solid var(--border)',
+  boxShadow: 'var(--shadow-sm)',
 }
 
 // Galería con hover-magnify tipo Amazon en desktop (≥1024px, mouse real) y
@@ -50,7 +50,7 @@ export default function GaleriaProducto({ imagenes, nombre, placeholderTexto }: 
         className={`${STAGE_BASE} flex flex-col items-center justify-center gap-2 h-80 md:h-[400px] lg:h-[440px]`}
         style={STAGE_ESTILO}
       >
-        <Package size={56} style={{ color: 'rgba(0,13,102,0.25)' }} />
+        <Package size={56} className="text-text-subtle" />
         {placeholderTexto && (
           <p className="text-sm" style={{ color: 'var(--ep-muted)' }}>{placeholderTexto}</p>
         )}
@@ -102,11 +102,11 @@ export default function GaleriaProducto({ imagenes, nombre, placeholderTexto }: 
             />
           </div>
 
+          {/* Badge de conteo e ícono de zoom -- overlay sobre la foto, no son
+              la acción primaria de la pantalla: usan bg-brand (ultramar),
+              el mismo rol que la cabecera de ficha técnica. */}
           {multiple && (
-            <span
-              className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[12px] font-bold text-white pointer-events-none"
-              style={{ background: 'var(--ep-navy)' }}
-            >
+            <span className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[12px] font-bold text-white pointer-events-none bg-bg-brand">
               {activa + 1}/{imagenes.length}
             </span>
           )}
@@ -118,8 +118,7 @@ export default function GaleriaProducto({ imagenes, nombre, placeholderTexto }: 
             type="button"
             onClick={() => setLightboxAbierto(true)}
             aria-label="Ver imagen completa"
-            className="absolute bottom-4 right-4 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-            style={{ background: 'var(--ep-navy)' }}
+            className="absolute bottom-4 right-4 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-bg-brand"
           >
             <ZoomIn size={16} className="text-white" />
           </button>
@@ -151,33 +150,25 @@ export default function GaleriaProducto({ imagenes, nombre, placeholderTexto }: 
           </div>
 
           {multiple && (
-            <span
-              className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[12px] font-bold text-white"
-              style={{ background: 'var(--ep-navy)' }}
-            >
+            <span className="absolute top-4 right-4 px-2 py-0.5 rounded-full text-[12px] font-bold text-white bg-bg-brand">
               {activa + 1}/{imagenes.length}
             </span>
           )}
 
           {/* En móvil la afordancia de zoom se muestra siempre — no hay hover */}
-          <span
-            className="absolute bottom-4 right-4 w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--ep-navy)' }}
-          >
+          <span className="absolute bottom-4 right-4 w-7 h-7 rounded-full flex items-center justify-center bg-bg-brand">
             <ZoomIn size={16} className="text-white" />
           </span>
 
+          {/* Dots de posición -- "toggle" de selección entre imágenes: cuarzo
+              (bg-accent) para el activo, el token de borde para el resto. */}
           {multiple && (
             <div className="flex justify-center gap-1.5 mt-2">
               {imagenes.map((_, i) => (
                 <span
                   key={i}
-                  className="rounded-full transition-all"
-                  style={{
-                    width: i === activa ? 20 : 6,
-                    height: 6,
-                    background: i === activa ? 'var(--ep-navy)' : 'var(--ep-border)',
-                  }}
+                  className={`rounded-full transition-all ${i === activa ? 'bg-bg-accent' : 'bg-border'}`}
+                  style={{ width: i === activa ? 20 : 6, height: 6 }}
                 />
               ))}
             </div>

@@ -26,7 +26,7 @@ export default function ProductosRelacionados({ productos, hrefBuilder, titulo =
 
   return (
     <div className="mt-2">
-      <h2 className="text-sm font-bold uppercase tracking-wide mb-3" style={{ color: 'var(--ep-muted)' }}>
+      <h2 className="text-sm font-bold uppercase tracking-wide mb-3 text-text-muted">
         {titulo}
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -34,21 +34,23 @@ export default function ProductosRelacionados({ productos, hrefBuilder, titulo =
           <Link
             key={p.id}
             href={hrefBuilder(p.id)}
-            className="bg-white rounded-xl overflow-hidden flex flex-col border-[var(--ep-border)] border hover:border-[var(--ep-navy)] hover:shadow-md transition-all"
+            // BUG-007: era bg-white fijo -- el código (text-text-heading, token)
+            // se vuelve blanco en modo oscuro y quedaba blanco sobre blanco.
+            className="bg-bg-surface rounded-xl overflow-hidden flex flex-col border border-border hover:border-ultramar hover:shadow-md transition-all"
           >
-            <div className="h-28 flex items-center justify-center" style={{ background: '#F8FAFC' }}>
+            <div className="h-28 flex items-center justify-center bg-bg-subtle">
               {p.imagen_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-2" />
               ) : (
-                <Package size={24} className="text-gray-300" />
+                <Package size={24} className="text-text-subtle" />
               )}
             </div>
             <div className="p-2.5">
-              <p className="font-mono text-[11px] font-bold" style={{ color: 'var(--ep-navy)' }}>{p.codigo}</p>
-              <p className="text-xs text-gray-700 font-medium leading-tight line-clamp-2 mt-0.5">{p.nombre}</p>
+              <p className="text-text-code text-text-heading">{p.codigo}</p>
+              <p className="text-xs text-text font-medium leading-tight line-clamp-2 mt-0.5">{p.nombre}</p>
               {p.precio != null && (
-                <p className="text-xs font-bold mt-1" style={{ color: 'var(--ep-navy)' }}>{formatUSD(p.precio)}</p>
+                <p className="text-xs font-bold tabular-nums mt-1 text-text-heading">{formatUSD(p.precio)}</p>
               )}
             </div>
           </Link>

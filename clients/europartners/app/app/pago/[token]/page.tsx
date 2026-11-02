@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Image from 'next/image'
 import { Loader2, AlertCircle, CheckCircle, Upload, FileCheck, Ship } from 'lucide-react'
 
 interface DespachoPago {
@@ -45,31 +46,40 @@ export default function PagoPage({ params }: { params: { token: string } }) {
 
   if (estado === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#000d66]" size={40} />
+      <div className="min-h-screen bg-bg-page flex items-center justify-center">
+        <Loader2 className="animate-spin text-action-primary" size={40} />
       </div>
     )
   }
 
   if (estado === 'invalid' || !proforma) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Invalid or expired link</h1>
-          <p className="text-gray-500 text-sm">Please contact Europartners to get a new link.</p>
+      // BUG-011: el logo solo se agregaba al estado válido -- un token
+      // inválido/expirado mostraba solo la tarjeta de error, sin marca.
+      <div className="min-h-screen bg-bg-page flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-bg-brand text-text-on-brand rounded-t-lg p-5">
+            <Image src="/brand/europartners-horizontal-blanco.svg" alt="Europartners" width={147} height={26} priority />
+          </div>
+          <div className="bg-bg-surface rounded-b-lg shadow-lg p-8 text-center">
+            <AlertCircle size={48} className="text-danger mx-auto mb-4" />
+            <h1 className="font-display heading-3 text-text-heading mb-2">Invalid or expired link</h1>
+            <p className="text-text-muted text-body">Please contact Europartners to get a new link.</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-bg-page p-4">
       <div className="max-w-md mx-auto pt-8 pb-8 space-y-5">
-        <div className="rounded-xl overflow-hidden shadow-lg">
-          <div className="bg-[#000d66] text-white p-5">
-            <h1 className="text-xl font-bold text-[#000d66]">Europartners</h1>
-            <p className="text-sm opacity-75">Proforma {proforma.numero}</p>
+        <div className="rounded-lg overflow-hidden shadow-lg">
+          <div className="bg-bg-brand text-text-on-brand p-5">
+            {/* Logo real — variante blanca del sistema de Marta (mismo
+                patrón que (auth)/login). */}
+            <Image src="/brand/europartners-horizontal-blanco.svg" alt="Europartners" width={147} height={26} priority />
+            <p className="text-body-sm opacity-75 mt-1">Proforma {proforma.numero}</p>
           </div>
         </div>
 
@@ -129,18 +139,18 @@ function SeccionFactura({
 
   if (estado === 'done') {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+      <div className="bg-bg-surface rounded-lg shadow-lg p-6 text-center">
         {proforma.estado_pago === 'pagado' ? (
           <>
-            <CheckCircle size={48} className="text-green-500 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Payment confirmed</h2>
-            <p className="text-gray-500 text-sm">Europartners has confirmed your payment for proforma <strong>{proforma.numero}</strong>. We&apos;ll start the shipment soon.</p>
+            <CheckCircle size={48} className="text-success mx-auto mb-3" />
+            <h2 className="font-display heading-3 text-text-heading mb-1">Payment confirmed</h2>
+            <p className="text-text-muted text-body">Europartners has confirmed your payment for proforma <strong className="text-code text-text">{proforma.numero}</strong>. We&apos;ll start the shipment soon.</p>
           </>
         ) : (
           <>
-            <FileCheck size={48} className="text-blue-500 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Payment proof received</h2>
-            <p className="text-gray-500 text-sm">We&apos;re verifying your payment proof for proforma <strong>{proforma.numero}</strong>. We&apos;ll let you know once the shipment starts.</p>
+            <FileCheck size={48} className="text-info mx-auto mb-3" />
+            <h2 className="font-display heading-3 text-text-heading mb-1">Payment proof received</h2>
+            <p className="text-text-muted text-body">We&apos;re verifying your payment proof for proforma <strong className="text-code text-text">{proforma.numero}</strong>. We&apos;ll let you know once the shipment starts.</p>
           </>
         )}
       </div>
@@ -148,12 +158,12 @@ function SeccionFactura({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase mb-3">Invoice payment</h2>
-      <p className="text-sm text-gray-500 mb-1">Total</p>
-      <p className="text-2xl font-bold text-gray-800 mb-5">{proforma.total_formateado}</p>
+    <div className="bg-bg-surface rounded-lg shadow-lg p-6">
+      <h2 className="text-overline text-text-muted mb-3">Invoice payment</h2>
+      <p className="text-text-muted text-body-sm mb-1">Total</p>
+      <p className="font-display figure-lg text-text-heading mb-5" style={{ fontVariantNumeric: 'tabular-nums' }}>{proforma.total_formateado}</p>
 
-      <label className="text-xs font-semibold text-gray-500 uppercase">Amount paid</label>
+      <label className="text-label text-text-muted">Amount paid</label>
       <input
         type="number"
         step="0.01"
@@ -161,16 +171,16 @@ function SeccionFactura({
         placeholder="0.00"
         value={monto}
         onChange={e => setMonto(e.target.value)}
-        className="w-full mt-1.5 mb-4 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+        className="w-full mt-1.5 mb-4 border border-border-control rounded-sm p-3 text-body bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
       />
 
-      <label className="text-xs font-semibold text-gray-500 uppercase">Bank payment proof</label>
+      <label className="text-label text-text-muted">Bank payment proof</label>
       <div
         onClick={() => fileRef.current?.click()}
-        className="mt-1.5 mb-5 border-2 border-dashed border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-gray-300"
+        className="mt-1.5 mb-5 border-2 border-dashed border-border-control rounded-md p-6 text-center cursor-pointer hover:border-border-strong"
       >
-        <Upload size={24} className="mx-auto mb-2 text-gray-400" />
-        <p className="text-sm text-gray-500">{archivo ? archivo.name : 'Tap to upload an image or PDF'}</p>
+        <Upload size={24} className="mx-auto mb-2 text-text-subtle" />
+        <p className="text-text-muted text-body-sm">{archivo ? archivo.name : 'Tap to upload an image or PDF'}</p>
       </div>
       <input
         ref={fileRef}
@@ -181,7 +191,7 @@ function SeccionFactura({
       />
 
       {estado === 'error' && error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg p-2.5 text-xs flex items-center gap-2">
+        <div className="mb-4 bg-danger-bg border border-danger text-danger rounded-md p-2.5 text-caption flex items-center gap-2">
           <AlertCircle size={14} className="flex-none" />
           {error}
         </div>
@@ -190,8 +200,7 @@ function SeccionFactura({
       <button
         onClick={enviar}
         disabled={!archivo || !monto || estado === 'sending'}
-        className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
-        style={{ background: '#000d66' }}
+        className="w-full h-control-lg rounded-sm text-button bg-action-primary hover:bg-action-primary-hover text-on-action-primary disabled:opacity-40 flex items-center justify-center gap-2"
       >
         {estado === 'sending' && <Loader2 className="animate-spin" size={18} />}
         Send payment proof
@@ -246,18 +255,18 @@ function SeccionFlete({
 
   if (estado === 'done') {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+      <div className="bg-bg-surface rounded-lg shadow-lg p-6 text-center">
         {despacho.estado_flete === 'pagado' ? (
           <>
-            <CheckCircle size={48} className="text-green-500 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Freight payment confirmed</h2>
-            <p className="text-gray-500 text-sm">Europartners has confirmed your freight payment for this shipment.</p>
+            <CheckCircle size={48} className="text-success mx-auto mb-3" />
+            <h2 className="font-display heading-3 text-text-heading mb-1">Freight payment confirmed</h2>
+            <p className="text-text-muted text-body">Europartners has confirmed your freight payment for this shipment.</p>
           </>
         ) : (
           <>
-            <FileCheck size={48} className="text-blue-500 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Freight payment proof received</h2>
-            <p className="text-gray-500 text-sm">We&apos;re verifying your freight payment proof. We&apos;ll let you know once it&apos;s confirmed.</p>
+            <FileCheck size={48} className="text-info mx-auto mb-3" />
+            <h2 className="font-display heading-3 text-text-heading mb-1">Freight payment proof received</h2>
+            <p className="text-text-muted text-body">We&apos;re verifying your freight payment proof. We&apos;ll let you know once it&apos;s confirmed.</p>
           </>
         )}
       </div>
@@ -265,22 +274,22 @@ function SeccionFlete({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-bg-surface rounded-lg shadow-lg p-6">
       <div className="flex items-center gap-2 mb-3">
-        <Ship size={16} className="text-gray-400" />
-        <h2 className="text-sm font-bold text-gray-500 uppercase">Freight payment</h2>
+        <Ship size={16} className="text-text-subtle" />
+        <h2 className="text-overline text-text-muted">Freight payment</h2>
       </div>
       {despacho.total_formateado && (
         <>
-          <p className="text-sm text-gray-500 mb-1">Freight amount</p>
-          <p className="text-2xl font-bold text-gray-800 mb-2">{despacho.total_formateado}</p>
+          <p className="text-text-muted text-body-sm mb-1">Freight amount</p>
+          <p className="font-display figure-lg text-text-heading mb-2" style={{ fontVariantNumeric: 'tabular-nums' }}>{despacho.total_formateado}</p>
         </>
       )}
       {despacho.estado_flete === 'parcial' && (
-        <p className="text-xs text-blue-600 mb-4">Partial payment received: {despacho.pagado_formateado}</p>
+        <p className="text-info text-caption mb-4">Partial payment received: {despacho.pagado_formateado}</p>
       )}
 
-      <label className="text-xs font-semibold text-gray-500 uppercase">Amount paid</label>
+      <label className="text-label text-text-muted">Amount paid</label>
       <input
         type="number"
         step="0.01"
@@ -288,16 +297,16 @@ function SeccionFlete({
         placeholder="0.00"
         value={monto}
         onChange={e => setMonto(e.target.value)}
-        className="w-full mt-1.5 mb-4 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#000d66]/20"
+        className="w-full mt-1.5 mb-4 border border-border-control rounded-sm p-3 text-body bg-bg-surface text-text focus:outline-none focus:ring-2 focus:ring-focus-ring"
       />
 
-      <label className="text-xs font-semibold text-gray-500 uppercase">Bank payment proof</label>
+      <label className="text-label text-text-muted">Bank payment proof</label>
       <div
         onClick={() => fileRef.current?.click()}
-        className="mt-1.5 mb-5 border-2 border-dashed border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-gray-300"
+        className="mt-1.5 mb-5 border-2 border-dashed border-border-control rounded-md p-6 text-center cursor-pointer hover:border-border-strong"
       >
-        <Upload size={24} className="mx-auto mb-2 text-gray-400" />
-        <p className="text-sm text-gray-500">{archivo ? archivo.name : 'Tap to upload an image or PDF'}</p>
+        <Upload size={24} className="mx-auto mb-2 text-text-subtle" />
+        <p className="text-text-muted text-body-sm">{archivo ? archivo.name : 'Tap to upload an image or PDF'}</p>
       </div>
       <input
         ref={fileRef}
@@ -308,7 +317,7 @@ function SeccionFlete({
       />
 
       {estado === 'error' && error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg p-2.5 text-xs flex items-center gap-2">
+        <div className="mb-4 bg-danger-bg border border-danger text-danger rounded-md p-2.5 text-caption flex items-center gap-2">
           <AlertCircle size={14} className="flex-none" />
           {error}
         </div>
@@ -317,8 +326,7 @@ function SeccionFlete({
       <button
         onClick={enviar}
         disabled={!archivo || !monto || estado === 'sending'}
-        className="w-full py-3 rounded-lg font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
-        style={{ background: '#000d66' }}
+        className="w-full h-control-lg rounded-sm text-button bg-action-primary hover:bg-action-primary-hover text-on-action-primary disabled:opacity-40 flex items-center justify-center gap-2"
       >
         {estado === 'sending' && <Loader2 className="animate-spin" size={18} />}
         Send freight payment proof
