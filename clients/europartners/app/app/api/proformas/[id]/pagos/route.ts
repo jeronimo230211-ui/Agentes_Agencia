@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
+import { tipoArchivoPermitido, MENSAJE_TIPO_NO_PERMITIDO_ES } from '@/lib/uploadValidation'
 import { randomUUID } from 'crypto'
 
 type Params = { params: { id: string } }
@@ -84,6 +85,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (archivo && archivo.size > 10 * 1024 * 1024) {
     return NextResponse.json({ error: 'El comprobante no debe superar 10MB' }, { status: 400 })
+  }
+  if (archivo && archivo.size > 0 && !tipoArchivoPermitido(archivo)) {
+    return NextResponse.json({ error: MENSAJE_TIPO_NO_PERMITIDO_ES }, { status: 400 })
   }
 
   const adminClient = createAdminClient()

@@ -2,6 +2,22 @@ import { Resend } from 'resend'
 import type { Proforma } from '@/types/europartners'
 import { formatUSD } from './precio'
 
+// Auditoría de seguridad oct-2026: estos emails se construyen con strings HTML
+// a mano (no JSX/React, que escapa solo) e interpolan texto que en varios
+// casos viene de un formulario público sin login (comentario del cliente al
+// rechazar una proforma vía /aprobacion-cliente, notas de solicitud, etc.).
+// Sin esto, alguien podría meter <img>/<a>/estilos en ese texto y el correo
+// interno de Marta/Deisy los renderizaría tal cual. No cambia nada visible
+// para texto normal — solo neutraliza caracteres HTML especiales.
+function escapeHtml(valor: string): string {
+  return valor
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 const FROM = process.env.EMAIL_FROM || 'Europartners <onboarding@resend.dev>'
 
@@ -24,14 +40,15 @@ export async function enviarNotificacionAprobacion(
   comentarioCliente?: string
 ): Promise<void> {
   const total = proforma.total_cif_usd || proforma.total_fob_usd || 0
-  const clienteNombre = proforma.cliente?.nombre || 'Cliente'
+  const clienteNombreRaw = proforma.cliente?.nombre || 'Cliente'
+  const clienteNombre = escapeHtml(clienteNombreRaw) // solo para el HTML -- el asunto (texto plano) usa el nombre crudo
   const lineas = proforma.lineas || []
   const approveUrl = `${APP_URL}/aprobacion-token/${token}`
 
   const tablaLineas = lineas.slice(0, 8).map(l =>
     `<tr>
-      <td style="padding:4px 8px;border-bottom:1px solid #eee">${l.codigo_pdf || ''}</td>
-      <td style="padding:4px 8px;border-bottom:1px solid #eee">${l.descripcion_pdf}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(l.codigo_pdf || '')}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(l.descripcion_pdf || '')}</td>
       <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:center">${l.cantidad}</td>
       <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right">${formatUSD(l.precio_cliente_usd || 0)}</td>
       <td style="padding:4px 8px;border-bottom:1px solid #eee;text-align:right;color:${(l.margen_pct || 0) < 0.10 ? '#dc2626' : '#16a34a'}">${((l.margen_pct || 0) * 100).toFixed(1)}%</td>
@@ -47,13 +64,13 @@ export async function enviarNotificacionAprobacion(
       <div style="padding:24px;background:#f9fafb">
         <h2 style="color:#162373;margin:0 0 8px">Proforma lista para revisión</h2>
         <p style="color:#6b7280;margin:0 0 20px">
-          Deisy preparó la proforma <strong>${proforma.numero}</strong> para
+          Deisy preparó la proforma <strong>${escapeHtml(proforma.numero)}</strong> para
           <strong>${clienteNombre}</strong>.
         </p>
         ${comentarioCliente ? `
         <div style="background:#fffbeb;border-left:4px solid #162373;border-radius:4px;padding:14px 16px;margin-bottom:20px">
           <p style="color:#92400e;margin:0 0 4px;font-size:12px;font-weight:bold;text-transform:uppercase">El cliente pidió este cambio</p>
-          <p style="color:#162373;margin:0;font-size:14px">${comentarioCliente}</p>
+          <p style="color:#162373;margin:0;font-size:14px">${escapeHtml(comentarioCliente)}</p>
         </div>` : ''}
         <div style="background:white;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:20px">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -91,7 +108,7 @@ export async function enviarNotificacionAprobacion(
     </div>
   `
 
-  await enviarEmail(destinatarioEmail, `[REVISAR] Proforma ${proforma.numero} · ${clienteNombre} · ${formatUSD(total)}`, html)
+  await enviarEmail(destinatarioEmail, `[REVISAR] Proforma ${proforma.numero} · ${clienteNombreRaw} · ${formatUSD(total)}`, html)
 }
 
 export async function enviarNotificacionComprobante(

@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   // `string` genérico, no como el literal real).
   const { data: producto, error } = await adminClient
     .from('productos')
-    .select('id, codigo, nombre, proveedor, color_variante, imagen_url, imagenes_urls, descripcion_corta_es, descripcion_corta_en, descripcion_larga_es, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado, categoria:categorias_producto(nombre)')
+    .select('id, codigo, nombre, proveedor, color_variante, imagen_url, imagenes_urls, descripcion_corta_es, descripcion_corta_en, descripcion_larga_es, descripcion_larga_en, ficha_tecnica, ficha_tecnica_estado, estado, categoria:categorias_producto(nombre)')
     .eq('id', params.id)
     .single()
 
@@ -56,7 +56,12 @@ export async function GET(req: NextRequest, { params }: Params) {
   // Gate duro, sin excepción de rol (ver nota de arriba): una ficha en
   // 'borrador' nunca sale por esta ruta. 404 (no 403) para no confirmarle a
   // quien tenga el link que el producto existe pero está sin aprobar.
-  if (producto.ficha_tecnica_estado !== 'aprobada') {
+  // Auditoría de seguridad oct-2026: faltaba este chequeo de `estado` -- un
+  // producto 'oculto'/'descontinuado'/'pendiente' (que getCatalogoPublico ya
+  // excluye del catálogo) seguía pudiendo descargarse por esta ruta si
+  // alguien conocía o adivinaba su UUID, porque esta ruta solo miraba
+  // ficha_tecnica_estado. Mismo criterio que el catálogo: solo 'activo'.
+  if (producto.ficha_tecnica_estado !== 'aprobada' || producto.estado !== 'activo') {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 })
   }
 

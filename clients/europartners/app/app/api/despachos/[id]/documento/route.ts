@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
+import { tipoArchivoPermitido, MENSAJE_TIPO_NO_PERMITIDO_ES } from '@/lib/uploadValidation'
 import { cookies } from 'next/headers'
 
 type Params = { params: { id: string } }
@@ -27,6 +28,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (!tipo || !TIPOS[tipo]) return NextResponse.json({ error: 'Tipo de documento inválido' }, { status: 400 })
   if (!archivo) return NextResponse.json({ error: 'Archivo requerido' }, { status: 400 })
+  // Auditoría de seguridad oct-2026: esta ruta no tenía ningún límite de
+  // tamaño ni de tipo de archivo (a diferencia de /api/pago/[token], que ya
+  // limitaba tamaño). Mismo criterio que el resto de uploads de documentos.
+  if (archivo.size > 10 * 1024 * 1024) return NextResponse.json({ error: 'El archivo no debe superar 10MB' }, { status: 400 })
+  if (!tipoArchivoPermitido(archivo)) return NextResponse.json({ error: MENSAJE_TIPO_NO_PERMITIDO_ES }, { status: 400 })
 
   const adminClient = createAdminClient()
   const ext = archivo.name.split('.').pop() || 'bin'

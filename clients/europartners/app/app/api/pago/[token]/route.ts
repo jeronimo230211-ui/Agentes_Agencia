@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
 import { formatUSD } from '@/lib/precio'
 import { enviarNotificacionComprobante } from '@/lib/email'
+import { tipoArchivoPermitido, MENSAJE_TIPO_NO_PERMITIDO_EN } from '@/lib/uploadValidation'
 import { randomUUID } from 'crypto'
 
 type Params = { params: { token: string } }
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (!archivo) return NextResponse.json({ error: 'Upload the payment proof' }, { status: 400 })
   if (archivo.size > 10 * 1024 * 1024) return NextResponse.json({ error: 'The file must not exceed 10MB' }, { status: 400 })
+  if (!tipoArchivoPermitido(archivo)) return NextResponse.json({ error: MENSAJE_TIPO_NO_PERMITIDO_EN }, { status: 400 })
 
   // La tabla `pagos` (migración 021) exige monto > 0 — a diferencia del
   // modelo viejo, ya no se puede guardar un comprobante sin monto. El
