@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Search, TrendingUp, TrendingDown, Minus, Tag } from 'lucide-react'
+import { Search, TrendingUp, TrendingDown, Minus, Tag, Pencil, Check } from 'lucide-react'
 import { formatUSD, formatPct } from '@/lib/precio'
+import { useRol } from '@/lib/useRol'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 
 interface Ref {
@@ -58,6 +59,18 @@ export default function HistorialPage() {
   // pensando que el guardado no funcionó.
   const [precioEspecialGuardado, setPrecioEspecialGuardado] = useState<number | null>(null)
 
+  // Edición inline del "Costo China" (precio_costo_usd) directamente en la
+  // tabla -- a diferencia del precio especial, esto SÍ corrige la fila de
+  // historial_precios que ya existe (ver PATCH /api/historial/[id]).
+  // `guardandoRef` (no un state) evita doble-submit: Enter dispara guardar()
+  // y el blur que sigue (al desmontar el input) puede volver a disparar
+  // onBlur antes de que el estado `editandoCostoId` ya se haya actualizado.
+  const { puedeEditar } = useRol()
+  const [editandoCostoId, setEditandoCostoId] = useState<string | null>(null)
+  const [costoEditado, setCostoEditado] = useState('')
+  const [errorCosto, setErrorCosto] = useState<string | null>(null)
+  const guardandoCostoRef = useRef(false)
+
   const filtroRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -86,6 +99,50 @@ export default function HistorialPage() {
   useEffect(() => {
     setPrecioEspecialGuardado(null)
   }, [seleccionado, clienteId])
+
+  function iniciarEdicionCosto(fila: Fila) {
+    setEditandoCostoId(fila.id)
+    setCostoEditado(fila.precio_costo_usd != null ? String(fila.precio_costo_usd) : '')
+    setErrorCosto(null)
+  }
+
+  function cancelarEdicionCosto() {
+    setEditandoCostoId(null)
+    setErrorCosto(null)
+  }
+
+  async function guardarCosto(id: string) {
+    // Guard contra doble-submit (Enter + el blur que sigue al desmontar el input).
+    if (editandoCostoId !== id || guardandoCostoRef.current) return
+
+    const texto = costoEditado.trim()
+    const valor = texto === '' ? null : Number(texto)
+    if (valor != null && (!Number.isFinite(valor) || valor <= 0)) {
+      setErrorCosto('Debe ser un número positivo')
+      return
+    }
+
+    guardandoCostoRef.current = true
+    const res = await fetch(`/api/historial/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ precio_costo_usd: valor }),
+    })
+    const json = await res.json().catch(() => ({}))
+    guardandoCostoRef.current = false
+
+    if (!res.ok) {
+      setErrorCosto(json.error || 'Error al guardar')
+      return
+    }
+
+    setFilas(prev => prev.map(f => f.id === id
+      ? { ...f, precio_costo_usd: json.data.precio_costo_usd, margen_pct: json.data.margen_pct }
+      : f
+    ))
+    setEditandoCostoId(null)
+    setErrorCosto(null)
+  }
 
   const clienteSeleccionado = clientes.find(c => c.id === clienteId) || null
 
@@ -440,7 +497,61 @@ export default function HistorialPage() {
                             </td>
                           )}
                           <td className="px-4 py-3 text-right text-xs text-text-muted">
-                            {f.precio_costo_usd != null ? formatUSD(f.precio_costo_usd) : '—'}
+                            {editandoCostoId === f.id ? (
+                              // BUG-001: el error de validación solo existía como `title`
+                              // (tooltip nativo, requiere hover) y en móvil nunca se veía.
+                              // Ahora se muestra como texto debajo del input, mismo patrón
+                              // que ModalAnularProforma/ModalDesanularProforma (proformas/page.tsx).
+                              <div className="flex flex-col items-end gap-0.5">
+                                <div className="flex items-center justify-end gap-1">
+                                  <input
+                                    autoFocus
+                                    type="number"
+                                    step="0.0001"
+                                    min="0"
+                                    value={costoEditado}
+                                    onChange={e => {
+                                      setCostoEditado(e.target.value)
+                                      if (errorCosto) setErrorCosto(null)
+                                    }}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') { e.preventDefault(); guardarCosto(f.id) }
+                                      if (e.key === 'Escape') { e.preventDefault(); cancelarEdicionCosto() }
+                                    }}
+                                    onBlur={() => guardarCosto(f.id)}
+                                    className={`w-20 text-right px-1.5 py-0.5 text-xs border rounded bg-bg-surface text-text focus:outline-none focus:ring-1 focus:ring-focus-ring ${
+                                      errorCosto ? 'border-danger' : 'border-border'
+                                    }`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onMouseDown={e => e.preventDefault()}
+                                    onClick={() => guardarCosto(f.id)}
+                                    className="text-success hover:opacity-70 flex-shrink-0"
+                                    title="Guardar"
+                                  >
+                                    <Check size={13} />
+                                  </button>
+                                </div>
+                                {errorCosto && (
+                                  <p className="text-[10px] text-danger leading-tight whitespace-nowrap">{errorCosto}</p>
+                                )}
+                              </div>
+                            ) : puedeEditar ? (
+                              <button
+                                type="button"
+                                onClick={() => iniciarEdicionCosto(f)}
+                                className="group inline-flex items-center gap-1 hover:text-text"
+                                title="Editar costo China"
+                              >
+                                <span className={f.precio_costo_usd == null ? 'text-text-subtle italic' : ''}>
+                                  {f.precio_costo_usd != null ? formatUSD(f.precio_costo_usd) : 'Agregar'}
+                                </span>
+                                <Pencil size={10} className="opacity-0 group-hover:opacity-60" />
+                              </button>
+                            ) : (
+                              f.precio_costo_usd != null ? formatUSD(f.precio_costo_usd) : '—'
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right font-bold tabular-nums text-text-heading">
                             {f.precio_cliente_usd != null ? formatUSD(f.precio_cliente_usd) : '—'}

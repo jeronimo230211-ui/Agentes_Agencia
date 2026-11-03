@@ -6,7 +6,7 @@ import {
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
   Search, X, Package, FileText, Ban,
   TrendingUp, TrendingDown, Minus, History, Users, Tag,
-  Wallet, ChevronDown, ChevronUp, UserCog,
+  Wallet, ChevronDown, ChevronUp, UserCog, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
@@ -621,6 +621,10 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   // /proformas (ver app/(app)/proformas/page.tsx): 'facturada' se anula
   // desde /facturador (admin-only) y 'anulada' ya no tiene acción posible.
   const [modalAnularAbierto, setModalAnularAbierto] = useState(false)
+  // Reactivar ("desanular") una proforma anulada por error, para reutilizar
+  // su número -- ver POST /api/proformas/[id]/desanular. Vuelve a 'borrador';
+  // de ahí en adelante usa los flujos normales que ya existen.
+  const [modalDesanularAbierto, setModalDesanularAbierto] = useState(false)
 
   // Datos financieros adicionales (Registro Maestro Vivo — ver
   // CAMPOS_FINANCIEROS_ADICIONALES en app/api/proformas/[id]/route.ts).
@@ -978,16 +982,20 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       body: JSON.stringify({ cliente_id: nuevoCliente.id }),
     })
     if (res.ok) {
+      const json = await res.json()
       // Las líneas ya tienen precio_cliente_usd fijado contra el cliente
       // anterior (manual o vía precio especial) — cambiar el cliente NO
       // los recalcula solo porque no hay forma de saber de forma segura
       // qué precio corresponde al nuevo cliente. Es más seguro avisar y que
       // operaciones revise, que asumir y aplicar el precio equivocado.
-      if (lineas.length > 0) {
-        setAvisoCambioCliente(
-          `Cliente cambiado a ${nuevoCliente.nombre}. Revisa los precios de las líneas — pueden no aplicar al nuevo cliente (ej. precios especiales del cliente anterior).`
-        )
-      }
+      // Si además la proforma volvió a 'en_revision' (venía de 'aprobada'),
+      // el aviso lo menciona explícitamente -- ya se advirtió antes de
+      // confirmar (SeleccionarClienteModal), pero esto confirma que sí pasó.
+      const volvioARevision = json.estado === 'en_revision' && proforma?.estado === 'aprobada'
+      const partes = [`Cliente cambiado a ${nuevoCliente.nombre}.`]
+      if (volvioARevision) partes.push('La proforma volvió a "en revisión" — Marta debe aprobarla de nuevo.')
+      if (lineas.length > 0) partes.push('Revisa los precios de las líneas — pueden no aplicar al nuevo cliente (ej. precios especiales del cliente anterior).')
+      if (partes.length > 1) setAvisoCambioCliente(partes.join(' '))
       await cargar()
     } else {
       const j = await res.json()
@@ -1007,10 +1015,10 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const puedeEnviarRevision = enTransicion && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
   const puedeAprobarDirecto = enTransicion && puedeEditar && lineas.length > 0 && !proforma?.requiere_revision
   const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
-  // Gate deliberadamente distinto (y más estricto) a puedeEditar: solo
-  // borrador/en_revision, nunca 'aprobada' — ver ESTADOS_PERMITE_CAMBIO_CLIENTE
-  // en cambiar-cliente/route.ts.
-  const puedeCambiarCliente = (proforma?.estado === 'borrador' || proforma?.estado === 'en_revision') && rolPuedeEditar
+  // borrador/en_revision/aprobada -- ver ESTADOS_PERMITE_CAMBIO_CLIENTE en
+  // cambiar-cliente/route.ts. Desde 'aprobada' el cambio de cliente devuelve
+  // la proforma a 'en_revision' (ver aviso antes de confirmar, más abajo).
+  const puedeCambiarCliente = (proforma?.estado === 'borrador' || proforma?.estado === 'en_revision' || proforma?.estado === 'aprobada') && rolPuedeEditar
   const puedeAnular = proforma?.estado !== 'facturada' && proforma?.estado !== 'anulada' && rolPuedeEditar
 
   if (loading) {
@@ -1106,10 +1114,25 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         />
       )}
 
+      {/* Modal reactivar proforma anulada -- mismo patrón que ModalAnularProforma
+          (motivo obligatorio, POST al servidor que valida rol+estado otra vez). */}
+      {modalDesanularAbierto && proforma && (
+        <ModalDesanularProforma
+          numero={proforma.numero}
+          clienteNombre={proforma.cliente?.nombre}
+          proformaId={proforma.id}
+          onClose={() => setModalDesanularAbierto(false)}
+          onReactivada={() => { setModalDesanularAbierto(false); cargar() }}
+        />
+      )}
+
       {/* Modal cambiar cliente */}
       {modalCambiarClienteAbierto && (
         <SeleccionarClienteModal
           titulo="Cambiar cliente de esta proforma"
+          aviso={proforma?.estado === 'aprobada'
+            ? 'Esta proforma está aprobada. Cambiar el cliente la devolverá a "en revisión" y Marta deberá aprobarla de nuevo.'
+            : undefined}
           onSeleccionar={cambiarCliente}
           onClose={() => setModalCambiarClienteAbierto(false)}
         />
@@ -1228,6 +1251,16 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             >
               <Ban size={16} />
               Anular
+            </button>
+          )}
+
+          {proforma.estado === 'anulada' && rolPuedeEditar && (
+            <button
+              onClick={() => setModalDesanularAbierto(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-action-primary border border-action-primary hover:bg-bg-subtle"
+            >
+              <RotateCcw size={16} />
+              Reactivar proforma
             </button>
           )}
         </div>
@@ -2011,7 +2044,8 @@ function ModalAnularProforma({
         </div>
         <div className="p-5 space-y-3">
           <p className="text-sm text-text-muted">
-            Anularla es permanente — no se puede editar ni volver a un estado anterior.
+            Una proforma anulada no se puede editar ni avanzar en el flujo normal —
+            si fue un error o ya no aplica, se puede reactivar después desde esta misma pantalla.
             Explica el motivo para dejarlo registrado.
           </p>
           <textarea
@@ -2037,6 +2071,84 @@ function ModalAnularProforma({
           >
             {enviando && <Loader2 size={14} className="animate-spin" />}
             Anular proforma
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Reactiva una proforma anulada (vuelve a 'borrador') para reutilizar su
+// número -- mismo patrón que ModalAnularProforma (motivo obligatorio, POST
+// al servidor que valida rol+estado otra vez). Vive en este mismo archivo
+// por el mismo criterio que ya se usa acá: solo un lugar la necesita, no
+// amerita un components/ compartido.
+function ModalDesanularProforma({
+  numero, clienteNombre, proformaId, onClose, onReactivada,
+}: {
+  numero: string
+  clienteNombre?: string
+  proformaId: string
+  onClose: () => void
+  onReactivada: () => void
+}) {
+  const [comentario, setComentario] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function confirmar() {
+    if (!comentario.trim()) { setError('El motivo es obligatorio'); return }
+    setEnviando(true)
+    setError('')
+    const res = await fetch(`/api/proformas/${proformaId}/desanular`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ comentario }),
+    })
+    const json = await res.json()
+    setEnviando(false)
+    if (!res.ok) { setError(json.error || 'Error al reactivar'); return }
+    onReactivada()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div>
+            <h2 className="text-lg font-bold text-text">Reactivar proforma</h2>
+            <p className="text-xs text-text-subtle">{numero} · {clienteNombre}</p>
+          </div>
+          <button onClick={onClose} className="text-text-subtle hover:text-text-muted"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <p className="text-sm text-text-muted">
+            La proforma vuelve a &quot;borrador&quot; y se puede editar normalmente (cambiar cliente,
+            líneas, etc.). Explica el motivo de la reactivación para dejarlo registrado.
+          </p>
+          <textarea
+            autoFocus
+            value={comentario}
+            onChange={e => setComentario(e.target.value)}
+            placeholder="Ej.: se anuló por error, se reutiliza para otro pedido..."
+            className="bg-bg-surface w-full border border-border rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-focus-ring"
+          />
+          {error && <p className="text-xs text-danger">{error}</p>}
+        </div>
+        <div className="flex gap-3 p-5 pt-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm border border-border text-text-muted hover:bg-bg-subtle"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={confirmar}
+            disabled={enviando}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-on-action-primary bg-action-primary hover:bg-action-primary-hover disabled:opacity-50"
+          >
+            {enviando && <Loader2 size={14} className="animate-spin" />}
+            Reactivar proforma
           </button>
         </div>
       </div>

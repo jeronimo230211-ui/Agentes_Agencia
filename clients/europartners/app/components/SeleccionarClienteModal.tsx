@@ -10,10 +10,15 @@ export interface ClienteOpcion {
 
 export default function SeleccionarClienteModal({
   titulo = 'Selecciona un cliente',
+  aviso,
   onSeleccionar,
   onClose,
 }: {
   titulo?: string
+  // Banner de advertencia opcional antes de la lista -- lo usa /cotizador
+  // para avisar ANTES de elegir el nuevo cliente que una proforma 'aprobada'
+  // vuelve a 'en revisión' al cambiarle el cliente (pedido de Jero, 2026-11-02).
+  aviso?: string
   onSeleccionar: (cliente: ClienteOpcion) => void
   onClose: () => void
 }) {
@@ -53,6 +58,12 @@ export default function SeleccionarClienteModal({
             />
           </div>
         </div>
+
+        {aviso && (
+          <div className="mx-5 mb-3 flex-none bg-warning-bg border border-warning rounded-lg p-3 text-xs text-warning">
+            {aviso}
+          </div>
+        )}
 
         <div className="overflow-y-auto flex-1 px-5 pb-5">
           {cargando ? (

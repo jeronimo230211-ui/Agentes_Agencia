@@ -2,7 +2,7 @@
 import { Suspense, useState, useEffect, useMemo, useCallback } from 'react'
 import {
   FileText, Clock, CheckCircle, XCircle, Send,
-  Receipt, ChevronRight, Plus, Download, AlertCircle, Ban, Loader2, X,
+  Receipt, ChevronRight, Plus, Download, AlertCircle, Ban, Loader2, X, RotateCcw,
 } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
@@ -66,8 +66,9 @@ function totalProforma(p: Proforma) {
 }
 
 // 'facturada' se anula desde /facturador (admin-only, es cancelar una
-// factura ya emitida) y 'anulada' ya no tiene acción posible -- para esos
-// dos estados esta pantalla no muestra el botón.
+// factura ya emitida) y 'anulada' ya está anulada -- para esos dos estados
+// esta pantalla no muestra el botón "Anular" ('anulada' en cambio muestra
+// "Reactivar", ver más abajo).
 function puedeAnularseAqui(estado: string) {
   return estado !== 'facturada' && estado !== 'anulada'
 }
@@ -110,6 +111,9 @@ function ProformasContent() {
   // /facturador y solo aplicaba a 'facturada'. Deisy pidió poder anularla
   // acá mismo sin pasar por Facturador (ESTADO_PUEDE_ANULARSE más abajo).
   const [anulando, setAnulando] = useState<Proforma | null>(null)
+  // Reactivar ("desanular") una proforma anulada por error, para reutilizar
+  // su número -- ver POST /api/proformas/[id]/desanular.
+  const [desanulando, setDesanulando] = useState<Proforma | null>(null)
 
   // Cargar clientes una vez
   useEffect(() => {
@@ -523,12 +527,24 @@ function ProformasContent() {
                         </div>
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        {/* BUG-003: sin padding el área táctil era solo el alto del
+                            texto (~16px), muy por debajo del mínimo de 44px. El padding
+                            extra hace crecer la fila cuando hace falta -- aceptable, no
+                            rompe el layout en desktop ni el scroll horizontal en mobile. */}
                         {puedeEditar && puedeAnularseAqui(p.estado) && (
                           <button
                             onClick={() => setAnulando(p)}
-                            className="flex items-center gap-1 text-xs font-semibold text-danger hover:opacity-80"
+                            className="flex items-center gap-1 text-xs font-semibold text-danger hover:opacity-80 px-2.5 py-3 -mx-2.5 rounded-lg hover:bg-danger/10"
                           >
                             <Ban size={13} /> Anular
+                          </button>
+                        )}
+                        {puedeEditar && p.estado === 'anulada' && (
+                          <button
+                            onClick={() => setDesanulando(p)}
+                            className="flex items-center gap-1 text-xs font-semibold text-action-primary hover:opacity-80 px-2.5 py-3 -mx-2.5 rounded-lg hover:bg-action-primary/10"
+                          >
+                            <RotateCcw size={13} /> Reactivar
                           </button>
                         )}
                       </td>
@@ -607,6 +623,15 @@ function ProformasContent() {
           onAnulada={() => { setAnulando(null); cargarProformas() }}
         />
       )}
+
+      {/* ── Modal reactivar proforma anulada ── */}
+      {desanulando && (
+        <ModalDesanularProforma
+          proforma={desanulando}
+          onClose={() => setDesanulando(null)}
+          onReactivada={() => { setDesanulando(null); cargarProformas() }}
+        />
+      )}
     </div>
   )
 }
@@ -654,7 +679,8 @@ function ModalAnularProforma({
         </div>
         <div className="p-5 space-y-3">
           <p className="text-sm text-text-muted">
-            Anularla es permanente — no se puede editar ni volver a un estado anterior.
+            Una proforma anulada no se puede editar ni avanzar en el flujo normal —
+            si fue un error o ya no aplica, se puede reactivar después con el botón &quot;Reactivar&quot;.
             Explica el motivo para dejarlo registrado.
           </p>
           <textarea
@@ -680,6 +706,81 @@ function ModalAnularProforma({
           >
             {enviando && <Loader2 size={14} className="animate-spin" />}
             Anular proforma
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Reactiva una proforma anulada (vuelve a 'borrador') para reutilizar su
+// número -- mismo patrón que ModalAnularProforma de arriba (motivo
+// obligatorio, llamada a POST /api/proformas/[id]/desanular que valida
+// rol+estado otra vez en el servidor).
+function ModalDesanularProforma({
+  proforma, onClose, onReactivada,
+}: {
+  proforma: Proforma
+  onClose: () => void
+  onReactivada: () => void
+}) {
+  const [comentario, setComentario] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
+
+  async function confirmar() {
+    if (!comentario.trim()) { setError('El motivo es obligatorio'); return }
+    setEnviando(true)
+    setError('')
+    const res = await fetch(`/api/proformas/${proforma.id}/desanular`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ comentario }),
+    })
+    const json = await res.json()
+    setEnviando(false)
+    if (!res.ok) { setError(json.error || 'Error al reactivar'); return }
+    onReactivada()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div>
+            <h2 className="text-lg font-bold text-text">Reactivar proforma</h2>
+            <p className="text-xs text-text-subtle">{proforma.numero} · {proforma.cliente?.nombre}</p>
+          </div>
+          <button onClick={onClose} className="text-text-subtle hover:text-text-muted"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <p className="text-sm text-text-muted">
+            La proforma vuelve a &quot;borrador&quot; y se puede editar normalmente (cambiar cliente,
+            líneas, etc.). Explica el motivo de la reactivación para dejarlo registrado.
+          </p>
+          <textarea
+            autoFocus
+            value={comentario}
+            onChange={e => setComentario(e.target.value)}
+            placeholder="Ej.: se anuló por error, se reutiliza para otro pedido..."
+            className="bg-bg-surface w-full border border-border rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-focus-ring"
+          />
+          {error && <p className="text-xs text-danger">{error}</p>}
+        </div>
+        <div className="flex gap-3 p-5 pt-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm border border-border text-text-muted hover:bg-bg-subtle"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={confirmar}
+            disabled={enviando}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-on-action-primary bg-action-primary hover:bg-action-primary-hover disabled:opacity-50"
+          >
+            {enviando && <Loader2 size={14} className="animate-spin" />}
+            Reactivar proforma
           </button>
         </div>
       </div>

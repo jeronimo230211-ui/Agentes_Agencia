@@ -6,14 +6,14 @@ type Params = { params: { id: string } }
 
 // Permite corregir el cliente de una proforma DESPUÉS de creada — caso real
 // que lo motivó: la 3-0256 se creó con el cliente equivocado (pedido de
-// Deisy, 2026-11-02). Solo tiene sentido mientras nada se le ha mostrado ni
-// enviado al cliente todavía: 'borrador' (recién creada/editándose) o
-// 'en_revision' (esperando aprobación interna de Marta, el cliente final
-// jamás la vio). Deliberadamente MÁS restrictivo que ESTADOS_EDITABLES de
-// ../route.ts (que incluye 'aprobada', porque esa sí ya pudo generar un PDF
-// o cotizar con las condiciones del cliente original) — no reusar esa
-// constante aquí.
-const ESTADOS_PERMITE_CAMBIO_CLIENTE = ['borrador', 'en_revision']
+// Deisy, 2026-11-02). 'borrador' y 'en_revision' no cambian de estado (nada
+// se le mostró aún al cliente final). 'aprobada' también se permite (pedido
+// de Jero, 2026-11-02) porque en la práctica a veces el error de cliente se
+// nota después de la aprobación de Marta -- pero como esa aprobación fue
+// para las condiciones del cliente ORIGINAL, cambiar el cliente fuerza la
+// proforma de vuelta a 'en_revision' para que Marta la apruebe de nuevo (ver
+// más abajo).
+const ESTADOS_PERMITE_CAMBIO_CLIENTE = ['borrador', 'en_revision', 'aprobada']
 
 export async function POST(req: NextRequest, { params }: Params) {
   const supabase = createRouteHandlerClient({ cookies })
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (!ESTADOS_PERMITE_CAMBIO_CLIENTE.includes(proforma.estado)) {
     return NextResponse.json({
-      error: `No se puede cambiar el cliente de una proforma en estado '${proforma.estado}' — ya pudo haberse mostrado o cotizado al cliente original. Solo se permite en 'borrador' o 'en_revision'.`,
+      error: `No se puede cambiar el cliente de una proforma en estado '${proforma.estado}' — ya pudo haberse mostrado o cotizado al cliente original. Solo se permite en 'borrador', 'en_revision' o 'aprobada'.`,
     }, { status: 400 })
   }
 
@@ -59,9 +59,23 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'El cliente seleccionado no existe' }, { status: 400 })
   }
 
+  const estadoOrigen = proforma.estado
+  // Si venía aprobada, la aprobación de Marta fue para el cliente original
+  // -- cambiar el cliente invalida esa aprobación y la devuelve a revisión.
+  // En cualquier otro estado permitido (borrador/en_revision) no hay cambio
+  // de estado, igual que antes.
+  const estadoDestino = estadoOrigen === 'aprobada' ? 'en_revision' : estadoOrigen
+
   const { error: updateError } = await supabase
     .from('proformas')
-    .update({ cliente_id: nuevoClienteId, updated_at: new Date().toISOString() })
+    .update({
+      cliente_id: nuevoClienteId,
+      estado: estadoDestino,
+      // aprobada_por ya no aplica una vez se revierte la aprobación -- se
+      // vuelve a fijar cuando Marta la apruebe de nuevo.
+      ...(estadoOrigen === 'aprobada' ? { aprobada_por: null } : {}),
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', params.id)
 
   if (updateError) {
@@ -69,21 +83,25 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: `No se pudo cambiar el cliente: ${updateError.message}` }, { status: 500 })
   }
 
-  // No hay cambio de estado (estado_desde === estado_hacia a propósito) —
-  // proforma_eventos exige estado_hacia NOT NULL pero no exige que sea
-  // distinto de estado_desde, así que este patrón sirve también para dejar
-  // rastro de auditoría de cambios que no mueven el flujo. El nombre del
-  // cliente anterior se guarda en el comentario porque una vez corre el
-  // UPDATE de arriba ya no hay forma de recuperarlo desde la proforma.
+  // Cuando no hubo cambio de estado (estado_desde === estado_hacia a
+  // propósito), este evento sirve solo como rastro de auditoría -- igual que
+  // antes. Cuando sí lo hubo (aprobada -> en_revision), el evento refleja el
+  // cambio real. El nombre del cliente anterior se guarda en el comentario
+  // porque una vez corre el UPDATE de arriba ya no hay forma de recuperarlo
+  // desde la proforma.
   const clienteAnterior = Array.isArray(proforma.cliente) ? proforma.cliente[0] : proforma.cliente
   const nombreAnterior = (clienteAnterior as { nombre?: string } | null)?.nombre || '(desconocido)'
+  const comentario = estadoDestino !== estadoOrigen
+    ? `Cliente cambiado de "${nombreAnterior}" a "${nuevoCliente.nombre}" — proforma devuelta a revisión (requiere nueva aprobación de Marta)`
+    : `Cliente cambiado de "${nombreAnterior}" a "${nuevoCliente.nombre}"`
+
   await supabase.from('proforma_eventos').insert({
     proforma_id: params.id,
     usuario_id: session.user.id,
-    estado_desde: proforma.estado,
-    estado_hacia: proforma.estado,
-    comentario: `Cliente cambiado de "${nombreAnterior}" a "${nuevoCliente.nombre}"`,
+    estado_desde: estadoOrigen,
+    estado_hacia: estadoDestino,
+    comentario,
   })
 
-  return NextResponse.json({ ok: true, cliente: nuevoCliente })
+  return NextResponse.json({ ok: true, cliente: nuevoCliente, estado: estadoDestino })
 }
