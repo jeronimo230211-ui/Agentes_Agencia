@@ -1350,7 +1350,10 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
             </button>
           )}
 
-          {puedeAnular && (
+          {/* No se puede anular una proforma real mientras se están
+              corrigiendo sus datos (modoCorreccionActivo) -- mismo criterio
+              que "Enviar a Marta"/"Aprobar" arriba: unmount real, no solo disabled. */}
+          {puedeAnular && !modoCorreccionActivo && (
             <button
               onClick={() => setModalAnularAbierto(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-danger border border-danger hover:bg-danger-bg"
