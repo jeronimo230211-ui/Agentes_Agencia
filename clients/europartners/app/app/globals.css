@@ -123,3 +123,13 @@ body {
   height: 100% !important;
   object-fit: contain;
 }
+
+/* Pista visual de "hay más para deslizar" en el borde derecho de un
+   contenedor con scroll horizontal (BUG-003, QA mobile 375px nov-2026) --
+   el componente ScrollFadeRight (app/(app)/cotizador/[id]/page.tsx) calcula
+   si falta contenido por ver y alterna la opacidad de esta capa; el color
+   usa var(--scroll-fade), el mismo tinte de --shadow-sm/md/lg, para no
+   inventar un color fuera del sistema de Marta. */
+.ep-scroll-fade-right {
+  background-image: linear-gradient(to left, var(--scroll-fade), transparent 24px);
+}

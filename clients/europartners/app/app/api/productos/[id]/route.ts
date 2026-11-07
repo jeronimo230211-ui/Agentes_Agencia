@@ -85,6 +85,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     precio_fob_usd, precio_mayorista, precio_detallista,
     cbm_unitario, moq, dimensiones,
     updated_at: new Date().toISOString(),
+    // Quién hizo el cambio, para el trigger de auditoría (migración 030).
+    // Sin esto el trigger igual registra el evento pero con usuario_id null.
+    actualizado_por: session.user.id,
   }
 
   // Es un formulario completo (no un PATCH parcial): los campos vacíos se

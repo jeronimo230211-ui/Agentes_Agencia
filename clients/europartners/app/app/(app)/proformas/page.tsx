@@ -431,7 +431,7 @@ function ProformasContent() {
             <p className="text-sm">No hay proformas con los filtros seleccionados</p>
           </div>
         ) : (
-          <div className="bg-bg-surface rounded-xl border border-border overflow-hidden">
+          <div className="bg-bg-surface rounded-xl border border-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-bg-subtle border-b border-border">
@@ -527,14 +527,17 @@ function ProformasContent() {
                         </div>
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                        {/* BUG-003: sin padding el área táctil era solo el alto del
-                            texto (~16px), muy por debajo del mínimo de 44px. El padding
-                            extra hace crecer la fila cuando hace falta -- aceptable, no
-                            rompe el layout en desktop ni el scroll horizontal en mobile. */}
+                        {/* BUG-003 / BUG-C: sin padding el área táctil era solo el alto del
+                            texto (~16px), muy por debajo del mínimo de 44px. py-3 (24px)
+                            + line-height de text-xs (16px) medía 40px reales en el DOM --
+                            4px corto. py-3.5 (28px) sí cierra los 44px medidos con
+                            getBoundingClientRect(). El padding extra hace crecer la fila
+                            cuando hace falta -- aceptable, no rompe el layout en desktop
+                            ni el scroll horizontal en mobile. */}
                         {puedeEditar && puedeAnularseAqui(p.estado) && (
                           <button
                             onClick={() => setAnulando(p)}
-                            className="flex items-center gap-1 text-xs font-semibold text-danger hover:opacity-80 px-2.5 py-3 -mx-2.5 rounded-lg hover:bg-danger/10"
+                            className="flex items-center gap-1 text-xs font-semibold text-danger hover:opacity-80 px-2.5 py-3.5 -mx-2.5 rounded-lg hover:bg-danger/10"
                           >
                             <Ban size={13} /> Anular
                           </button>
@@ -542,7 +545,7 @@ function ProformasContent() {
                         {puedeEditar && p.estado === 'anulada' && (
                           <button
                             onClick={() => setDesanulando(p)}
-                            className="flex items-center gap-1 text-xs font-semibold text-action-primary hover:opacity-80 px-2.5 py-3 -mx-2.5 rounded-lg hover:bg-action-primary/10"
+                            className="flex items-center gap-1 text-xs font-semibold text-action-primary hover:opacity-80 px-2.5 py-3.5 -mx-2.5 rounded-lg hover:bg-action-primary/10"
                           >
                             <RotateCcw size={13} /> Reactivar
                           </button>

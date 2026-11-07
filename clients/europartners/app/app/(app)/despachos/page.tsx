@@ -247,7 +247,7 @@ function DespachosContent() {
             <p className="text-sm">No hay despachos con este filtro</p>
           </div>
         ) : (
-          <div className="bg-bg-surface rounded-xl border border-border overflow-hidden">
+          <div className="bg-bg-surface rounded-xl border border-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-bg-subtle border-b border-border">

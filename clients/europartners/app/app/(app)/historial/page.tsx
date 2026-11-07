@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Search, TrendingUp, TrendingDown, Minus, Tag, Pencil, Check } from 'lucide-react'
+import { Search, TrendingUp, TrendingDown, Minus, Tag, Pencil, Check, ChevronLeft } from 'lucide-react'
 import { formatUSD, formatPct } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
@@ -183,14 +183,31 @@ export default function HistorialPage() {
     ? CAT_COLORES[seleccionado.categoria_nombre] ?? 'bg-gray-100 text-gray-500 border-gray-200'
     : ''
 
+  // BUG-002: tocar "Volver" en móvil tiene que limpiar AMBOS filtros. Si solo
+  // se limpia uno, la condición `seleccionado || clienteId` del aside/main
+  // sigue siendo verdadera y el botón parece no hacer nada.
+  function volverALista() {
+    setSeleccionado(null)
+    setClienteId('')
+  }
+
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+    // El header real (Topbar.tsx) es h-14 (56px), no 64px -- las otras 5 pantallas
+    // con este mismo patrón (proformas, despachos, facturador, finanzas,
+    // solicitudes) ya usan calc(100vh-0px) porque `main` ya es flex-1 dentro del
+    // flex-col de AppLayout y se ajusta solo. El -64px de aquí era un resto
+    // legado que dejaba el panel más corto de lo necesario.
+    <div className="flex flex-col md:flex-row h-[calc(100vh-0px)] overflow-hidden">
 
       {/* ── PANEL IZQUIERDO ── */}
       {/* BUG-007: era bg-white fijo -- en modo oscuro el texto del SKU
           (text-text-heading, token) se vuelve blanco y quedaba blanco sobre
-          blanco, invisible. bg-bg-surface sí cambia con el tema. */}
-      <aside className="w-72 flex-shrink-0 border-r border-border bg-bg-surface flex flex-col">
+          blanco, invisible. bg-bg-surface sí cambia con el tema.
+          BUG-002: en móvil se oculta por completo mientras hay una referencia
+          o un cliente elegido, para que el detalle ocupe el ancho completo
+          (mismo patrón de lista↔detalle que /catalogo). En desktop (md:flex)
+          siempre va lado a lado con el panel de detalle, igual que antes. */}
+      <aside className={`${seleccionado || clienteId ? 'hidden' : 'flex'} md:flex w-full md:w-72 flex-shrink-0 border-r border-border bg-bg-surface flex-col`}>
 
         {/* Buscador */}
         <div className="p-3 border-b border-border">
@@ -322,7 +339,10 @@ export default function HistorialPage() {
       </aside>
 
       {/* ── PANEL DERECHO ── */}
-      <main className="flex-1 overflow-y-auto bg-bg-page">
+      {/* BUG-002: visibilidad inversa al aside -- en móvil solo aparece cuando
+          hay referencia o cliente elegido (ocupa el ancho completo). En
+          desktop (md:block) siempre visible, lado a lado, igual que antes. */}
+      <main className={`${seleccionado || clienteId ? 'block' : 'hidden'} md:block flex-1 overflow-y-auto bg-bg-page`}>
         {!seleccionado && !clienteId ? (
           <div className="flex flex-col items-center justify-center h-full text-text-subtle gap-3">
             <Search size={44} strokeWidth={1} />
@@ -334,8 +354,19 @@ export default function HistorialPage() {
           </div>
         ) : (
           <div className="p-6">
+            {/* Botón "Volver" -- solo móvil, mismo estilo que Migas.tsx
+                (componentes/producto-detalle/Migas.tsx) para que el patrón de
+                navegación lista↔detalle se vea igual en toda la app. */}
+            <button
+              onClick={volverALista}
+              className="md:hidden inline-flex items-center gap-1 text-sm font-semibold text-text-link -ml-1 mb-3 px-1 py-1"
+            >
+              <ChevronLeft size={18} />
+              Volver
+            </button>
+
             {/* Encabezado */}
-            <div className="flex items-start justify-between mb-5">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-5">
               <div>
                 {seleccionado ? (
                   <div className="flex items-center gap-2 mb-1">
@@ -411,7 +442,7 @@ export default function HistorialPage() {
               <>
                 {/* Stats — solo tienen sentido mirando una referencia puntual */}
                 {seleccionado && stats && (
-                  <div className="grid grid-cols-4 gap-3 mb-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                     <div className="bg-bg-surface rounded-xl border border-border p-3 text-center">
                       <p className="text-xs text-text-subtle mb-1">Último precio</p>
                       <p className="font-bold tabular-nums text-text-heading text-base">
@@ -454,6 +485,7 @@ export default function HistorialPage() {
                     proforma y "Precio cliente" usan text-text-heading (token, se
                     vuelve blanco en modo oscuro) y quedaban invisibles. */}
                 <div className="bg-bg-surface rounded-xl border border-border overflow-hidden">
+                  <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-bg-subtle border-b border-border">
@@ -567,6 +599,7 @@ export default function HistorialPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                   <div className="px-4 py-2 border-t border-border text-xs text-text-subtle">
                     {filas.length} proforma{filas.length !== 1 ? 's' : ''} · más reciente primero
                   </div>

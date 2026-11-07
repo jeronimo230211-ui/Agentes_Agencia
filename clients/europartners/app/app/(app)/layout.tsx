@@ -35,6 +35,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [sidebarVisible, loaded])
 
+  // BUG-A: si la sesión ya está abierta y alguien reduce el viewport (o gira
+  // una tablet/convertible) sin recargar, el sidebar se queda fijo tapando
+  // la pantalla en mobile. matchMedia + su evento 'change' solo dispara al
+  // cruzar el breakpoint, no en cada pixel de resize.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mql = window.matchMedia('(max-width: 767px)')
+    const handleBreakpointCross = (e: MediaQueryListEvent) => {
+      if (e.matches) setSidebarVisible(false)
+    }
+    mql.addEventListener('change', handleBreakpointCross)
+    return () => mql.removeEventListener('change', handleBreakpointCross)
+  }, [])
+
   return (
     <div className="flex min-h-screen">
       {sidebarVisible && <Sidebar onClose={() => setSidebarVisible(false)} />}

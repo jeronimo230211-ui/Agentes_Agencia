@@ -72,6 +72,10 @@
   --shadow-sm: 0 1px 2px rgba(22, 35, 115, 0.08);
   --shadow-md: 0 4px 16px rgba(22, 35, 115, 0.1);
   --shadow-lg: 0 16px 40px rgba(22, 35, 115, 0.16);
+  /* Mismo tinte que las sombras de arriba, pero pensado para el degradado
+     de borde de scroll horizontal (BUG-003, QA mobile nov-2026) -- no es un
+     color nuevo, solo la variante con alpha que ese uso necesita. */
+  --scroll-fade: rgba(22, 35, 115, 0.14);
 
   /* ---- Tipografía ----
      El token del manual pide la fuente por su nombre literal, pero las
@@ -155,4 +159,5 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --scroll-fade: rgba(0, 0, 0, 0.45);
 }

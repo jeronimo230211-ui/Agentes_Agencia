@@ -34,6 +34,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Nada para actualizar' }, { status: 400 })
   }
 
+  // Quién hizo el cambio, para el trigger de auditoría (migración 030).
+  // Sin esto el trigger igual registra el evento pero con usuario_id null.
+  update.actualizado_por = session.user.id
+
   const adminClient = createAdminClient()
   const { data, error } = await adminClient
     .from('clientes')

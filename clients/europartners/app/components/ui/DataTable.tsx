@@ -42,7 +42,7 @@ export default function DataTable<T>({
   onRowClick,
 }: DataTableProps<T>) {
   return (
-    <div className="bg-bg-surface rounded-xl border border-border overflow-hidden">
+    <div className="bg-bg-surface rounded-xl border border-border overflow-x-auto">
       <table className="w-full text-text-body">
         <thead>
           <tr className="bg-bg-subtle border-b border-border">
