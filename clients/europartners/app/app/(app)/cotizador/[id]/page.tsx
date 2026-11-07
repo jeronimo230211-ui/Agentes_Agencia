@@ -654,7 +654,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [aprobando, setAprobando] = useState(false)
   const [paymentTermsOpciones, setPaymentTermsOpciones] = useState<PaymentTermsOpcion[]>([])
   const [mostrarNuevoPaymentTerm, setMostrarNuevoPaymentTerm] = useState(false)
-  const { puedeEditar: rolPuedeEditar } = useRol()
+  const { rol, puedeEditar: rolPuedeEditar } = useRol()
 
   // Cambiar el cliente de una proforma ya creada (ver cambiar-cliente/route.ts
   // — solo permitido en borrador/en_revision, antes de que el cliente final
@@ -673,6 +673,19 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   // su número -- ver POST /api/proformas/[id]/desanular. Vuelve a 'borrador';
   // de ahí en adelante usa los flujos normales que ya existen.
   const [modalDesanularAbierto, setModalDesanularAbierto] = useState(false)
+
+  // Corrección de datos (admin) -- habilita editar líneas de una proforma ya
+  // 'enviada' (ej. migradas de Excel con datos incompletos, como la 3-0051),
+  // que el flujo normal no deja tocar (ver ESTADOS_EDITABLES en
+  // app/api/proformas/[id]/route.ts). Exclusiva de admin. A diferencia de
+  // ModalAnularProforma, confirmar este modal NO llama a la API directamente
+  // -- solo guarda el motivo y activa el gate de edición (puedeEditar más
+  // abajo); el motivo se manda al backend en cada guardado mientras el modo
+  // esté activo, que es quien valida rol+estado otra vez y deja el evento en
+  // proforma_eventos.
+  const [modalCorreccionAbierto, setModalCorreccionAbierto] = useState(false)
+  const [modoCorreccionActivo, setModoCorreccionActivo] = useState(false)
+  const [motivoCorreccion, setMotivoCorreccion] = useState('')
 
   // Datos financieros adicionales (Registro Maestro Vivo — ver
   // CAMPOS_FINANCIEROS_ADICIONALES en app/api/proformas/[id]/route.ts).
@@ -940,6 +953,10 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         freight: proforma.freight,
         insurance: proforma.insurance,
         payment_terms: proforma.payment_terms,
+        // Solo se manda mientras el modo "Corrección de datos (admin)" está
+        // activo -- es lo que le dice al backend que acepte el guardado
+        // sobre una proforma 'enviada' y deje el evento de auditoría.
+        ...(modoCorreccionActivo ? { motivo_correccion: motivoCorreccion } : {}),
       }),
     })
 
@@ -1059,7 +1076,12 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   // no vuelve a mostrar esos botones — ver mismo permiso en el PUT de
   // app/api/proformas/[id]/route.ts.
   const enTransicion = proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados'
-  const puedeEditar = (enTransicion || proforma?.estado === 'aprobada') && rolPuedeEditar
+  // Corrección de datos (admin): habilita el mismo gate de edición
+  // (puedeEditar) para una proforma 'enviada' solo mientras el admin activó
+  // el modo explícitamente con un motivo (modoCorreccionActivo) -- ver
+  // ModalCorreccionDatos más abajo y motivo_correccion en guardar().
+  const puedeCorregirDatos = proforma?.estado === 'enviada' && rol === 'admin'
+  const puedeEditar = (enTransicion || proforma?.estado === 'aprobada' || modoCorreccionActivo) && rolPuedeEditar
   const puedeEnviarRevision = enTransicion && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
   const puedeAprobarDirecto = enTransicion && puedeEditar && lineas.length > 0 && !proforma?.requiere_revision
   const puedeEnviarCliente = proforma?.estado === 'aprobada' && rolPuedeEditar
@@ -1186,6 +1208,22 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         />
       )}
 
+      {/* Modal corrección de datos (admin) -- ver estado modoCorreccionActivo
+          más arriba; a diferencia de los modales de anular/desanular, este
+          no llama a la API al confirmar, solo activa el modo de edición. */}
+      {modalCorreccionAbierto && proforma && (
+        <ModalCorreccionDatos
+          numero={proforma.numero}
+          clienteNombre={proforma.cliente?.nombre}
+          onClose={() => setModalCorreccionAbierto(false)}
+          onConfirmar={(motivo) => {
+            setMotivoCorreccion(motivo)
+            setModoCorreccionActivo(true)
+            setModalCorreccionAbierto(false)
+          }}
+        />
+      )}
+
       {/* Modal cambio de tipo de precio */}
       {cambioTipoPendiente && (
         <ModalCambioTipoPrecio
@@ -1260,28 +1298,45 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                 disabled={guardando}
                 className="px-4 py-2 border border-border rounded-lg text-sm text-text hover:bg-bg-subtle disabled:opacity-50"
               >
-                {guardando ? 'Guardando...' : 'Guardar'}
+                {modoCorreccionActivo
+                  ? (guardando ? 'Guardando corrección...' : 'Guardar corrección')
+                  : (guardando ? 'Guardando...' : 'Guardar')}
               </button>
-              {proforma.requiere_revision ? (
-                <button
-                  onClick={enviarRevision}
-                  disabled={!puedeEnviarRevision || enviando}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
-                >
-                  <Send size={16} />
-                  {enviando ? 'Enviando...' : 'Enviar a Marta'}
-                </button>
-              ) : (
-                <button
-                  onClick={aprobarDirecto}
-                  disabled={!puedeAprobarDirecto || aprobando}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
-                >
-                  <CheckCircle size={16} />
-                  {aprobando ? 'Aprobando...' : 'Aprobar'}
-                </button>
+              {/* Enviar a Marta / Aprobar son parte del flujo normal
+                  (borrador/aprobada) -- no deben aparecer durante la
+                  corrección de datos de una proforma ya 'enviada'. */}
+              {!modoCorreccionActivo && (
+                proforma.requiere_revision ? (
+                  <button
+                    onClick={enviarRevision}
+                    disabled={!puedeEnviarRevision || enviando}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
+                  >
+                    <Send size={16} />
+                    {enviando ? 'Enviando...' : 'Enviar a Marta'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={aprobarDirecto}
+                    disabled={!puedeAprobarDirecto || aprobando}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-50"
+                  >
+                    <CheckCircle size={16} />
+                    {aprobando ? 'Aprobando...' : 'Aprobar'}
+                  </button>
+                )
               )}
             </>
+          )}
+
+          {puedeCorregirDatos && !modoCorreccionActivo && (
+            <button
+              onClick={() => setModalCorreccionAbierto(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-danger border border-danger hover:bg-danger-bg"
+            >
+              <AlertCircle size={16} />
+              Corrección de datos (admin)
+            </button>
           )}
 
           {puedeEnviarCliente && (
@@ -1451,6 +1506,24 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       </div>
 
       {/* Alertas de estado */}
+      {modoCorreccionActivo && (
+        <div className="bg-danger-bg border-2 border-danger rounded-xl p-4 mb-4 flex gap-3 items-start">
+          <AlertCircle size={18} className="text-danger flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium text-danger text-sm">Modo corrección de datos (admin) activo</p>
+            <p className="text-danger text-sm mt-0.5">
+              Estás editando una proforma ya enviada al cliente. Motivo: &quot;{motivoCorreccion}&quot;.
+              No se envía nada nuevo al cliente ni cambia el estado -- solo guarda las correcciones.
+            </p>
+          </div>
+          <button
+            onClick={() => { setModoCorreccionActivo(false); setMotivoCorreccion('') }}
+            className="text-danger hover:opacity-70 flex-shrink-0 text-xs font-medium underline whitespace-nowrap"
+          >
+            Salir del modo
+          </button>
+        </div>
+      )}
       {proforma.estado === 'rechazada' && proforma.motivo_rechazo && (
         <div className="bg-danger-bg border border-danger rounded-xl p-4 mb-4 flex gap-3">
           <XCircle size={18} className="text-danger flex-shrink-0 mt-0.5" />
@@ -1717,24 +1790,42 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                             </div>
                           )}
                           <div className="mt-1">
-                            {comp.precio_especial ? (
-                              <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
-                                <Tag size={10} className="text-warning flex-shrink-0" />
-                                <span className="text-warning font-semibold">
-                                  Precio especial aplicado: {formatUSD(comp.precio_especial.precio_usd)}
-                                </span>
-                                {comp.precio_especial.motivo && (
-                                  <span className="text-text-subtle">— {comp.precio_especial.motivo}</span>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => quitarPrecioEspecial(comp.precio_especial!.id)}
-                                  className="text-text-subtle hover:text-danger hover:underline"
-                                >
-                                  Quitar
-                                </button>
-                              </div>
-                            ) : (
+                            {comp.precio_especial ? (() => {
+                              // El precio especial es un dato de referencia del cliente
+                              // (producto_precios_especiales) que nunca se sincronizó solo
+                              // con precio_cliente_usd de la línea -- son independientes
+                              // desde que se creó esta función. "aplicado" implicaba que ya
+                              // estaba puesto en la línea, lo cual era falso en cuanto
+                              // alguien tocaba el precio de la línea a mano después.
+                              const hayDiferencia = comp.precio_especial!.precio_usd !== linea.precio_cliente_usd
+                              return (
+                                <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
+                                  <Tag size={10} className="text-warning flex-shrink-0" />
+                                  <span className="text-warning font-semibold">
+                                    {hayDiferencia ? 'Precio especial configurado' : 'Precio especial aplicado'}: {formatUSD(comp.precio_especial!.precio_usd)}
+                                  </span>
+                                  {comp.precio_especial!.motivo && (
+                                    <span className="text-text-subtle">— {comp.precio_especial!.motivo}</span>
+                                  )}
+                                  {hayDiferencia && puedeEditar && (
+                                    <button
+                                      type="button"
+                                      onClick={() => actualizarLinea(linea._key, 'precio_cliente_usd', comp.precio_especial!.precio_usd)}
+                                      className="text-action-primary hover:underline font-medium"
+                                    >
+                                      Aplicar a esta línea
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => quitarPrecioEspecial(comp.precio_especial!.id)}
+                                    className="text-text-subtle hover:text-danger hover:underline"
+                                  >
+                                    Quitar
+                                  </button>
+                                </div>
+                              )
+                            })() : (
                               <button
                                 type="button"
                                 onClick={() => { setFijandoPrecioCodigo(linea.codigo_pdf!); setFijandoPrecioProductoId(linea.producto_id ?? null) }}
@@ -2200,6 +2291,76 @@ function ModalDesanularProforma({
           >
             {enviando && <Loader2 size={14} className="animate-spin" />}
             Reactivar proforma
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Activa el modo de edición especial para proformas 'enviada' (ver
+// puedeCorregirDatos / modoCorreccionActivo en ProformaEditorPage). A
+// diferencia de ModalAnularProforma/ModalDesanularProforma, este modal NO
+// llama a la API al confirmar -- solo recoge el motivo obligatorio y se lo
+// devuelve al padre, que activa el mismo gate de edición (puedeEditar) que
+// ya existe para 'borrador'/'aprobada'. El motivo real se manda al backend
+// recién en el siguiente guardado (ver motivo_correccion en guardar()),
+// que es quien valida rol+estado otra vez y deja el evento de auditoría.
+function ModalCorreccionDatos({
+  numero, clienteNombre, onClose, onConfirmar,
+}: {
+  numero: string
+  clienteNombre?: string
+  onClose: () => void
+  onConfirmar: (motivo: string) => void
+}) {
+  const [motivo, setMotivo] = useState('')
+  const [error, setError] = useState('')
+
+  function confirmar() {
+    if (!motivo.trim()) { setError('El motivo es obligatorio'); return }
+    onConfirmar(motivo.trim())
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <div>
+            <h2 className="text-lg font-bold text-text">Corrección de datos (admin)</h2>
+            <p className="text-xs text-text-subtle">{numero} · {clienteNombre}</p>
+          </div>
+          <button onClick={onClose} className="text-text-subtle hover:text-text-muted"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <p className="text-sm text-text-muted">
+            Esta proforma ya fue enviada al cliente y normalmente no se puede editar.
+            Esta opción habilita la edición de sus líneas y campos solo para corregir
+            datos incompletos o incorrectos (ej. proformas migradas de Excel) -- no
+            reinicia el flujo de aprobación ni cambia su estado. Explica el motivo
+            para dejarlo registrado.
+          </p>
+          <textarea
+            autoFocus
+            value={motivo}
+            onChange={e => setMotivo(e.target.value)}
+            placeholder="Ej.: datos incompletos de la migración desde Excel..."
+            className="bg-bg-surface w-full border border-border rounded-lg p-3 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-danger"
+          />
+          {error && <p className="text-xs text-danger">{error}</p>}
+        </div>
+        <div className="flex gap-3 p-5 pt-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm border border-border text-text-muted hover:bg-bg-subtle"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={confirmar}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-on-danger bg-danger hover:opacity-90"
+          >
+            Habilitar edición
           </button>
         </div>
       </div>

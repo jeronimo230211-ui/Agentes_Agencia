@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Clock, CheckSquare, DollarSign, Ship } from 'lucide-react'
 import { formatUSD } from '@/lib/precio'
+import SeccionColapsable from '@/components/ui/SeccionColapsable'
 
 interface ItemEnRevision { id: string; numero: string; cliente: string | null; total: number | null; horas: number | null }
 interface ItemPago { id: string; numero: string; cliente: string | null; total: number | null; estado_pago: string; horas: number | null }
@@ -67,12 +68,13 @@ export default function MisPendientesPanel() {
   const total = data.en_revision.length + data.pago_pendiente.length + data.despachos_pendientes.length
   if (total === 0) return null
 
+  // "Mis Pendientes" es una de las 3 secciones colapsables de primer nivel
+  // del dashboard (ver app/(app)/dashboard/page.tsx) -- abierta por defecto,
+  // a diferencia de "Proformas recientes" y "KPIs". El header (ícono+título+
+  // chevron+aria-expanded) vive en SeccionColapsable, reusado también por
+  // esas otras 2 secciones y por los tiles del tab Estratégico.
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-2 mb-3">
-        <Clock size={18} className="text-text-heading" />
-        <h2 className="text-lg font-bold text-text-heading">Mis Pendientes</h2>
-      </div>
+    <SeccionColapsable titulo="Mis Pendientes" icon={Clock} defaultAbierto>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Seccion titulo="Por aprobar" icon={CheckSquare} count={data.en_revision.length} href="/aprobacion">
           {data.en_revision.slice(0, 5).map(p => (
@@ -101,6 +103,6 @@ export default function MisPendientesPanel() {
           ))}
         </Seccion>
       </div>
-    </div>
+    </SeccionColapsable>
   )
 }
