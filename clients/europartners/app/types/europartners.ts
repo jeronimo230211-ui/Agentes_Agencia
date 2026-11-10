@@ -108,6 +108,12 @@ export interface ProductoVariante {
 export interface ProductoComponente {
   id: string
   producto_id: string
+  // Migración 031 — si está presente, este componente (parte) cuelga de una
+  // VARIANTE de color específica (producto_variantes.id), porque su precio
+  // cambia según el color del set (ej. HK0426 blanco vs. hueso). Si es null,
+  // el componente cuelga directo del producto genérico (comportamiento
+  // anterior a la 031, sin cambios).
+  variante_id?: string
   componente: string
   precio_fob_usd?: number
   orden: number

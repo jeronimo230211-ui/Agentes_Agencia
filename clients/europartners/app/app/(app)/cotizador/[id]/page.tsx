@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, useRef, Fragment, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Plus, Trash2, Send, Eye, Loader2,
@@ -7,11 +7,12 @@ import {
   Search, X, Package, FileText, Ban,
   TrendingUp, TrendingDown, Minus, History, Users, Tag,
   Wallet, ChevronDown, ChevronUp, UserCog, RotateCcw,
+  SplitSquareHorizontal,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRol } from '@/lib/useRol'
 import { formatUSD, formatPct, calcMargen, precioPorTipo } from '@/lib/precio'
-import type { Proforma, ProformaLinea, TipoPrecio, TipoPago, PaymentTermsOpcion } from '@/types/europartners'
+import type { Proforma, ProformaLinea, TipoPrecio, TipoPago, PaymentTermsOpcion, ProductoVariante, ProductoComponente } from '@/types/europartners'
 import { INCOTERM_SUGERENCIAS, INSURANCE_SUGERENCIAS, INCOTERM_FREIGHT_INSURANCE_DEFAULTS, type Incoterm } from '@/types/europartners'
 import NuevoProductoModal, { type ProductoCreado } from '@/components/NuevoProductoModal'
 import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaModal'
@@ -62,10 +63,39 @@ interface ProductoOpcion {
   precio_mayorista?: number
   precio_detallista?: number
   categoria: { nombre: string }
+  // /api/productos ya los incluye (variantes:producto_variantes(*),
+  // componentes:producto_componentes(*)) -- solo faltaba usarlos aquí.
+  variantes?: ProductoVariante[]
+  componentes?: ProductoComponente[]
 }
 
 function textoProducto(nombre: string, descripcion?: string | null) {
   return descripcion ? `${nombre} — ${descripcion}` : nombre
+}
+
+// "SEAT COVER" -> "Seat Cover", "WHITE" -> "White" -- solo para texto
+// legible al cliente (descripcion_pdf). codigo_pdf se queda en mayúsculas
+// tal cual aparece hoy en el PDF (ej. "HK0426 TANK WHITE").
+function capitalizar(s: string) {
+  if (!s) return s
+  return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// Gate de Hardware & Lumber (HL) -- dividir un producto en partes (Bowl/Tank/
+// Seat Cover) solo tiene sentido si el producto tiene al menos una variante
+// de color con componentes cargados colgando de ella (migración 031). Nunca
+// depende del cliente aquí: el cliente (modo_pricing === 'componente') se
+// revisa aparte, en el caller -- ver SelectorProductoModal.
+function productoEsDivisible(p: ProductoOpcion): boolean {
+  return !!p.variantes?.some(v => p.componentes?.some(c => c.variante_id === v.id))
+}
+
+// Componentes de una variante específica, en el orden en que deben
+// agregarse como líneas (orden ya viene de producto_componentes.orden).
+function componentesDeVariante(p: ProductoOpcion, varianteId: string): ProductoComponente[] {
+  return (p.componentes || [])
+    .filter(c => c.variante_id === varianteId)
+    .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
 }
 
 // ─── Indicador de scroll horizontal ────────────────────────────────────────
@@ -121,19 +151,120 @@ interface LineaEditable extends Partial<ProformaLinea> {
   _cantidadStr: string
   _precioMayorista?: number
   _precioDetallista?: number
+  // Producto dividido en partes (HL) -- identifica qué líneas nacieron
+  // juntas del mismo "Agregar N líneas" (ver agregarLineasDivididas). Más
+  // robusto que inferir por producto_id+variante_id compartidos: si el
+  // usuario divide el mismo HK0426 WHITE dos veces en la misma proforma,
+  // esto sigue distinguiendo cada grupo. Nunca se manda al backend --
+  // guardar() solo lee los campos de ProformaLinea.
+  _grupoId?: string
+  // Texto fijo para el encabezado del grupo (ej. "HK0426 — WHITE"), armado
+  // una sola vez al crear las líneas -- evita tener que re-derivarlo del
+  // codigo_pdf (frágil si alguien lo edita a mano después).
+  _grupoLabel?: string
 }
 
 const labelTipo = (t: TipoPrecio) => (t === 'mayorista' ? 'Mayorista' : 'Detallista')
 
+// ─── Paso "elige el color" (dividir en partes) ─────────────────────────────
+// Mismo estilo de tarjetas apiladas que ModalCambioTipoPrecio (ver abajo) --
+// vive DENTRO del selector de producto, como un paso más, no como un modal
+// aparte (ajuste de Jero sobre el diseño original de ui-ux-designer: acceso
+// directo desde el ícono de la fila, sin pantalla intermedia de "¿completo o
+// dividir?").
+function PasoDividirProducto({
+  producto,
+  onVolver,
+  onAgregar,
+}: {
+  producto: ProductoOpcion
+  onVolver: () => void
+  onAgregar: (variante: ProductoVariante, componentes: ProductoComponente[], cantidad: number) => void
+}) {
+  const [varianteId, setVarianteId] = useState<string | null>(null)
+  const [cantidadStr, setCantidadStr] = useState('1')
+
+  const variantes = producto.variantes || []
+  const varianteSeleccionada = variantes.find(v => v.id === varianteId) || null
+  const componentesSeleccionados = varianteSeleccionada ? componentesDeVariante(producto, varianteSeleccionada.id) : []
+  const cantidad = Math.max(1, parseInt(cantidadStr) || 1)
+
+  return (
+    <>
+      <div className="overflow-y-auto flex-1 p-4 space-y-2">
+        <p className="text-sm text-text-muted mb-1">
+          {producto.codigo} — elige el color para dividir en partes:
+        </p>
+        {variantes.map(v => {
+          const partes = componentesDeVariante(producto, v.id)
+          const activa = varianteId === v.id
+          return (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => setVarianteId(v.id)}
+              className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
+                activa ? 'border-action-primary bg-info-bg' : 'border-border hover:border-action-primary hover:bg-info-bg'
+              }`}
+            >
+              <p className="font-medium text-text text-sm">{v.variante}</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {partes.length > 0
+                  ? partes.map(c => `${c.componente} ${formatUSD(c.precio_fob_usd || 0)}`).join(' · ')
+                  : 'Esta variante aún no tiene las partes cargadas'}
+              </p>
+            </button>
+          )
+        })}
+      </div>
+      <div className="p-4 border-t border-border flex flex-col gap-3 flex-none">
+        <div className="flex items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-sm text-text-muted">
+            Cantidad (se aplica a las {componentesSeleccionados.length || '—'} partes)
+            <input
+              type="text"
+              inputMode="numeric"
+              value={cantidadStr}
+              onChange={e => setCantidadStr(e.target.value.replace(/\D/g, ''))}
+              onBlur={() => setCantidadStr(String(cantidad))}
+              className="bg-bg-surface w-16 border border-border rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-1 focus:ring-focus-ring"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={!varianteSeleccionada || componentesSeleccionados.length === 0}
+            onClick={() => varianteSeleccionada && onAgregar(varianteSeleccionada, componentesSeleccionados, cantidad)}
+            className="px-4 py-2 rounded-lg text-sm bg-action-primary text-on-action-primary hover:bg-action-primary-hover font-medium disabled:opacity-40 whitespace-nowrap"
+          >
+            {componentesSeleccionados.length > 0
+              ? `Agregar ${componentesSeleccionados.length} línea${componentesSeleccionados.length === 1 ? '' : 's'}`
+              : 'Agregar líneas'}
+          </button>
+        </div>
+        <button onClick={onVolver} className="text-sm text-text-muted hover:text-text self-start">
+          ← Volver
+        </button>
+      </div>
+    </>
+  )
+}
+
 // ─── Selector de Producto ─────────────────────────────────────────────────────
 function SelectorProductoModal({
   tipoPrecio,
+  modoComponente,
   onSelect,
+  onAgregarDividido,
   onClose,
   onNuevoProducto,
 }: {
   tipoPrecio: TipoPrecio
+  // Gate exclusivo de Hardware & Lumber (ver productoEsDivisible) -- con esto
+  // en false el selector se comporta IDÉNTICO al de antes para cualquier
+  // otro cliente, cero cambios visibles.
+  modoComponente: boolean
   onSelect: (p: ProductoOpcion) => void
+  onAgregarDividido: (producto: ProductoOpcion, variante: ProductoVariante, componentes: ProductoComponente[], cantidad: number) => void
   onClose: () => void
   onNuevoProducto: () => void
 }) {
@@ -142,6 +273,9 @@ function SelectorProductoModal({
   const [busqueda, setBusqueda] = useState('')
   const [productos, setProductos] = useState<ProductoOpcion[]>([])
   const [cargando, setCargando] = useState(false)
+  // Paso interno "elige el color" -- no es un modal nuevo, es otro paso del
+  // mismo selector (ver PasoDividirProducto arriba).
+  const [productoDividiendo, setProductoDividiendo] = useState<ProductoOpcion | null>(null)
 
   useEffect(() => {
     fetch('/api/categorias').then(r => r.json()).then(({ data }) => setCategorias(data || []))
@@ -162,106 +296,139 @@ function SelectorProductoModal({
       <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between flex-none">
-          <h3 className="font-bold text-text-heading">Seleccionar Producto</h3>
+          <h3 className="font-bold text-text-heading">
+            {productoDividiendo ? `${productoDividiendo.codigo} — Elige el color` : 'Seleccionar Producto'}
+          </h3>
           <div className="flex items-center gap-3">
-            <button
-              onClick={onNuevoProducto}
-              className="flex items-center gap-1 text-sm font-medium text-action-primary hover:underline"
-            >
-              <Plus size={14} /> Nuevo producto
-            </button>
+            {!productoDividiendo && (
+              <button
+                onClick={onNuevoProducto}
+                className="flex items-center gap-1 text-sm font-medium text-action-primary hover:underline"
+              >
+                <Plus size={14} /> Nuevo producto
+              </button>
+            )}
             <button onClick={onClose} className="p-1 hover:bg-bg-subtle rounded-lg">
               <X size={18} className="text-text-muted" />
             </button>
           </div>
         </div>
 
-        {/* Filtros */}
-        <div className="p-4 border-b border-border flex gap-3 flex-none">
-          <select
-            value={categoriaId}
-            onChange={e => setCategoriaId(e.target.value)}
-            className="bg-bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring w-44"
-          >
-            <option value="">Todas las categorías</option>
-            {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-          </select>
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
-            <input
-              autoFocus
-              type="text"
-              value={busqueda}
-              onChange={e => setBusqueda(e.target.value)}
-              placeholder="Código o descripción..."
-              className="bg-bg-surface w-full border border-border rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
-            />
-          </div>
-        </div>
-
-        {/* Lista */}
-        <div className="overflow-y-auto flex-1">
-          {cargando ? (
-            <div className="p-10 text-center">
-              <Loader2 size={24} className="animate-spin mx-auto text-text-subtle" />
-            </div>
-          ) : productos.length === 0 ? (
-            <div className="p-10 text-center">
-              <Package size={36} className="mx-auto text-text-subtle mb-3" />
-              <p className="text-text-muted text-sm font-medium">Sin productos que coincidan</p>
-              <button
-                onClick={onNuevoProducto}
-                className="mt-4 inline-flex items-center gap-1 text-sm text-action-primary underline"
+        {productoDividiendo ? (
+          <PasoDividirProducto
+            producto={productoDividiendo}
+            onVolver={() => setProductoDividiendo(null)}
+            onAgregar={(variante, componentes, cantidad) => {
+              onAgregarDividido(productoDividiendo, variante, componentes, cantidad)
+              setProductoDividiendo(null)
+            }}
+          />
+        ) : (
+          <>
+            {/* Filtros */}
+            <div className="p-4 border-b border-border flex gap-3 flex-none">
+              <select
+                value={categoriaId}
+                onChange={e => setCategoriaId(e.target.value)}
+                className="bg-bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring w-44"
               >
-                <Plus size={14} /> Crear un producto nuevo
-              </button>
+                <option value="">Todas las categorías</option>
+                {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+              </select>
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
+                <input
+                  autoFocus
+                  type="text"
+                  value={busqueda}
+                  onChange={e => setBusqueda(e.target.value)}
+                  placeholder="Código o descripción..."
+                  className="bg-bg-surface w-full border border-border rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-focus-ring"
+                />
+              </div>
             </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-bg-subtle">
-                <tr>
-                  <th className="p-3 w-12"></th>
-                  <th className="text-left p-3 font-medium text-text-muted">Código</th>
-                  <th className="text-left p-3 font-medium text-text-muted">Descripción</th>
-                  <th className="text-right p-3 font-medium text-text-muted">FOB China</th>
-                  <th className="text-right p-3 font-medium text-text-muted">
-                    P. Cliente ({labelTipo(tipoPrecio)})
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {productos.map(p => {
-                  const precioSugerido = precioPorTipo(p.precio_mayorista, p.precio_detallista, tipoPrecio)
-                  return (
-                    <tr
-                      key={p.id}
-                      onClick={() => onSelect(p)}
-                      className="border-b border-border hover:bg-info-bg cursor-pointer transition-colors"
-                    >
-                      <td className="p-2 pl-3">
-                        <div className="w-9 h-9 rounded-md bg-bg-subtle flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {p.imagen_url ? (
-                            <img src={p.imagen_url} alt="" loading="lazy" className="w-full h-full object-contain" />
-                          ) : (
-                            <Package size={14} className="text-text-subtle" />
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-3 font-mono text-xs text-text-muted">
-                        {p.codigo || '—'}
-                      </td>
-                      <td className="p-3">{textoProducto(p.nombre, p.descripcion)}</td>
-                      <td className="p-3 text-right text-text-muted">{formatUSD(p.precio_fob_usd || 0)}</td>
-                      <td className="p-3 text-right font-medium text-text-heading">
-                        {precioSugerido !== undefined ? formatUSD(precioSugerido) : '—'}
-                      </td>
+
+            {/* Lista */}
+            <div className="overflow-y-auto flex-1">
+              {cargando ? (
+                <div className="p-10 text-center">
+                  <Loader2 size={24} className="animate-spin mx-auto text-text-subtle" />
+                </div>
+              ) : productos.length === 0 ? (
+                <div className="p-10 text-center">
+                  <Package size={36} className="mx-auto text-text-subtle mb-3" />
+                  <p className="text-text-muted text-sm font-medium">Sin productos que coincidan</p>
+                  <button
+                    onClick={onNuevoProducto}
+                    className="mt-4 inline-flex items-center gap-1 text-sm text-action-primary underline"
+                  >
+                    <Plus size={14} /> Crear un producto nuevo
+                  </button>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-bg-subtle">
+                    <tr>
+                      <th className="p-3 w-12"></th>
+                      <th className="text-left p-3 font-medium text-text-muted">Código</th>
+                      <th className="text-left p-3 font-medium text-text-muted">Descripción</th>
+                      <th className="text-right p-3 font-medium text-text-muted">FOB China</th>
+                      <th className="text-right p-3 font-medium text-text-muted">
+                        P. Cliente ({labelTipo(tipoPrecio)})
+                      </th>
+                      {modoComponente && <th className="p-3 w-10"></th>}
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+                  </thead>
+                  <tbody>
+                    {productos.map(p => {
+                      const precioSugerido = precioPorTipo(p.precio_mayorista, p.precio_detallista, tipoPrecio)
+                      const divisible = modoComponente && productoEsDivisible(p)
+                      return (
+                        <tr
+                          key={p.id}
+                          onClick={() => onSelect(p)}
+                          className="border-b border-border hover:bg-info-bg cursor-pointer transition-colors"
+                        >
+                          <td className="p-2 pl-3">
+                            <div className="w-9 h-9 rounded-md bg-bg-subtle flex items-center justify-center overflow-hidden flex-shrink-0">
+                              {p.imagen_url ? (
+                                <img src={p.imagen_url} alt="" loading="lazy" className="w-full h-full object-contain" />
+                              ) : (
+                                <Package size={14} className="text-text-subtle" />
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-3 font-mono text-xs text-text-muted">
+                            {p.codigo || '—'}
+                          </td>
+                          <td className="p-3">{textoProducto(p.nombre, p.descripcion)}</td>
+                          <td className="p-3 text-right text-text-muted">{formatUSD(p.precio_fob_usd || 0)}</td>
+                          <td className="p-3 text-right font-medium text-text-heading">
+                            {precioSugerido !== undefined ? formatUSD(precioSugerido) : '—'}
+                          </td>
+                          {modoComponente && (
+                            <td className="p-2 text-center">
+                              {divisible && (
+                                <button
+                                  type="button"
+                                  title="Dividir en partes"
+                                  onClick={e => { e.stopPropagation(); setProductoDividiendo(p) }}
+                                  className="p-1.5 rounded-lg text-text-subtle hover:text-action-primary hover:bg-bg-subtle"
+                                >
+                                  <SplitSquareHorizontal size={15} />
+                                </button>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -705,13 +872,39 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     if (data) {
       setProforma({ ...data, requiere_revision: data.requiere_revision ?? false })
       setTipoPrecio(data.tipo_precio || data.cliente?.tipo || 'mayorista')
-      setLineas((data.lineas || []).map((l: ProformaLinea) => ({
-        ...l,
-        _key: l.id,
-        _cantidadStr: String(l.cantidad ?? 1),
-        _precioMayorista: l.producto?.precio_mayorista,
-        _precioDetallista: l.producto?.precio_detallista,
-      })))
+
+      // BUG-H1 -- _grupoId/_grupoLabel (encabezado de grupo, borde, aviso de
+      // "Cantidades distintas" y "Deshacer división" de un producto dividido
+      // en partes, ver agregarLineasDivididas) solo existen en memoria y
+      // nunca se persisten en proforma_lineas, así que se perdían apenas se
+      // guardaba una vez (guardar() llama a este cargar()). Se reconstruyen
+      // aquí agrupando las líneas CONSECUTIVAS que comparten producto_id +
+      // variante_id no nulo -- variante_id solo se llena desde
+      // agregarLineasDivididas, nunca desde seleccionarProducto/agregarLinea,
+      // así que ninguna línea "normal" cae en un grupo por error. Dos
+      // divisiones del mismo producto+variante que queden NO consecutivas en
+      // la misma proforma se tratan como grupos distintos -- caso borde
+      // aceptado, no hace falta un id estable entre cargas.
+      let claveGrupoAnterior: string | null = null
+      let grupoIdActual: string | undefined
+      const lineasConGrupo = (data.lineas || []).map((l: ProformaLinea) => {
+        const claveGrupo = l.producto_id && l.variante_id ? `${l.producto_id}::${l.variante_id}` : null
+        if (claveGrupo !== claveGrupoAnterior) {
+          grupoIdActual = claveGrupo ? crypto.randomUUID() : undefined
+          claveGrupoAnterior = claveGrupo
+        }
+        return {
+          ...l,
+          _key: l.id,
+          _cantidadStr: String(l.cantidad ?? 1),
+          _precioMayorista: l.producto?.precio_mayorista,
+          _precioDetallista: l.producto?.precio_detallista,
+          _grupoId: claveGrupo ? grupoIdActual : undefined,
+          // Mismo formato que agregarLineasDivididas (ej. "HK0426 — white").
+          _grupoLabel: claveGrupo ? `${l.producto?.codigo || ''} — ${l.variante?.variante || ''}` : undefined,
+        }
+      })
+      setLineas(lineasConGrupo)
     }
     setLoading(false)
   }, [params.id])
@@ -872,6 +1065,61 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
     setSelectorAbierto(false)
     setLineaParaSelector(null)
+  }
+
+  // Dividir un producto en partes (HL, ver gate en productoEsDivisible) --
+  // en vez de reemplazar la línea que abrió el selector con UN producto,
+  // la reemplaza con la PRIMERA parte y agrega el resto justo después, para
+  // que las N líneas queden donde el usuario estaba trabajando (mismo lugar
+  // que ocuparía la línea única de seleccionarProducto) y no sueltas al
+  // final de la tabla ni con una fila en blanco sobrante.
+  function agregarLineasDivididas(
+    producto: ProductoOpcion,
+    variante: ProductoVariante,
+    componentes: ProductoComponente[],
+    cantidad: number,
+  ) {
+    if (!lineaParaSelector || componentes.length === 0) return
+    const codigo = producto.codigo || ''
+    const grupoId = crypto.randomUUID()
+    const grupoLabel = `${codigo} — ${variante.variante}`
+
+    const nuevasLineas: LineaEditable[] = componentes.map(comp => {
+      const precioCosto = comp.precio_fob_usd || 0
+      return {
+        _key: crypto.randomUUID(),
+        _cantidadStr: String(cantidad),
+        _grupoId: grupoId,
+        _grupoLabel: grupoLabel,
+        producto_id: producto.id,
+        variante_id: variante.id,
+        componente_id: comp.id,
+        // Tal cual aparece en el PDF al cliente -- ej. "HK0426 TANK WHITE".
+        codigo_pdf: `${codigo} ${comp.componente.toUpperCase()} ${variante.variante.toUpperCase()}`.trim(),
+        descripcion_pdf: `${codigo} — ${capitalizar(comp.componente)} (${capitalizar(variante.variante)})`,
+        cantidad,
+        precio_costo_usd: precioCosto,
+        // En blanco -- igual que una línea agregada a mano (agregarLinea).
+        // No se inventa un precio de venta por parte: lo pone operaciones.
+        precio_cliente_usd: undefined,
+        margen_pct: undefined,
+      }
+    })
+
+    setLineas(prev => {
+      const idx = prev.findIndex(l => l._key === lineaParaSelector)
+      if (idx === -1) return [...prev, ...nuevasLineas]
+      return [...prev.slice(0, idx), ...nuevasLineas, ...prev.slice(idx + 1)]
+    })
+
+    setSelectorAbierto(false)
+    setLineaParaSelector(null)
+  }
+
+  // "Deshacer división" del encabezado de grupo -- mismo efecto que borrar
+  // las 3 líneas una por una con eliminarLinea.
+  function deshacerDivision(grupoId: string) {
+    setLineas(prev => prev.filter(l => l._grupoId !== grupoId))
   }
 
   function productoCreado(producto: ProductoCreado) {
@@ -1109,7 +1357,9 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       {selectorAbierto && (
         <SelectorProductoModal
           tipoPrecio={tipoPrecio}
+          modoComponente={proforma?.cliente?.modo_pricing === 'componente'}
           onSelect={seleccionarProducto}
+          onAgregarDividido={agregarLineasDivididas}
           onClose={() => setSelectorAbierto(false)}
           onNuevoProducto={() => setMostrarNuevoProducto(true)}
         />
@@ -1702,8 +1952,48 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                   </td>
                 </tr>
               )}
-              {lineas.map((linea, i) => (
-                <tr key={linea._key} className={`border-b border-border ${i % 2 === 0 ? '' : 'bg-bg-subtle'}`}>
+              {lineas.map((linea, i) => {
+                // Encabezado de grupo (producto dividido en partes, ver
+                // agregarLineasDivididas) -- se repite SOLO cuando empieza
+                // un grupo nuevo, aunque la línea no tenga _grupoId (en cuyo
+                // caso esInicioGrupo es false y no se muestra nada).
+                const esInicioGrupo = !!linea._grupoId && (i === 0 || lineas[i - 1]._grupoId !== linea._grupoId)
+                const miembrosGrupo = esInicioGrupo ? lineas.filter(l => l._grupoId === linea._grupoId) : []
+                const cantidadesGrupo = miembrosGrupo.map(m => m.cantidad ?? 1)
+                const cantidadesDistintas = new Set(cantidadesGrupo).size > 1
+
+                return (
+                <Fragment key={linea._key}>
+                  {esInicioGrupo && (
+                    <tr className="border-b border-border bg-bg-subtle">
+                      {/* La fila de encabezado NO es sticky y scrollea igual
+                          que cualquier otra fila -- no romper BUG-003
+                          (ScrollFadeRight / overflow-x-auto en móvil). */}
+                      <td colSpan={9} className="p-2 px-3">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                            <SplitSquareHorizontal size={12} className="text-warning flex-none" />
+                            {linea._grupoLabel || 'Producto dividido'} · dividido en {miembrosGrupo.length} partes
+                            {cantidadesDistintas && (
+                              <span className="text-warning font-semibold">
+                                · Cantidades distintas ({cantidadesGrupo.join(' / ')})
+                              </span>
+                            )}
+                          </span>
+                          {puedeEditar && (
+                            <button
+                              type="button"
+                              onClick={() => deshacerDivision(linea._grupoId!)}
+                              className="text-xs text-danger hover:underline font-medium flex-none"
+                            >
+                              Deshacer división
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                <tr className={`border-b border-border ${i % 2 === 0 ? '' : 'bg-bg-subtle'} ${linea._grupoId ? 'border-l-4 border-l-warning' : ''}`}>
                   <td className="p-3 text-text-subtle text-xs">{i + 1}</td>
 
                   {/* Código */}
@@ -1938,7 +2228,9 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
                     </td>
                   )}
                 </tr>
-              ))}
+                </Fragment>
+                )
+              })}
             </tbody>
           </table>
         </ScrollFadeRight>
