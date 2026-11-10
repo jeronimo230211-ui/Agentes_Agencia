@@ -81,11 +81,12 @@ function capitalizar(s: string) {
   return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 }
 
-// Gate de Hardware & Lumber (HL) -- dividir un producto en partes (Bowl/Tank/
-// Seat Cover) solo tiene sentido si el producto tiene al menos una variante
-// de color con componentes cargados colgando de ella (migración 031). Nunca
-// depende del cliente aquí: el cliente (modo_pricing === 'componente') se
-// revisa aparte, en el caller -- ver SelectorProductoModal.
+// Gate de "dividir en partes" (Bowl/Tank/Seat Cover) -- solo tiene sentido si
+// el PRODUCTO tiene al menos una variante de color con componentes cargados
+// colgando de ella (migración 031, hoy solo HK0426). Único gate de la
+// función: disponible para cualquier cliente de la proforma, nunca depende
+// de modo_pricing (ajuste de Jero, nov-2026 -- antes esto era exclusivo de
+// Hardware & Lumber).
 function productoEsDivisible(p: ProductoOpcion): boolean {
   return !!p.variantes?.some(v => p.componentes?.some(c => c.variante_id === v.id))
 }
@@ -252,17 +253,12 @@ function PasoDividirProducto({
 // ─── Selector de Producto ─────────────────────────────────────────────────────
 function SelectorProductoModal({
   tipoPrecio,
-  modoComponente,
   onSelect,
   onAgregarDividido,
   onClose,
   onNuevoProducto,
 }: {
   tipoPrecio: TipoPrecio
-  // Gate exclusivo de Hardware & Lumber (ver productoEsDivisible) -- con esto
-  // en false el selector se comporta IDÉNTICO al de antes para cualquier
-  // otro cliente, cero cambios visibles.
-  modoComponente: boolean
   onSelect: (p: ProductoOpcion) => void
   onAgregarDividido: (producto: ProductoOpcion, variante: ProductoVariante, componentes: ProductoComponente[], cantidad: number) => void
   onClose: () => void
@@ -276,6 +272,12 @@ function SelectorProductoModal({
   // Paso interno "elige el color" -- no es un modal nuevo, es otro paso del
   // mismo selector (ver PasoDividirProducto arriba).
   const [productoDividiendo, setProductoDividiendo] = useState<ProductoOpcion | null>(null)
+  // Columna "dividir en partes" -- ya no depende del cliente de la proforma
+  // (ajuste de Jero, nov-2026): se muestra para CUALQUIER cliente mientras
+  // algún producto de la lista actual tenga la estructura cargada (ver
+  // productoEsDivisible). Se recalcula con cada búsqueda/filtro porque la
+  // lista de productos visibles cambia.
+  const hayDivisibles = productos.some(productoEsDivisible)
 
   useEffect(() => {
     fetch('/api/categorias').then(r => r.json()).then(({ data }) => setCategorias(data || []))
@@ -376,13 +378,13 @@ function SelectorProductoModal({
                       <th className="text-right p-3 font-medium text-text-muted">
                         P. Cliente ({labelTipo(tipoPrecio)})
                       </th>
-                      {modoComponente && <th className="p-3 w-10"></th>}
+                      {hayDivisibles && <th className="p-3 w-10"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {productos.map(p => {
                       const precioSugerido = precioPorTipo(p.precio_mayorista, p.precio_detallista, tipoPrecio)
-                      const divisible = modoComponente && productoEsDivisible(p)
+                      const divisible = productoEsDivisible(p)
                       return (
                         <tr
                           key={p.id}
@@ -406,7 +408,7 @@ function SelectorProductoModal({
                           <td className="p-3 text-right font-medium text-text-heading">
                             {precioSugerido !== undefined ? formatUSD(precioSugerido) : '—'}
                           </td>
-                          {modoComponente && (
+                          {hayDivisibles && (
                             <td className="p-2 text-center">
                               {divisible && (
                                 <button
@@ -1067,7 +1069,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
     setLineaParaSelector(null)
   }
 
-  // Dividir un producto en partes (HL, ver gate en productoEsDivisible) --
+  // Dividir un producto en partes (ver gate en productoEsDivisible) --
   // en vez de reemplazar la línea que abrió el selector con UN producto,
   // la reemplaza con la PRIMERA parte y agrega el resto justo después, para
   // que las N líneas queden donde el usuario estaba trabajando (mismo lugar
@@ -1357,7 +1359,6 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       {selectorAbierto && (
         <SelectorProductoModal
           tipoPrecio={tipoPrecio}
-          modoComponente={proforma?.cliente?.modo_pricing === 'componente'}
           onSelect={seleccionarProducto}
           onAgregarDividido={agregarLineasDivididas}
           onClose={() => setSelectorAbierto(false)}
