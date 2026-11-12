@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { enviarNotificacionResultado } from '@/lib/email'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 type Params = { params: { id: string } }
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: proforma } = await supabase
     .from('proformas')
-    .select('estado, creada_por, numero, incoterm, total_fob_usd, total_cif_usd, cliente:clientes(nombre)')
+    .select('estado, creada_por, numero, incoterm, total_fob_usd, total_cif_usd, notas_internas, cliente:clientes(nombre)')
     .eq('id', params.id)
     .single()
 
@@ -54,10 +55,13 @@ export async function POST(req: NextRequest, { params }: Params) {
     comentario: motivo,
   })
 
-  // Notificar a Deisy (in-app + email)
+  // Notificar a Deisy (in-app + email) -- salvo que sea una proforma de
+  // prueba de QA/desarrollo (lib/qaTest.ts).
   let email_enviado = false
   let email_error: string | undefined
-  if (proforma.creada_por) {
+  if (esAccionDePrueba(proforma.notas_internas, motivo)) {
+    console.log(`[test] notificación de rechazo omitida para proforma de prueba ${proforma.numero}`)
+  } else if (proforma.creada_por) {
     // adminClient (no `supabase`) — RLS "notif_own"/"usuarios_own" solo dejan ver/escribir la
     // propia fila, y aquí es Marta insertando/leyendo la fila de Deisy. Mismo bug ya corregido
     // en enviar-revision/route.ts.

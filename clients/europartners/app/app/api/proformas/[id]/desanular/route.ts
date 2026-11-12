@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 type Params = { params: { id: string } }
 
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data: proforma } = await supabase
     .from('proformas')
-    .select('estado, creada_por, numero')
+    .select('estado, creada_por, numero, notas_internas')
     .eq('id', params.id)
     .single()
 
@@ -61,7 +62,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   })
 
   // Notificar a quien la creó (in-app, sin email -- es una acción interna).
-  if (proforma.creada_por) {
+  // Salvo que sea una proforma de prueba de QA/desarrollo (lib/qaTest.ts).
+  if (esAccionDePrueba(proforma.notas_internas, comentario)) {
+    console.log(`[test] notificación de reactivación omitida para proforma de prueba ${proforma.numero}`)
+  } else if (proforma.creada_por) {
     const adminClient = createAdminClient()
     await adminClient.from('notificaciones').insert({
       usuario_id: proforma.creada_por,

@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { generarPDFProforma } from '@/lib/pdf/generator'
 import { enviarProformaParaAprobacion } from '@/lib/email'
+import { esAccionDePrueba } from '@/lib/qaTest'
 import { cookies } from 'next/headers'
 
 type Params = { params: { id: string } }
@@ -49,7 +50,15 @@ export async function POST(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'No se pudo generar el link de aprobación' }, { status: 500 })
   }
 
-  await enviarProformaParaAprobacion(proforma, pdfBuffer, tokenAprobacion.token)
+  // Mismo guard que el resto del flujo: este es el email REAL que le manda al
+  // cliente el link de aprobación con el PDF adjunto. Sin esto, una proforma
+  // "QA TEST" con un cliente de contacto_email real le llegaría como si fuera
+  // una proforma de negocio de verdad.
+  if (esAccionDePrueba(proforma.notas_internas)) {
+    console.log(`[test] email de aprobación omitido para proforma de prueba ${proforma.numero}`)
+  } else {
+    await enviarProformaParaAprobacion(proforma, pdfBuffer, tokenAprobacion.token)
+  }
 
   // El % de abono requerido lo define Deisy/Marta caso a caso (no hay una
   // regla fija documentada) — se registra desde /despachos antes de crear

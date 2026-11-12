@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { enviarNotificacionResultado } from '@/lib/email'
 import { poblarHistorialPrecios } from '@/lib/historialPrecios'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 type Params = { params: { id: string } }
 
@@ -81,10 +82,13 @@ export async function POST(req: NextRequest, { params }: Params) {
     .eq('proforma_id', params.id)
     .eq('usado', false)
 
-  // Notificar a Deisy (in-app + email)
+  // Notificar a Deisy (in-app + email) -- salvo que sea una proforma de
+  // prueba de QA/desarrollo (lib/qaTest.ts).
   let email_enviado = false
   let email_error: string | undefined
-  if (proforma.creada_por) {
+  if (esAccionDePrueba(proforma.notas_internas, body.comentario)) {
+    console.log(`[test] notificación de aprobación omitida para proforma de prueba ${proforma.numero}`)
+  } else if (proforma.creada_por) {
     // adminClient (no `supabase`) — RLS "notif_own"/"usuarios_own" solo dejan ver/escribir la
     // propia fila, y aquí es Marta insertando/leyendo la fila de Deisy. Mismo bug ya corregido
     // en enviar-revision/route.ts.

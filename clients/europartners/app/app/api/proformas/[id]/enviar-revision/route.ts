@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { enviarNotificacionAprobacion } from '@/lib/email'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 type Params = { params: { id: string } }
 
@@ -78,9 +79,18 @@ export async function POST(_req: NextRequest, { params }: Params) {
     .limit(1)
     .single()
 
+  // Proforma de prueba de QA/desarrollo (lib/qaTest.ts): el token de
+  // aprobación sí se crea (es la funcionalidad que se está probando), pero
+  // no se le manda a Marta ni el correo ni la notificación in-app -- no hay
+  // un motivo/comentario de usuario en este endpoint, así que la única
+  // señal posible es notas_internas.
+  const esPrueba = esAccionDePrueba(proforma.notas_internas)
+
   let email_enviado = false
   let email_error: string | undefined
-  if (tokenError || !tokenData?.token) {
+  if (esPrueba) {
+    console.log(`[test] notificación/email de envío a revisión omitidos para proforma de prueba ${proforma.numero}`)
+  } else if (tokenError || !tokenData?.token) {
     email_error = tokenError ? `Error creando token de aprobación: ${tokenError.message}` : 'No se pudo generar el token de aprobación'
     console.error(email_error)
   } else if (!marta?.email) {
@@ -96,7 +106,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     }
   }
 
-  if (marta) {
+  if (marta && !esPrueba) {
     // Mismo motivo que arriba: notificaciones tiene policy RLS "notif_own" (usuario_id =
     // auth.uid()), así que con el cliente de sesión de Deisy este insert para Marta también
     // fallaba en silencio.

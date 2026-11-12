@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
 import { generarPDFProforma } from '@/lib/pdf/generator'
 import { enviarProformaCliente } from '@/lib/email'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 // Ruta pública — el cliente aprueba o pide cambios sin login, vía el link
 // que le mandó enviarProformaParaAprobacion(). Distinta de /api/aprobacion-token,
@@ -87,7 +88,15 @@ export async function POST(req: NextRequest) {
       pagoToken = tokenPago?.token
     }
 
-    await enviarProformaCliente(proforma, pdfBuffer, pagoToken, true)
+    // El email de factura es el que recibe el cliente REAL (adjunta el PDF/invoice).
+    // Debe quedar detrás del mismo guard que ya protege la notificación interna
+    // más abajo: una proforma "QA TEST" con contacto_email real no puede generarle
+    // una factura falsa al cliente.
+    if (esAccionDePrueba(proforma.notas_internas)) {
+      console.log(`[test] email de factura omitido para proforma de prueba ${proforma.numero}`)
+    } else {
+      await enviarProformaCliente(proforma, pdfBuffer, pagoToken, true)
+    }
 
     await adminClient.from('proformas').update({
       estado: 'facturada',
@@ -103,7 +112,9 @@ export async function POST(req: NextRequest) {
 
     await adminClient.from('tokens_aprobacion_cliente').update({ usado: true }).eq('token', token)
 
-    if (proforma.creada_por) {
+    if (esAccionDePrueba(proforma.notas_internas)) {
+      console.log(`[test] notificación de aprobación de cliente omitida para proforma de prueba ${proforma.numero}`)
+    } else if (proforma.creada_por) {
       await adminClient.from('notificaciones').insert({
         usuario_id: proforma.creada_por,
         tipo: 'proforma_aprobada_cliente',
@@ -132,7 +143,9 @@ export async function POST(req: NextRequest) {
 
     await adminClient.from('tokens_aprobacion_cliente').update({ usado: true }).eq('token', token)
 
-    if (proforma.creada_por) {
+    if (esAccionDePrueba(proforma.notas_internas, comentario)) {
+      console.log(`[test] notificación de cambios de cliente omitida para proforma de prueba ${proforma.numero}`)
+    } else if (proforma.creada_por) {
       await adminClient.from('notificaciones').insert({
         usuario_id: proforma.creada_por,
         tipo: 'proforma_cambios_cliente',

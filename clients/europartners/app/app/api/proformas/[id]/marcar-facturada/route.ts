@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { createAdminClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 type Params = { params: { id: string } }
 
@@ -30,7 +31,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
   const { data: proforma, error: pfError } = await supabase
     .from('proformas')
-    .select('estado, creada_por, numero')
+    .select('estado, creada_por, numero, notas_internas')
     .eq('id', params.id)
     .single()
 
@@ -60,7 +61,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
     comentario: 'Facturada manualmente por el equipo (aprobación fuera del sistema)',
   })
 
-  if (proforma.creada_por) {
+  if (esAccionDePrueba(proforma.notas_internas)) {
+    console.log(`[test] notificación de facturación manual omitida para proforma de prueba ${proforma.numero}`)
+  } else if (proforma.creada_por) {
     const adminClient = createAdminClient()
     await adminClient.from('notificaciones').insert({
       usuario_id: proforma.creada_por,

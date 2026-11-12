@@ -4,6 +4,7 @@ import { formatUSD } from '@/lib/precio'
 import { enviarNotificacionComprobante } from '@/lib/email'
 import { tipoArchivoPermitido, MENSAJE_TIPO_NO_PERMITIDO_EN } from '@/lib/uploadValidation'
 import { randomUUID } from 'crypto'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 type Params = { params: { token: string } }
 
@@ -182,16 +183,19 @@ export async function POST(req: NextRequest, { params }: Params) {
   // de abajo (mismo flujo para ambos tipos, solo cambia el texto).
   const { data: proforma } = await adminClient
     .from('proformas')
-    .select('numero, creada_por, cliente:clientes(nombre)')
+    .select('numero, creada_por, notas_internas, cliente:clientes(nombre)')
     .eq('id', resuelto.proformaId)
     .single()
 
-  if (proforma?.creada_por) {
+  if (proforma && esAccionDePrueba(proforma.notas_internas)) {
+    console.log(`[test] notificación de comprobante subido omitida para proforma de prueba ${proforma.numero}`)
+  } else if (proforma?.creada_por) {
     const clienteNombre = (proforma.cliente as { nombre?: string } | null)?.nombre || 'Cliente'
     const mensajeConcepto = tipo === 'flete' ? 'comprobante de pago de FLETE' : 'comprobante de pago'
 
     await adminClient.from('notificaciones').insert({
       usuario_id: proforma.creada_por,
+      proforma_id: resuelto.proformaId,
       tipo: 'comprobante_subido',
       mensaje: `${clienteNombre} subió el ${mensajeConcepto} de la proforma ${proforma.numero} — pendiente de validar`,
     })

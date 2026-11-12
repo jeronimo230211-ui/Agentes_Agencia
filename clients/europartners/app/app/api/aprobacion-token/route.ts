@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-server'
 import { poblarHistorialPrecios } from '@/lib/historialPrecios'
+import { esAccionDePrueba } from '@/lib/qaTest'
 
 // Ruta pública para validar token y aprobar/rechazar sin login
 export async function GET(req: NextRequest) {
@@ -86,8 +87,10 @@ export async function POST(req: NextRequest) {
     // Marcar token como usado
     await adminClient.from('tokens_aprobacion').update({ usado: true }).eq('token', token)
 
-    // Notificar a Deisy
-    if (proforma.creada_por) {
+    // Notificar a Deisy -- salvo que sea una proforma de prueba (lib/qaTest.ts)
+    if (esAccionDePrueba(proforma.notas_internas)) {
+      console.log(`[test] notificación de aprobación omitida para proforma de prueba ${proforma.numero}`)
+    } else if (proforma.creada_por) {
       await adminClient.from('notificaciones').insert({
         usuario_id: proforma.creada_por,
         tipo: 'proforma_aprobada',
@@ -103,7 +106,7 @@ export async function POST(req: NextRequest) {
 
     const { data: proforma } = await adminClient
       .from('proformas')
-      .select('estado, creada_por, numero')
+      .select('estado, creada_por, numero, notas_internas')
       .eq('id', proformaId)
       .single()
 
@@ -126,7 +129,9 @@ export async function POST(req: NextRequest) {
 
     await adminClient.from('tokens_aprobacion').update({ usado: true }).eq('token', token)
 
-    if (proforma.creada_por) {
+    if (esAccionDePrueba(proforma.notas_internas, motivo)) {
+      console.log(`[test] notificación de rechazo omitida para proforma de prueba ${proforma.numero}`)
+    } else if (proforma.creada_por) {
       await adminClient.from('notificaciones').insert({
         usuario_id: proforma.creada_por,
         tipo: 'proforma_rechazada',
