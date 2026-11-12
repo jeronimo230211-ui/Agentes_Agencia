@@ -20,9 +20,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   const body = await req.json()
+
+  // Defensa en profundidad: 'nombre' no puede llegar vacío aunque el
+  // frontend ya valide -- un PATCH directo (curl, bug de UI) no debe poder
+  // dejar un cliente sin nombre de empresa.
+  if ('nombre' in body && (typeof body.nombre !== 'string' || !body.nombre.trim())) {
+    return NextResponse.json({ error: 'El nombre de la empresa es obligatorio' }, { status: 400 })
+  }
+
   const update: Record<string, string | null> = {}
   for (const campo of [
-    'contacto_nombre', 'contacto_email', 'contacto_telefono', 'direccion',
+    'nombre', 'contacto_nombre', 'contacto_email', 'contacto_telefono', 'direccion',
     'incoterm_default', 'freight_default', 'insurance_default',
   ] as const) {
     if (campo in body) {

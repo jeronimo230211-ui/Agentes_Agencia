@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, BookOpen, Wallet, Package,
   CheckSquare, History, Receipt, LogOut, ClipboardList, Inbox, Ship, BarChart3, Container,
-  ChevronDown,
+  ChevronDown, Users,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Usuario } from '@/types/europartners'
@@ -43,6 +43,7 @@ const navCategories: NavCategory[] = [
       { href: '/aprobacion', label: 'Aprobaciones', icon: CheckSquare, roles: ['admin'] },
       { href: '/facturador', label: 'Facturador', icon: Receipt, roles: ['admin'] },
       { href: '/despachos', label: 'Despachos', icon: Ship, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
+      { href: '/clientes', label: 'Clientes', icon: Users, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
     ],
   },
   {
