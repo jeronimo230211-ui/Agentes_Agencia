@@ -1002,6 +1002,11 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
       if (campo === 'margen_pct' && l.precio_costo_usd && typeof valor === 'number' && !isNaN(valor)) {
         updated.precio_cliente_usd = Number(l.precio_costo_usd) * (1 + valor)
       }
+      // Si se edita el costo y ya hay precio de venta cargado, el margen quedaba desincronizado
+      // (bug real en prod: Marta corrigió costos de HK0427/HK0426 y el margen guardado no cambió)
+      if (campo === 'precio_costo_usd' && l.precio_cliente_usd && typeof valor === 'number' && !isNaN(valor)) {
+        updated.margen_pct = calcMargen(valor, l.precio_cliente_usd)
+      }
 
       return updated
     }))
