@@ -16,6 +16,7 @@ import { extraerModelo } from '@/lib/especificacionesPrincipales'
 import NuevoProductoModal from '@/components/NuevoProductoModal'
 import SeleccionarClienteModal, { type ClienteOpcion } from '@/components/SeleccionarClienteModal'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
+import SeccionVariantesComponentes, { type Variante, type Componente } from '@/components/producto-detalle/SeccionVariantesComponentes'
 
 interface Dimensiones { largo_mm?: number; ancho_mm?: number; alto_mm?: number }
 interface FichaTecnica { campos: { label: string; valor: string; label_en?: string | null; valor_en?: string | null }[] }
@@ -45,6 +46,8 @@ interface ProductoDetalle {
   descripcion_larga_en: string | null
   ficha_tecnica: FichaTecnica | null
   ficha_tecnica_estado: 'borrador' | 'aprobada' | null
+  variantes: Variante[]
+  componentes: Componente[]
 }
 
 interface PrecioEspecialFila {
@@ -123,6 +126,22 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
   }, [params.id])
 
   useEffect(() => { cargar() }, [cargar])
+
+  // Refresco silencioso para variantes/componentes: a diferencia de cargar(),
+  // no pasa por setEstado('cargando') -- eso reemplaza TODO el return por
+  // <Skeleton/> y se llevaría de paso los modales abiertos de
+  // SeccionVariantesComponentes (ej. a medio "Guardar y agregar otra parte").
+  const refrescarVariantesComponentes = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/productos/${params.id}`)
+      if (!res.ok) return
+      const { data } = await res.json()
+      setProducto(prev => prev ? { ...prev, variantes: data.variantes, componentes: data.componentes } : data)
+    } catch {
+      // Silencioso a propósito: un refresco fallido no debe tumbar el modal
+      // abierto. El usuario puede seguir intentando guardar.
+    }
+  }, [params.id])
 
   const cargarPreciosEspeciales = useCallback(() => {
     setCargandoPrecios(true)
@@ -403,6 +422,14 @@ export default function CatalogoDetalleProductoPage({ params }: { params: { id: 
               )}
             </div>
           )}
+
+          <SeccionVariantesComponentes
+            productoId={producto.id}
+            variantes={producto.variantes || []}
+            componentes={producto.componentes || []}
+            puedeEditar={puedeEditar}
+            onCambio={refrescarVariantesComponentes}
+          />
 
           {/* Acciones — sticky en móvil. Dos botones, una sola acción primaria
               por pantalla (regla del sistema de Marta): "Editar producto" es

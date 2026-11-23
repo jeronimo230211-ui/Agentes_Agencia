@@ -28,7 +28,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
       tiene_historial, veces_vendido, fecha_ultima_venta, precio_cliente_historico_ultimo,
       descripcion_corta_es, descripcion_corta_en, descripcion_larga_es, descripcion_larga_en,
       ficha_tecnica, ficha_tecnica_estado,
-      categoria:categorias_producto(id, nombre)
+      categoria:categorias_producto(id, nombre),
+      variantes:producto_variantes(*),
+      componentes:producto_componentes(*)
     `)
     .eq('id', params.id)
     .single()
