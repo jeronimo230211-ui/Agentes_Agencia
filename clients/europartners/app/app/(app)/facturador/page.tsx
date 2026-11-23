@@ -4,6 +4,7 @@ import { Receipt, Clock, DollarSign, CheckCircle2, Ban, X, Loader2 } from 'lucid
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
+import { useRefrescarAlVolver } from '@/lib/useRefrescarAlVolver'
 import Badge, { type BadgeVariant } from '@/components/ui/Badge'
 import SearchField from '@/components/ui/SearchField'
 
@@ -70,6 +71,10 @@ function FacturadorContent() {
   }
 
   useEffect(() => { cargar() }, [])
+
+  // Mismo bug que /proformas: anular/marcar facturada desde otra pestaña y
+  // volver a esta sin navegar de nuevo lo dejaba desactualizado.
+  useRefrescarAlVolver(cargar)
 
   const clasificadas = useMemo(
     () => proformas.map(p => ({ p, clase: clasificar(p) })),

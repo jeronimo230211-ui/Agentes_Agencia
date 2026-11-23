@@ -11,6 +11,7 @@ import Badge, { type BadgeVariant } from '@/components/ui/Badge'
 import SearchField from '@/components/ui/SearchField'
 import FilterChipRow from '@/components/ui/FilterChipRow'
 import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
+import { useRefrescarAlVolver } from '@/lib/useRefrescarAlVolver'
 
 interface ClienteMini { id: string; nombre: string; slug?: string }
 interface ProformaMini {
@@ -111,6 +112,10 @@ function DespachosContent() {
   }, [filtros.estado])
 
   useEffect(() => { cargarDespachos() }, [cargarDespachos])
+
+  // Mismo bug que /proformas: editar un despacho/pago desde otra pestaña y
+  // volver a esta sin navegar de nuevo lo dejaba desactualizado.
+  useRefrescarAlVolver(cargarDespachos)
 
   // Búsqueda en memoria sobre los despachos ya cargados (AND con el filtro
   // de Estado, que ya se aplica server-side en cargarDespachos arriba).

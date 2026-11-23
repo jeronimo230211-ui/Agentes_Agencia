@@ -266,6 +266,46 @@ export async function enviarNotificacionResultado(
   await enviarEmail(destinatarioEmail, `[${etiqueta}] Proforma ${proforma.numero} · ${clienteNombre}`, html)
 }
 
+// Alerta interna cuando el cron diario de backup (/api/cron/backup) falla --
+// hasta ahora nadie se enteraba salvo que alguien entrara a mano a los logs
+// de Vercel. Solo se llama cuando SÍ hubo error (tablas o Storage); una
+// corrida exitosa no manda nada, para no generar ruido diario.
+export async function enviarAlertaBackupFallido(
+  destinatarioEmail: string,
+  detalle: {
+    fecha: string
+    errorGeneral?: string
+    erroresTablas?: Record<string, string>
+    erroresStorage?: Record<string, string>
+  }
+): Promise<void> {
+  const filasTablas = Object.entries(detalle.erroresTablas ?? {}).map(([tabla, msg]) =>
+    `<tr><td style="padding:4px 8px;border-bottom:1px solid #eee">tabla: ${escapeHtml(tabla)}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;color:#dc2626">${escapeHtml(msg)}</td></tr>`
+  )
+  const filasStorage = Object.entries(detalle.erroresStorage ?? {}).map(([objeto, msg]) =>
+    `<tr><td style="padding:4px 8px;border-bottom:1px solid #eee">storage: ${escapeHtml(objeto)}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;color:#dc2626">${escapeHtml(msg)}</td></tr>`
+  )
+  const filas = [...filasTablas, ...filasStorage].join('')
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#dc2626;padding:20px;text-align:center">
+        <h1 style="color:#ffffff;margin:0;font-size:18px">Europartners — Backup diario con errores</h1>
+      </div>
+      <div style="padding:24px;background:#f9fafb">
+        <p style="color:#6b7280;margin:0 0 12px">
+          El backup automático del <strong>${escapeHtml(detalle.fecha)}</strong> no terminó limpio.
+          Revisa los logs de Vercel de <code>/api/cron/backup</code> si necesitas más contexto.
+        </p>
+        ${detalle.errorGeneral ? `<p style="color:#dc2626;margin:0 0 12px"><strong>Error general:</strong> ${escapeHtml(detalle.errorGeneral)}</p>` : ''}
+        ${filas ? `<table style="width:100%;border-collapse:collapse;font-size:13px">${filas}</table>` : ''}
+      </div>
+    </div>
+  `
+
+  await enviarEmail(destinatarioEmail, `[ALERTA] Backup diario con errores — ${detalle.fecha}`, html)
+}
+
 export async function enviarSolicitudDevuelta(
   clienteEmail: string,
   clienteNombre: string,

@@ -7,6 +7,7 @@ import {
 import { formatUSD } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
+import { useRefrescarAlVolver } from '@/lib/useRefrescarAlVolver'
 import FiltroCliente from '@/components/FiltroCliente'
 import Badge, { type BadgeVariant } from '@/components/ui/Badge'
 import SearchField from '@/components/ui/SearchField'
@@ -140,6 +141,12 @@ function ProformasContent() {
   }, [clienteTab, filtros.anio, filtros.mes, filtros.estado])
 
   useEffect(() => { cargarProformas(); setSeleccionadas(new Set()) }, [cargarProformas])
+
+  // BUG reportado: dejar /proformas abierta, editar una proforma desde otra
+  // pestaña/ventana (ej. el cotizador) y volver a esta pestaña sin navegar
+  // con un link nuevo -- el total/estado se quedaba desactualizado porque
+  // nada volvía a pedir los datos. Recarga al recuperar foco/visibilidad.
+  useRefrescarAlVolver(cargarProformas)
 
   // Búsqueda por número de proforma, número de cliente o nombre del
   // cliente -- en memoria, AND con los demás filtros (que ya recortaron

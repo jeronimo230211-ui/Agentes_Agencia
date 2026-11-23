@@ -15,6 +15,7 @@ import DataTable from '@/components/ui/DataTable'
 import SearchField from '@/components/ui/SearchField'
 import FilterChipRow from '@/components/ui/FilterChipRow'
 import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
+import { useRefrescarAlVolver } from '@/lib/useRefrescarAlVolver'
 
 interface Cliente {
   id: string
@@ -162,6 +163,10 @@ function SolicitudesContent() {
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
+
+  // Mismo bug que /proformas: convertir/devolver una solicitud desde otra
+  // pestaña y volver a esta sin navegar de nuevo la dejaba desactualizada.
+  useRefrescarAlVolver(cargar)
 
   // Búsqueda en tiempo real sobre lo que ya trajo el servidor para el estado
   // filtrado (AND con Estado). La tabla solo muestra el nombre del cliente

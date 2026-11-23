@@ -1,5 +1,5 @@
 'use client'
-import { Suspense, useState, useEffect, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Wallet, DollarSign, TrendingUp, AlertTriangle, Ship, ChevronRight, FileText,
@@ -13,6 +13,7 @@ import StatCard from '@/components/ui/StatCard'
 import SearchField from '@/components/ui/SearchField'
 import FilterChipRow from '@/components/ui/FilterChipRow'
 import { useFiltrosUrl } from '@/lib/useFiltrosUrl'
+import { useRefrescarAlVolver } from '@/lib/useRefrescarAlVolver'
 
 interface Cliente { id: string; nombre: string; pais: string }
 
@@ -130,7 +131,7 @@ function FinanzasContent() {
       .then(({ data }) => setClientes(data || []))
   }, [])
 
-  useEffect(() => {
+  const cargarFinanzas = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
     if (filtros.cliente !== 'todos') params.set('cliente_id', filtros.cliente)
@@ -149,6 +150,12 @@ function FinanzasContent() {
         setLoading(false)
       })
   }, [filtros.cliente, filtros.año, filtros.pais, filtros.estado_deuda])
+
+  useEffect(() => { cargarFinanzas() }, [cargarFinanzas])
+
+  // Mismo bug que /proformas: registrar un pago desde otra pestaña y
+  // volver a esta sin navegar de nuevo la dejaba desactualizada.
+  useRefrescarAlVolver(cargarFinanzas)
 
   const paisesDisponibles = useMemo(
     () => Array.from(new Set(clientes.map(c => c.pais).filter(Boolean))).sort(),
