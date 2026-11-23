@@ -823,7 +823,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   const [aprobando, setAprobando] = useState(false)
   const [paymentTermsOpciones, setPaymentTermsOpciones] = useState<PaymentTermsOpcion[]>([])
   const [mostrarNuevoPaymentTerm, setMostrarNuevoPaymentTerm] = useState(false)
-  const { rol, puedeEditar: rolPuedeEditar } = useRol()
+  const { puedeEditar: rolPuedeEditar } = useRol()
 
   // Cambiar el cliente de una proforma ya creada (ver cambiar-cliente/route.ts
   // — solo permitido en borrador/en_revision, antes de que el cliente final
@@ -843,10 +843,13 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   // de ahí en adelante usa los flujos normales que ya existen.
   const [modalDesanularAbierto, setModalDesanularAbierto] = useState(false)
 
-  // Corrección de datos (admin) -- habilita editar líneas de una proforma ya
+  // Corrección de datos -- habilita editar líneas de una proforma ya
   // 'enviada' (ej. migradas de Excel con datos incompletos, como la 3-0051),
   // que el flujo normal no deja tocar (ver ESTADOS_EDITABLES en
-  // app/api/proformas/[id]/route.ts). Exclusiva de admin. A diferencia de
+  // app/api/proformas/[id]/route.ts). Mismos roles que pueden editar en
+  // general (operaciones + admin, ver useRol/ROLES_EDICION) -- antes era
+  // exclusiva de admin, Jerónimo pidió habilitarla también para Deisy
+  // (operaciones) el 2026-11-23. A diferencia de
   // ModalAnularProforma, confirmar este modal NO llama a la API directamente
   // -- solo guarda el motivo y activa el gate de edición (puedeEditar más
   // abajo); el motivo se manda al backend en cada guardado mientras el modo
@@ -1208,7 +1211,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
         freight: proforma.freight,
         insurance: proforma.insurance,
         payment_terms: proforma.payment_terms,
-        // Solo se manda mientras el modo "Corrección de datos (admin)" está
+        // Solo se manda mientras el modo "Corrección de datos" está
         // activo -- es lo que le dice al backend que acepte el guardado
         // sobre una proforma 'enviada' y deje el evento de auditoría.
         ...(modoCorreccionActivo ? { motivo_correccion: motivoCorreccion } : {}),
@@ -1331,11 +1334,12 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
   // no vuelve a mostrar esos botones — ver mismo permiso en el PUT de
   // app/api/proformas/[id]/route.ts.
   const enTransicion = proforma?.estado === 'borrador' || proforma?.estado === 'rechazada' || proforma?.estado === 'cambios_solicitados'
-  // Corrección de datos (admin): habilita el mismo gate de edición
-  // (puedeEditar) para una proforma 'enviada' solo mientras el admin activó
-  // el modo explícitamente con un motivo (modoCorreccionActivo) -- ver
+  // Corrección de datos: habilita el mismo gate de edición
+  // (puedeEditar) para una proforma 'enviada' solo mientras alguien con
+  // permiso de edición (operaciones o admin, mismo rolPuedeEditar de abajo)
+  // activó el modo explícitamente con un motivo (modoCorreccionActivo) -- ver
   // ModalCorreccionDatos más abajo y motivo_correccion en guardar().
-  const puedeCorregirDatos = proforma?.estado === 'enviada' && rol === 'admin'
+  const puedeCorregirDatos = proforma?.estado === 'enviada' && rolPuedeEditar
   const puedeEditar = (enTransicion || proforma?.estado === 'aprobada' || modoCorreccionActivo) && rolPuedeEditar
   const puedeEnviarRevision = enTransicion && puedeEditar && lineas.length > 0 && !!proforma?.requiere_revision
   const puedeAprobarDirecto = enTransicion && puedeEditar && lineas.length > 0 && !proforma?.requiere_revision
@@ -1591,7 +1595,7 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-danger border border-danger hover:bg-danger-bg"
             >
               <AlertCircle size={16} />
-              Corrección de datos (admin)
+              Corrección de datos
             </button>
           )}
 
@@ -2628,7 +2632,7 @@ function ModalCorreccionDatos({
       <div className="bg-bg-surface rounded-2xl shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold text-text">Corrección de datos (admin)</h2>
+            <h2 className="text-lg font-bold text-text">Corrección de datos</h2>
             <p className="text-xs text-text-subtle">{numero} · {clienteNombre}</p>
           </div>
           <button onClick={onClose} className="text-text-subtle hover:text-text-muted"><X size={20} /></button>

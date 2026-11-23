@@ -83,16 +83,18 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   if (!current) return NextResponse.json({ error: 'Proforma no encontrada' }, { status: 404 })
 
-  // Corrección de datos (admin): única forma de editar una proforma ya
+  // Corrección de datos: única forma de editar una proforma ya
   // 'enviada' -- caso real que lo motivó: proformas migradas de Excel con
   // datos incompletos (ej. 3-0051) que nunca pasaron por el flujo normal y
   // hoy no se pueden arreglar porque 'enviada' no está en ESTADOS_EDITABLES.
-  // Exclusivo de admin (no 'operaciones') y con motivo obligatorio, mismo
-  // patrón que anular/cambiar-cliente. No aplica a ningún otro estado
+  // Antes era exclusiva de admin; desde 2026-11-23 también la puede usar
+  // 'operaciones' (Deisy) -- mismos roles que ya pueden editar en general
+  // (ver ROLES_EDICION en lib/useRol.ts). Sigue exigiendo motivo obligatorio,
+  // mismo patrón que anular/cambiar-cliente. No aplica a ningún otro estado
   // bloqueado (en_revision/facturada/anulada/descartada) porque exige
   // current.estado === 'enviada' explícitamente.
   const motivoCorreccionTrim = typeof motivo_correccion === 'string' ? motivo_correccion.trim() : ''
-  const esCorreccionAdmin = usuario.rol === 'admin' && motivoCorreccionTrim.length > 0 && current.estado === 'enviada'
+  const esCorreccionDatos = ['operaciones', 'admin'].includes(usuario.rol) && motivoCorreccionTrim.length > 0 && current.estado === 'enviada'
 
   // Control de concurrencia optimista: si el formulario mandó la fecha de
   // actualización que tenía cargada y ya no coincide con la actual, alguien
@@ -114,7 +116,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   // reiniciar el flujo — ver mismo permiso en cotizador/[id]/page.tsx). No
   // editable en en_revision/facturada/anulada/descartada.
   const ESTADOS_EDITABLES = ['borrador', 'rechazada', 'cambios_solicitados', 'aprobada']
-  if (hayEdicionEstandar && !ESTADOS_EDITABLES.includes(current.estado) && !esCorreccionAdmin) {
+  if (hayEdicionEstandar && !ESTADOS_EDITABLES.includes(current.estado) && !esCorreccionDatos) {
     return NextResponse.json({ error: `No se puede editar una proforma en estado '${current.estado}'` }, { status: 400 })
   }
 
@@ -200,13 +202,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
   // Auditoría de la corrección (mismo patrón que cambiar-cliente/route.ts:
   // estado_desde = estado_hacia = estado actual, porque esta capacidad no
   // cambia el estado de la proforma, solo corrige sus datos).
-  if (esCorreccionAdmin && hayEdicionEstandar) {
+  if (esCorreccionDatos && hayEdicionEstandar) {
     await supabase.from('proforma_eventos').insert({
       proforma_id: params.id,
       usuario_id: session.user.id,
       estado_desde: current.estado,
       estado_hacia: current.estado,
-      comentario: `Corrección de datos (admin): ${motivoCorreccionTrim}`,
+      comentario: `Corrección de datos: ${motivoCorreccionTrim}`,
     })
   }
 
