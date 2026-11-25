@@ -25,8 +25,8 @@ export async function POST(_req: NextRequest, { params }: Params) {
     .eq('id', session.user.id)
     .single()
 
-  if (usuario?.rol !== 'admin') {
-    return NextResponse.json({ error: 'Solo Marta puede marcar una proforma como facturada manualmente' }, { status: 403 })
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+    return NextResponse.json({ error: 'No autorizado para marcar una proforma como facturada manualmente' }, { status: 403 })
   }
 
   const { data: proforma, error: pfError } = await supabase

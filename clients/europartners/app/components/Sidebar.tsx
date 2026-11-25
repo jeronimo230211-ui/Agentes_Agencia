@@ -41,7 +41,7 @@ const navCategories: NavCategory[] = [
       { href: '/proformas', label: 'Proformas', icon: ClipboardList, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
       { href: '/proformas-china', label: 'Proformas China', icon: Container, roles: ['operaciones', 'admin'] },
       { href: '/aprobacion', label: 'Aprobaciones', icon: CheckSquare, roles: ['admin'] },
-      { href: '/facturador', label: 'Facturador', icon: Receipt, roles: ['admin'] },
+      { href: '/facturador', label: 'Facturador', icon: Receipt, roles: ['operaciones', 'admin'] },
       { href: '/despachos', label: 'Despachos', icon: Ship, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
       { href: '/clientes', label: 'Clientes', icon: Users, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
     ],

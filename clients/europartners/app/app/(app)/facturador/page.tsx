@@ -53,7 +53,11 @@ export default function FacturadorPage() {
 }
 
 function FacturadorContent() {
-  const { rol } = useRol()
+  // Deisy (operaciones) tiene el mismo nivel que Marta (admin) en Facturador --
+  // encargo explícito de Jero, 2026-11-24. Mismo criterio de edición que el
+  // resto de la app (puedeEditar de useRol.ts, ver también "Enviar al Cliente"
+  // en /cotizador), no una comparación directa a 'admin'.
+  const { puedeEditar } = useRol()
   const [proformas, setProformas] = useState<ProformaFacturador[]>([])
   const [loading, setLoading] = useState(true)
   const { filtros, setFiltro, limpiarFiltros } = useFiltrosUrl(
@@ -194,7 +198,7 @@ function FacturadorContent() {
                         <Badge variant={st.variant} icon={st.icon}>{st.label}</Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {rol === 'admin' && p.estado === 'enviada' && (
+                        {puedeEditar && p.estado === 'enviada' && (
                           <button
                             onClick={() => setMarcando(p)}
                             className="text-xs font-semibold text-success hover:text-success flex items-center gap-1"
@@ -202,7 +206,7 @@ function FacturadorContent() {
                             <CheckCircle2 size={13} /> Marcar facturada
                           </button>
                         )}
-                        {rol === 'admin' && p.estado === 'facturada' && (
+                        {puedeEditar && p.estado === 'facturada' && (
                           <button
                             onClick={() => setAnulando(p)}
                             className="text-xs font-semibold text-danger hover:text-danger flex items-center gap-1"

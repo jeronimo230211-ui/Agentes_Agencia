@@ -11,12 +11,13 @@ type Params = { params: { id: string } }
 // factura ya emitida ('facturada'). Deisy y Jero pidieron poder anular desde
 // /proformas sin pasar por Facturador (ej. un borrador que ya no aplica, una
 // proforma rechazada que no se va a retomar). Mismo patrón que
-// rechazar/route.ts (motivo obligatorio, evento, notificación), pero el
-// permiso varía según el estado de origen:
-//   - 'facturada' -> solo admin (cancelar una factura ya emitida es más
-//     delicado, es la regla de negocio real).
-//   - cualquier otro estado no terminal -> operaciones o admin (Deisy es
-//     operaciones y necesita poder anular ella misma).
+// rechazar/route.ts (motivo obligatorio, evento, notificación).
+//
+// El permiso es el mismo ('operaciones' o 'admin') sin importar el estado de
+// origen. Anular desde 'facturada' (cancelar una factura ya emitida) era
+// admin-only, pero Jero confirmó explícitamente (2026-11-24) que Deisy
+// (operaciones) debe tener EXACTAMENTE el mismo nivel que Marta en
+// Facturador, incluyendo anular una factura ya emitida.
 export async function POST(req: NextRequest, { params }: Params) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
@@ -40,14 +41,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Esta proforma ya está anulada' }, { status: 400 })
   }
 
-  // El chequeo de permiso depende del estado de origen -- ver comentario de
-  // arriba. Se valida el estado antes del rol para que el mensaje de error
-  // sea el mismo sin importar quién lo intente.
-  if (proforma.estado === 'facturada') {
-    if (usuario?.rol !== 'admin') {
-      return NextResponse.json({ error: 'Solo Marta puede anular una factura' }, { status: 403 })
-    }
-  } else if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
+  if (!usuario || !['operaciones', 'admin'].includes(usuario.rol)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   }
 
