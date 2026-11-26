@@ -81,8 +81,10 @@ const EXPANDED_STORAGE_KEY = 'ep_sidebar_expanded_categories'
 
 type SidebarProps = {
   // En mobile (<md) el sidebar es un drawer superpuesto, no un panel que
-  // empuja el contenido -- onClose lo cierra al tocar el fondo o un link
-  // (en desktop no se usa: ahí sigue siendo AppLayout quien desmonta).
+  // empuja el contenido -- onClose lo cierra al tocar el fondo o un link.
+  // En desktop el link SÍ llama a este mismo onClose (toggle del Topbar
+  // también lo usa), pero handleNavClick solo lo invoca si el viewport es
+  // mobile -- ver abajo.
   onClose: () => void
 }
 
@@ -147,6 +149,16 @@ export default function Sidebar({ onClose }: SidebarProps) {
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
+  // Cerrar el drawer al navegar SOLO en mobile (<768px, el mismo breakpoint
+  // `md` que ya usa este archivo para el backdrop y que usa AppLayout para
+  // su propio matchMedia) -- en desktop el sidebar es un panel fijo y
+  // AppLayout no debe desmontarlo nunca al hacer clic en un link.
+  function handleNavClick() {
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      onClose()
+    }
+  }
+
   const dashboardVisible = !usuario || dashboardItem.roles.includes(usuario.rol)
 
   function renderItem({ href, label, icon: Icon, badge }: NavItem) {
@@ -157,7 +169,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
         href={href}
         // En mobile, navegar cierra el drawer -- si no, la página de destino
         // queda tapada por el overlay hasta que el usuario lo toque aparte.
-        onClick={onClose}
+        // En desktop NO debe cerrar nada (handleNavClick lo filtra por viewport).
+        onClick={handleNavClick}
         // Opción activa de menú -- el token del sistema de Marta para este
         // rol es bg-selected (cuarzo-soft), no cuarzo sólido (ese es para
         // badges, ver abajo).
