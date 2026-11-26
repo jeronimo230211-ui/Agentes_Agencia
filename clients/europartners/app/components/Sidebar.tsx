@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, BookOpen, Wallet, Package,
   CheckSquare, History, Receipt, LogOut, ClipboardList, Inbox, Ship, BarChart3, Container,
-  ChevronDown, Users,
+  ChevronDown, Users, Truck, Database,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Usuario } from '@/types/europartners'
@@ -37,22 +37,31 @@ const navCategories: NavCategory[] = [
     label: 'Pedidos',
     icon: Package,
     items: [
+      // Orden secuencial del flujo real del pedido.
       { href: '/solicitudes', label: 'Solicitudes', icon: Inbox, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
       { href: '/proformas', label: 'Proformas', icon: ClipboardList, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
-      { href: '/proformas-china', label: 'Proformas China', icon: Container, roles: ['operaciones', 'admin'] },
       { href: '/aprobacion', label: 'Aprobaciones', icon: CheckSquare, roles: ['admin'] },
       { href: '/facturador', label: 'Facturador', icon: Receipt, roles: ['operaciones', 'admin'] },
       { href: '/despachos', label: 'Despachos', icon: Ship, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
-      { href: '/clientes', label: 'Clientes', icon: Users, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
     ],
   },
   {
-    key: 'catalogo',
-    label: 'Catálogo',
-    icon: BookOpen,
+    key: 'compras',
+    label: 'Compras',
+    icon: Truck,
+    items: [
+      // Único ítem por ahora -- categoría pensada para crecer.
+      { href: '/proformas-china', label: 'Proformas China', icon: Container, roles: ['operaciones', 'admin'] },
+    ],
+  },
+  {
+    key: 'catalogo_clientes',
+    label: 'Catálogo y Clientes',
+    icon: Database,
     items: [
       { href: '/catalogo', label: 'Catálogo', icon: BookOpen, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
       { href: '/historial', label: 'Historial Precios', icon: History, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
+      { href: '/clientes', label: 'Clientes', icon: Users, roles: ['operaciones', 'admin', 'analista', 'diseñadora'] },
     ],
   },
   {
@@ -82,7 +91,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter()
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    pedidos: true, catalogo: true, finanzas: true,
+    pedidos: true, compras: true, catalogo_clientes: true, finanzas: true,
   })
   const [expandedLoaded, setExpandedLoaded] = useState(false)
 

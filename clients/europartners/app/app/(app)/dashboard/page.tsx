@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import {
-  FileText, CheckCircle, Send, Clock, TrendingUp, AlertCircle, DollarSign, Ship, Inbox,
+  FileText, CheckCircle, Send, Clock, TrendingUp, AlertCircle, AlertTriangle, DollarSign, Ship, Inbox,
   Users, Percent, Tag, XCircle, RefreshCw, Wallet, TrendingDown,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -12,6 +12,7 @@ import Badge, { type BadgeVariant } from '@/components/ui/Badge'
 import StatCard from '@/components/ui/StatCard'
 import DataTable from '@/components/ui/DataTable'
 import SeccionColapsable from '@/components/ui/SeccionColapsable'
+import ScrollFadeRight from '@/components/ui/ScrollFadeRight'
 import RankedBarList, { type RankedBarListItem } from '@/components/ui/RankedBarList'
 import Meter, { type Nivel } from '@/components/ui/Meter'
 import type { Proforma, Usuario } from '@/types/europartners'
@@ -74,6 +75,20 @@ interface PerdidaNotaCreditoFila {
 }
 interface PerdidasNotasCredito { total_perdida_usd: number; total_nota_credito_usd: number; filas: PerdidaNotaCreditoFila[] }
 
+// Excepciones de facturación (migración 033_snapshot_lineas_enviadas_cliente.sql
+// -- GET /api/dashboard/excepciones-facturacion). Proformas FACTURADAS cuyo
+// total terminó distinto de lo que se cotizó y envió al cliente. A
+// diferencia de los otros 6 indicadores de este tab, viene de un endpoint
+// propio (no de indicadores-estrategicos) porque Jero pidió que la pantalla
+// de detalle por línea (cotizador/[id]) y esta pudieran construirse y
+// probarse por separado -- ver PROJECT.md.
+interface ExcepcionFacturacion {
+  proforma_id: string; numero: string; cliente_nombre: string | null
+  total_snapshot_cliente_usd: number; total_actual_cliente_usd: number
+  n_lineas_caidas: number; n_lineas_agregadas: number
+  diferencia_usd: number; diferencia_pct: number | null
+}
+
 interface IndicadoresEstrategicos {
   concentracion_clientes: ConcentracionCliente[]
   concentracion_paises: ConcentracionPais[]
@@ -83,6 +98,7 @@ interface IndicadoresEstrategicos {
   proformas_perdidas: ProformasPerdidas
   deuda_viva: DeudaViva
   perdidas_notas_credito: PerdidasNotasCredito
+  excepciones_facturacion: ExcepcionFacturacion[]
 }
 
 type TabCEO = 'operativo' | 'estrategico'
@@ -129,6 +145,14 @@ function nivelDeuda(totalDeuda: number, facturacionTotal: number): Nivel {
 function nivelPerdidasNotas(total: number): Nivel {
   if (total <= 0) return 'ok'
   if (total < 1000) return 'warn'
+  return 'bad'
+}
+// Mismo criterio conservador que nivelCatalogo (0/≤3/>3 casos) -- ninguno de
+// los 2 viene con un umbral exacto aprobado por Jero, ambos son "cuántos
+// casos hay" más que "qué tan grande es cada uno".
+function nivelExcepcionesFacturacion(n: number): Nivel {
+  if (n === 0) return 'ok'
+  if (n <= 3) return 'warn'
   return 'bad'
 }
 
@@ -452,6 +476,69 @@ function TilePerdidasNotasCredito({ data }: { data: PerdidasNotasCredito }) {
   )
 }
 
+// Excepciones de facturación -- lista las proformas facturadas cuyo total
+// quedó distinto de lo cotizado/enviado al cliente (ver migración 033 y
+// GET /api/dashboard/excepciones-facturacion, que ya filtra tiene_snapshot
+// y ordena por magnitud de diferencia, mayor primero). Mismo patrón visual
+// que TileDeudaViva/TileCatalogoDesactualizado -- tabla con scroll
+// horizontal (ScrollFadeRight) en vez de RankedBarList porque acá importan
+// 2 montos por fila (cotizado y facturado), no solo 1 valor comparable.
+function TileExcepcionesFacturacion({ rows }: { rows: ExcepcionFacturacion[] }) {
+  const totalDiferenciaAbs = rows.reduce((a, r) => a + Math.abs(r.diferencia_usd), 0)
+  return (
+    <SeccionColapsable
+      variante="tile"
+      icon={AlertTriangle}
+      titulo="Excepciones de facturación"
+      headline={`${rows.length}`}
+      indicador={<SemaforoDot nivel={nivelExcepcionesFacturacion(rows.length)} />}
+    >
+      {rows.length === 0 ? (
+        <p className="text-sm text-text-subtle">Sin diferencias entre lo cotizado y lo facturado</p>
+      ) : (
+        <div>
+          <p className="text-xs text-text-subtle mb-2">
+            {rows.length} proforma{rows.length !== 1 ? 's' : ''} facturada{rows.length !== 1 ? 's' : ''} con diferencia · {formatUSD(totalDiferenciaAbs)} en total
+          </p>
+          <ScrollFadeRight className="overflow-x-auto" wrapperClassName="rounded-lg overflow-hidden">
+            <table className="w-full text-sm min-w-[480px]">
+              <thead>
+                <tr className="bg-bg-subtle border-b border-border text-left text-xs text-text-subtle">
+                  <th className="p-2 px-3">Proforma</th>
+                  <th className="p-2 px-3 text-right">Cotizado</th>
+                  <th className="p-2 px-3 text-right">Facturado</th>
+                  <th className="p-2 px-3 text-right">Diferencia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(r => (
+                  <tr key={r.proforma_id} className="border-b border-border last:border-0">
+                    <td className="p-2 px-3">
+                      {/* QA: el área táctil era solo el alto del texto (~16px), por debajo
+                          del mínimo de 44px. Mismo patrón que proformas/page.tsx (Anular/
+                          Reactivar): py-3.5 cierra los 44px (la fila crece, es aceptable);
+                          -mx-2.5 compensa el padding horizontal para no desalinear con el
+                          nombre del cliente debajo. */}
+                      <Link href={`/cotizador/${r.proforma_id}`} className="inline-flex items-center font-mono text-action-primary hover:bg-action-primary/10 px-2.5 py-3.5 -mx-2.5 rounded-lg">{r.numero}</Link>
+                      <p className="text-text-muted text-xs truncate max-w-[9rem]">{r.cliente_nombre ?? '—'}</p>
+                    </td>
+                    <td className="p-2 px-3 text-right text-text-muted whitespace-nowrap">{formatUSD(r.total_snapshot_cliente_usd)}</td>
+                    <td className="p-2 px-3 text-right text-text-muted whitespace-nowrap">{formatUSD(r.total_actual_cliente_usd)}</td>
+                    <td className={`p-2 px-3 text-right font-medium whitespace-nowrap ${r.diferencia_usd > 0 ? 'text-danger' : 'text-warning'}`}>
+                      {r.diferencia_usd > 0 ? '+' : ''}{formatUSD(r.diferencia_usd)}
+                      {r.diferencia_pct != null && <span className="block text-xs font-normal">{r.diferencia_pct > 0 ? '+' : ''}{r.diferencia_pct.toFixed(1)}%</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollFadeRight>
+        </div>
+      )}
+    </SeccionColapsable>
+  )
+}
+
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<KPIs>({ recientes: [] })
   const [loading, setLoading] = useState(true)
@@ -475,10 +562,19 @@ export default function DashboardPage() {
     setIndicadoresLoading(true)
     setIndicadoresError(false)
     try {
-      const res = await fetch('/api/dashboard/indicadores-estrategicos')
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      setIndicadores(data as IndicadoresEstrategicos)
+      // Excepciones de facturación (migración 033) vive en un endpoint propio
+      // -- se pide en paralelo y se funde en el mismo objeto `indicadores`
+      // para reusar el mismo skeleton/error de todo el tab (no tiene sentido
+      // un 2do spinner independiente para un solo tile más).
+      const [resIndicadores, resExcepciones] = await Promise.all([
+        fetch('/api/dashboard/indicadores-estrategicos'),
+        fetch('/api/dashboard/excepciones-facturacion'),
+      ])
+      if (!resIndicadores.ok) throw new Error(`HTTP ${resIndicadores.status}`)
+      if (!resExcepciones.ok) throw new Error(`HTTP ${resExcepciones.status}`)
+      const data = await resIndicadores.json()
+      const { data: excepciones } = await resExcepciones.json()
+      setIndicadores({ ...data, excepciones_facturacion: excepciones || [] } as IndicadoresEstrategicos)
     } catch {
       // No bloquea el resto del dashboard: ese ya cargó con sus propios
       // fetch independientes más abajo -- este error solo afecta al tab
@@ -814,6 +910,7 @@ export default function DashboardPage() {
                   <TileCatalogoDesactualizado rows={indicadores.catalogo_desactualizado} />
                   <TileDeudaViva data={indicadores.deuda_viva} facturacionTotal={stats?.facturacion_total ?? 0} />
                   <TilePerdidasNotasCredito data={indicadores.perdidas_notas_credito} />
+                  <TileExcepcionesFacturacion rows={indicadores.excepciones_facturacion} />
                 </div>
               </div>
             ) : null

@@ -35,6 +35,21 @@ export async function POST(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'El cliente no tiene email registrado' }, { status: 400 })
   }
 
+  // Snapshot de las líneas tal como se le van a mandar al cliente — ver
+  // migración 033. Permite comparar después "qué se le mandó" vs. "qué se
+  // terminó facturando" si alguien corrige cantidad/precio en el medio.
+  // No bloquea el envío si falla: el snapshot es para auditoría futura, no
+  // es parte del flujo de aprobación/pago del cliente.
+  const { error: errorSnapshot } = await adminClient.rpc('snapshot_lineas_proforma_enviada', {
+    p_proforma_id: params.id,
+  })
+  if (errorSnapshot) {
+    console.error('[enviar-cliente] snapshot de líneas falló', {
+      proforma_id: params.id,
+      error: errorSnapshot,
+    })
+  }
+
   const pdfBuffer = await generarPDFProforma(proforma)
 
   // El cliente debe aprobar la proforma antes de que se facture y se le pida el

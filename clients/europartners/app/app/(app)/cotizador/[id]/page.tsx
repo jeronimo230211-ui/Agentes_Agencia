@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef, Fragment, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Plus, Trash2, Send, Eye, Loader2,
@@ -19,7 +19,9 @@ import AgregarPrecioReferenciaModal from '@/components/AgregarPrecioReferenciaMo
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
 import SeleccionarClienteModal, { type ClienteOpcion } from '@/components/SeleccionarClienteModal'
 import HistorialPagos from '@/components/HistorialPagos'
+import ComparacionFacturacion from '@/components/ComparacionFacturacion'
 import Badge from '@/components/ui/Badge'
+import ScrollFadeRight from '@/components/ui/ScrollFadeRight'
 
 interface OtroClienteReferencia {
   cliente_nombre: string
@@ -97,54 +99,6 @@ function componentesDeVariante(p: ProductoOpcion, varianteId: string): ProductoC
   return (p.componentes || [])
     .filter(c => c.variante_id === varianteId)
     .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
-}
-
-// ─── Indicador de scroll horizontal ────────────────────────────────────────
-// BUG-003 (QA mobile 375px, nov-2026): la barra de botones del header y la
-// tabla de "Líneas de la proforma" tienen overflow-x funcional, pero a
-// 375px no hay ninguna pista de que se puede deslizar -- en la práctica
-// nadie lo descubre. Envuelve cualquier contenedor con scroll horizontal y
-// muestra una sombra sutil en el borde derecho SOLO mientras falte
-// contenido por ver; se oculta sola al llegar al final o si el contenido ya
-// cabe completo (ej. en desktop). className va en el div que de verdad
-// scrollea; wrapperClassName es para el div exterior (p.ej. recortar la
-// sombra a la esquina redondeada de una tarjeta sin tocar el scroll).
-function ScrollFadeRight({
-  children,
-  className = '',
-  wrapperClassName = '',
-}: {
-  children: ReactNode
-  className?: string
-  wrapperClassName?: string
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [hayMasContenido, setHayMasContenido] = useState(false)
-
-  const revisar = useCallback(() => {
-    const el = ref.current
-    if (!el) return
-    // 2px de margen para no parpadear por redondeos de subpíxel.
-    setHayMasContenido(el.scrollWidth - el.clientWidth - el.scrollLeft > 2)
-  }, [])
-
-  useEffect(() => {
-    revisar()
-    window.addEventListener('resize', revisar)
-    return () => window.removeEventListener('resize', revisar)
-  }, [revisar, children])
-
-  return (
-    <div className={`relative ${wrapperClassName}`}>
-      <div ref={ref} onScroll={revisar} className={className}>
-        {children}
-      </div>
-      <div
-        aria-hidden
-        className={`pointer-events-none absolute right-0 top-0 bottom-0 w-6 ep-scroll-fade-right transition-opacity duration-150 ${hayMasContenido ? 'opacity-100' : 'opacity-0'}`}
-      />
-    </div>
-  )
 }
 
 interface LineaEditable extends Partial<ProformaLinea> {
@@ -1909,6 +1863,17 @@ export default function ProformaEditorPage({ params }: { params: { id: string } 
 
         <HistorialPagos proformaId={proforma.id} refreshKey={pagosRefreshKey} />
       </div>
+
+      {/* Cotizado vs. facturado (migración 033) -- solo tiene sentido si la
+          proforma pasó por 'enviada' alguna vez. Solo 'enviada' y
+          'facturada' llegan a ese punto (ver marcar-facturada/route.ts, que
+          exige estado='enviada' para pasar a 'facturada'), así que basta con
+          chequear el estado actual -- no hace falta mirar el historial de
+          eventos. El componente mismo gatea además por tiene_snapshot
+          (proformas facturadas antes de esta migración, sin snapshot real). */}
+      {(proforma.estado === 'enviada' || proforma.estado === 'facturada') && (
+        <ComparacionFacturacion proformaId={proforma.id} />
+      )}
 
       {error && (
         <div className="bg-danger-bg border border-danger text-danger rounded-xl p-3 mb-4 text-sm flex items-center gap-2">

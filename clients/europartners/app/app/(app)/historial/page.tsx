@@ -4,12 +4,17 @@ import { Search, TrendingUp, TrendingDown, Minus, Tag, Pencil, Check, ChevronLef
 import { formatUSD, formatPct } from '@/lib/precio'
 import { useRol } from '@/lib/useRol'
 import FijarPrecioEspecialModal from '@/components/FijarPrecioEspecialModal'
+import ScrollFadeRight from '@/components/ui/ScrollFadeRight'
 
 interface Ref {
   codigo_pdf: string
   descripcion_pdf: string
   categoria_id: string | null
   categoria_nombre: string | null
+  // true cuando el historial de esta referencia mezcla más de un color/variante
+  // (ver /api/historial route.ts) -- el nombre del header es solo el de la
+  // proforma más reciente, cada fila puede tener el suyo propio.
+  color_mixto: boolean
 }
 interface Fila {
   id: string
@@ -19,6 +24,11 @@ interface Fila {
   precio_cliente_usd: number | null
   margen_pct: number | null
   codigo_pdf: string
+  descripcion_pdf: string | null
+  // Color(es) que el backend detectó en ESTA fila (ver detectarColores en
+  // api/historial/route.ts) -- BUG-H1: antes el color real de la fila solo
+  // se veía si cabía en el texto truncado o con hover, y en móvil nunca.
+  colores_detectados?: string[]
   clientes?: { id: string; nombre: string }
 }
 
@@ -315,10 +325,15 @@ export default function HistorialPage() {
                     : 'hover:bg-bg-subtle'
                 }`}
               >
-                <p className={`text-text-code ${
+                <p className={`text-text-code flex items-center gap-1 ${
                   seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-text-on-accent' : 'text-text-heading'
                 }`}>
                   {r.codigo_pdf}
+                  {/* Mismo aviso que el header de detalle, visible desde la lista para no
+                      tener que entrar a cada referencia para descubrir la mezcla. */}
+                  {r.color_mixto && (
+                    <span title="Mezcla de colores/variantes en el historial" className="text-amber-500">⚠</span>
+                  )}
                 </p>
                 <p className={`text-xs mt-0.5 line-clamp-1 ${
                   seleccionado?.codigo_pdf === r.codigo_pdf ? 'text-text-muted' : 'text-text-muted'
@@ -385,6 +400,15 @@ export default function HistorialPage() {
                     ? seleccionado.descripcion_pdf
                     : `Historial de todas las referencias compradas por este cliente`}
                 </p>
+                {/* Esta referencia tiene filas con más de un color/variante -- el nombre
+                    de arriba es solo el de la proforma más reciente, no el de todas.
+                    Sin este aviso, Deisy/Marta pueden volver a confiar en el header y
+                    repetir el bug real de TZ-3430H (mostraba "White" con una fila Bone). */}
+                {seleccionado?.color_mixto && (
+                  <p className="text-xs font-medium text-amber-600 mt-1">
+                    ⚠ Mezcla de colores/variantes en este historial — revisa el detalle por fila
+                  </p>
+                )}
               </div>
               {seleccionado && clienteSeleccionado && (
                 <span className="text-xs px-3 py-1.5 rounded-lg bg-bg-surface border border-border text-text-muted">
@@ -485,7 +509,13 @@ export default function HistorialPage() {
                     proforma y "Precio cliente" usan text-text-heading (token, se
                     vuelve blanco en modo oscuro) y quedaban invisibles. */}
                 <div className="bg-bg-surface rounded-xl border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
+                  {/* BUG-H3 (QA 375px, nov-2026): la tabla tenía overflow-x
+                      funcional pero sin ninguna pista de que se puede
+                      deslizar -- el badge de color y varias columnas
+                      quedaban fuera de vista sin aviso. Mismo patrón que
+                      cotizador/[id] y el tile de Excepciones de Facturación
+                      del Dashboard. */}
+                  <ScrollFadeRight className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-bg-subtle border-b border-border">
@@ -496,6 +526,11 @@ export default function HistorialPage() {
                         ) : (
                           <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Código</th>
                         )}
+                        {/* Descripción/color real de ESTA fila -- antes se descartaba en el
+                            frontend aunque el endpoint ya la devolvía (bug real: la fila de
+                            3-0211 decía "Bone" en la base pero no se mostraba en ningún lado
+                            de esta tabla, solo el nombre del header, que era "White"). */}
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted">Descripción</th>
                         <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Costo China</th>
                         <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Precio cliente</th>
                         <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted">Margen</th>
@@ -528,6 +563,30 @@ export default function HistorialPage() {
                               {f.codigo_pdf}
                             </td>
                           )}
+                          {/* BUG-H1: el color real de la fila (ej. "BONE" en
+                              TZ-3430H / 3-0211) quedaba oculto tras el "…" del
+                              truncate y solo se veía con hover (title), que no
+                              existe en touch/mobile. Ahora va en un badge
+                              SIEMPRE visible junto al texto truncado. */}
+                          <td className="px-4 py-3 text-xs text-text-muted max-w-[220px]">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="truncate" title={f.descripcion_pdf || ''}>
+                                {f.descripcion_pdf || '—'}
+                              </span>
+                              {!!f.colores_detectados?.length && (
+                                <span className="flex items-center gap-1 flex-shrink-0">
+                                  {f.colores_detectados.map(c => (
+                                    <span
+                                      key={c}
+                                      className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-bg-subtle border border-border text-text-heading whitespace-nowrap"
+                                    >
+                                      {c}
+                                    </span>
+                                  ))}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-right text-xs text-text-muted">
                             {editandoCostoId === f.id ? (
                               // BUG-001: el error de validación solo existía como `title`
@@ -599,7 +658,7 @@ export default function HistorialPage() {
                       ))}
                     </tbody>
                   </table>
-                  </div>
+                  </ScrollFadeRight>
                   <div className="px-4 py-2 border-t border-border text-xs text-text-subtle">
                     {filas.length} proforma{filas.length !== 1 ? 's' : ''} · más reciente primero
                   </div>
