@@ -558,6 +558,37 @@ export default function DashboardPage() {
   const [indicadoresCargados, setIndicadoresCargados] = useState(false)
   const canVerEstrategico = usuario?.rol === 'admin' || usuario?.rol === 'analista'
 
+  // Excepciones de facturación para operaciones (Deisy) -- encargo explícito
+  // de Jero (25-nov-2026): SOLO este tile, no el tab Estratégico completo
+  // (los otros 6 indicadores siguen siendo financieros/admin-analista).
+  // Operaciones no tiene el segmented control Operativo/Estratégico (ver
+  // gate de abajo), así que no hay "tab" que active una carga perezosa --
+  // se pide directo apenas se conoce el rol del usuario.
+  const [excepcionesOperaciones, setExcepcionesOperaciones] = useState<ExcepcionFacturacion[] | null>(null)
+  const [excepcionesOperacionesLoading, setExcepcionesOperacionesLoading] = useState(false)
+  const [excepcionesOperacionesError, setExcepcionesOperacionesError] = useState(false)
+
+  const cargarExcepcionesOperaciones = useCallback(async () => {
+    setExcepcionesOperacionesLoading(true)
+    setExcepcionesOperacionesError(false)
+    try {
+      const res = await fetch('/api/dashboard/excepciones-facturacion')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const { data } = await res.json()
+      setExcepcionesOperaciones(data || [])
+    } catch {
+      setExcepcionesOperacionesError(true)
+    } finally {
+      setExcepcionesOperacionesLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (usuario?.rol === 'operaciones') {
+      cargarExcepcionesOperaciones()
+    }
+  }, [usuario, cargarExcepcionesOperaciones])
+
   const cargarIndicadores = useCallback(async () => {
     setIndicadoresLoading(true)
     setIndicadoresError(false)
@@ -889,6 +920,25 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Excepciones de facturación -- SOLO este tile para
+                  operaciones (ver encargo arriba). No reusa el tab
+                  Estratégico: admin/analista siguen viéndolo ahí abajo, y
+                  este bloque no se renderiza para ellos para no duplicarlo. */}
+              {usuario?.rol === 'operaciones' && (
+                <div className="mt-6">
+                  {excepcionesOperacionesLoading ? (
+                    <div className="bg-bg-surface rounded-xl border border-border p-5 animate-pulse">
+                      <div className="h-4 w-56 bg-bg-subtle rounded mb-4" />
+                      <div className="h-12 bg-bg-subtle rounded" />
+                    </div>
+                  ) : excepcionesOperacionesError ? (
+                    <ErrorIndicadores onRetry={cargarExcepcionesOperaciones} />
+                  ) : excepcionesOperaciones ? (
+                    <TileExcepcionesFacturacion rows={excepcionesOperaciones} />
+                  ) : null}
                 </div>
               )}
             </>

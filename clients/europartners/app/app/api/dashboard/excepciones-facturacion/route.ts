@@ -9,11 +9,14 @@ import { getCurrentUsuario } from '@/lib/auth'
 // detectar ventas que cambiaron entre el envío y la factura sin que nadie
 // se diera cuenta.
 //
-// Acceso: admin + analista -- mismo criterio que /api/finanzas y
-// /api/dashboard/indicadores-estrategicos (información analítica, no la
-// cola de acción de operaciones). Gate en el backend, no solo en el
-// frontend.
-const ROLES_EXCEPCIONES = ['admin', 'analista']
+// Acceso: admin + analista + operaciones. Nació con el mismo criterio que
+// /api/finanzas y /api/dashboard/indicadores-estrategicos (info analítica,
+// no la cola de acción de operaciones), pero Jero pidió explícitamente
+// (25-nov-2026) abrirle este tile puntual a Deisy/operaciones -- a
+// diferencia de los otros 6 indicadores del tab Estratégico (margen,
+// rentabilidad, deuda viva, etc.) que siguen siendo SOLO admin/analista.
+// Gate en el backend, no solo en el frontend.
+const ROLES_EXCEPCIONES = ['admin', 'analista', 'operaciones']
 
 export async function GET() {
   const ctx = await getCurrentUsuario()
